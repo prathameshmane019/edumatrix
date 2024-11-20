@@ -3,6 +3,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
+import { toast } from 'sonner';
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@nextui-org/react";
+
 import {
   Table,
   TableHeader,
@@ -23,7 +26,7 @@ import {
   Tabs,
   Tab
 } from "@nextui-org/react";
-import { Calendar, Download, RefreshCcw } from "lucide-react";
+import { Calendar, Download, RefreshCcw, Trash2 } from "lucide-react";
 import { DateRangePicker } from '@nextui-org/react';
 import { getCurrentAcademicYear, getAcademicYears } from "@/app/utils/acadmicYears";
 import { parseDate, getLocalTimeZone, CalendarDate } from "@internationalized/date";
@@ -44,7 +47,8 @@ export default function FacultyAttendance({ facultyId = '' }) {
   });
   const [classesWithSubjects, setClassesWithSubjects] = useState([]);
   const [isFilterDirty, setIsFilterDirty] = useState(false);
-
+  const [showDeleteColumnModal, setShowDeleteColumnModal] = useState(false);
+  const [selectedColumnToDelete, setSelectedColumnToDelete] = useState(null);
 
   useEffect(() => {
     const loadUserProfile = () => {
@@ -69,7 +73,30 @@ export default function FacultyAttendance({ facultyId = '' }) {
     setAttendanceData(null);
     setIsFilterDirty(true);
   }, [viewType]);
-
+  const handleDeleteAttendance = async () => {
+    try {
+      const deleteData = {
+        date: selectedColumnToDelete.date,
+        subject: selectedSubject,
+        session: selectedColumnToDelete.session,
+        academicYear: academicYear,
+        semester: selectedSemester,
+        ...(selectedColumnToDelete.batchId && { batchId: selectedColumnToDelete.batchId })
+      };
+  
+      console.log('Delete Payload:', deleteData); // Log exact payload
+  
+      const response = await axios.delete('/api/attendance', {
+        data: deleteData
+      });
+  
+      // Rest of the code...
+    } catch (error) {
+      console.error('Full Error Response:', error.response?.data);
+      // More error handling...
+    }
+  };
+  
   const fetchFacultySubjects = useCallback(async () => {
     try {
       const response = await axios.get(
@@ -341,75 +368,139 @@ export default function FacultyAttendance({ facultyId = '' }) {
       </Table>
     );
   };
-
   const renderDateWiseTable = (batchData) => {
     if (!batchData || !Array.isArray(batchData) || batchData.length === 0) {
       return <div>No attendance data available</div>;
     }
 
-    const dates = batchData[0]?.sessions?.map(session => ({
+    // Sort dates from older to newer
+    const dates = (batchData[0]?.sessions?.map(session => ({
       date: session.date,
       session: session.session
-    })) || [];
+    })) || []).sort((a, b) => new Date(a.date) - new Date(b.date));
 
     const students = batchData.sort((a, b) => compareRollNumbers(a.student.rollNumber, b.student.rollNumber));
 
-    return (
-      <div className="overflow-x-auto">
-        <Table aria-label="Date-wise Attendance Table">
-          <TableHeader>
-            <TableColumn sticky>Roll No</TableColumn>
-            <TableColumn sticky>Name</TableColumn>
-            {dates.map((date, index) => (
-              <TableColumn key={`${date.date}-${date.session}`}>
-                <div className="text-sm">
-                  <div>{new Date(date.date).toLocaleDateString()}</div>
-                  <div className="text-xs text-default-500">
-                    Session {date.session}
-                  </div>
-                </div>
-              </TableColumn>
-            ))}
-            <TableColumn sticky="right">Present/Total</TableColumn>
-            <TableColumn sticky="right">Overall %</TableColumn>
-          
-          </TableHeader>
-          <TableBody>
-            {students.map(student => {
-              const studentAttendance = student.sessions?.map(session => session.status) || [];
+    const formatDate = (dateString) => {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-GB', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric' 
+      });
+    };
 
-              return (
-                <TableRow key={student.student._id}>
-                  <TableCell>{student.student.rollNumber}</TableCell>
-                  <TableCell>{student.student.name}</TableCell>
-                  {studentAttendance.map((status, index) => (
-                    <TableCell key={`${dates[index]?.date}-${dates[index]?.session}`}>
+    const handleDeleteColumn = (dateInfo) => {
+      setSelectedColumnToDelete(dateInfo);
+      setShowDeleteColumnModal(true);
+    };
+
+    const confirmDeleteColumn = () => {
+      // Implement column deletion logic here
+      console.log('Deleting column:', selectedColumnToDelete);
+      
+      // You would typically call an API to delete the entire session record
+      setShowDeleteColumnModal(false);
+      setSelectedColumnToDelete(null);
+    };
+
+    return (
+      <>
+        <div className="overflow-x-auto">
+          <Table aria-label="Date-wise Attendance Table">
+            <TableHeader>
+              <TableColumn sticky>Roll No</TableColumn>
+              <TableColumn sticky>Name</TableColumn>
+              {dates.map((date, index) => (
+                <TableColumn key={`${date.date}-${date.session}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm">
+                      <div>{formatDate(date.date)}</div>
+                      <div className="text-xs text-default-500">
+                        Session {date.session}
+                      </div>
+                    </div>
+                    <Button 
+                      isIconOnly 
+                      size="sm" 
+                      color="danger" 
+                      variant="light"
+                      onClick={() => handleDeleteColumn(date)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </TableColumn>
+              ))}
+              <TableColumn sticky="right">Present/Total</TableColumn>
+              <TableColumn sticky="right">Overall %</TableColumn>
+            </TableHeader>
+            <TableBody>
+              {students.map(student => {
+                const studentAttendance = student.sessions?.map(session => session.status) || [];
+
+                return (
+                  <TableRow key={student.student._id}>
+                    <TableCell>{student.student.rollNumber}</TableCell>
+                    <TableCell>{student.student.name}</TableCell>
+                    {studentAttendance.map((status, index) => (
+                      <TableCell key={`${dates[index]?.date}-${dates[index]?.session}`}>
+                        <Chip
+                          size="sm"
+                          color={status === 'present' ? "success" : "danger"}
+                          variant="flat"
+                        >
+                          {status === 'present' ? 'P' : 'A'}
+                        </Chip>
+                      </TableCell>
+                    ))}
+                    <TableCell>{student.presentCount}/{student.totalLectures}</TableCell>
+                    <TableCell>
                       <Chip
-                        size="sm"
-                        color={status === 'present' ? "success" : "danger"}
+                        color={student.percentage >= 75 ? "success" : "danger"}
                         variant="flat"
                       >
-                        {status === 'present' ? 'P' : 'A'}
+                        {student.percentage.toFixed(1)}%
                       </Chip>
                     </TableCell>
-                  ))}
-                  <TableCell>{student.presentCount}/{student.totalLectures}</TableCell>
-                  <TableCell>
-                    <Chip
-                      color={student.percentage >= 75 ? "success" : "danger"}
-                      variant="flat"
-                    >
-                      {student.percentage.toFixed(1)}%
-                    </Chip>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+        {/* Delete Confirmation Modal */}
+        <Modal 
+  isOpen={showDeleteColumnModal} 
+  onOpenChange={(open) => setShowDeleteColumnModal(open)}
+>
+  <ModalContent>
+    {(onClose) => (
+      <>
+        <ModalHeader>Confirm Deletion</ModalHeader>
+        <ModalBody>
+          <p>Are you sure you want to delete this attendance record?</p>
+        </ModalBody>
+        <ModalFooter>
+          <Button color="default" onPress={onClose}>
+            Cancel
+          </Button>
+          <Button color="danger" onPress={() => {
+            handleDeleteAttendance();
+            onClose();
+          }}>
+            Delete
+          </Button>
+        </ModalFooter>
+      </>
+    )}
+  </ModalContent>
+</Modal>
+      </>
     );
   };
+  
+  
 
   const renderDropdown = (label, value, options, onSelect) => (
     <Dropdown>
@@ -573,3 +664,4 @@ export default function FacultyAttendance({ facultyId = '' }) {
     </Card>
   );
 }
+

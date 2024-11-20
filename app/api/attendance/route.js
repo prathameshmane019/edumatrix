@@ -310,3 +310,62 @@ export async function PUT(req) {
         }, { status: 500 });
     }
 }
+export async function DELETE(req) {
+  try {
+    await connectMongoDB();
+    const data = await req.json();
+    const { date, subject, session, batchId } = data;
+
+    if (!date || !subject || !session) {
+      return NextResponse.json({ message: "Invalid Input Data" }, { status: 400 });
+    }
+
+    const attendanceDate = new Date(date);
+    const startOfDay = new Date(Date.UTC(attendanceDate.getUTCFullYear(), attendanceDate.getUTCMonth(), attendanceDate.getUTCDate()));
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setUTCDate(endOfDay.getUTCDate() + 1);
+
+        const filter = {
+            date: { $gte: startOfDay, $lt: endOfDay },
+            subject,
+            session
+        };
+
+        console.log(filter);
+        
+        if (batchId) {
+            filter.batch = batchId;
+        }
+        const attendanceRecord = await Attendance.findOne(filter);
+
+console.log(attendanceRecord);
+
+    if (!attendanceRecord) {
+      return NextResponse.json({ 
+        message: "No matching attendance record found",
+        filter: filter
+      }, { status: 404 });
+    }
+
+    // Delete the attendance record
+    const deletedRecord = await Attendance.findByIdAndDelete(attendanceRecord._id);
+console.log(deletedRecord);
+
+    // Remove reference from Subject
+    await Subject.findByIdAndUpdate(subject, {
+      $pull: { reports: attendanceRecord._id }
+    });
+
+    return NextResponse.json({
+      message: "Attendance Deleted Successfully",
+      deletedRecord
+    }, { status: 200 });
+
+  } catch (error) {
+    console.error("Error deleting attendance:", error);
+    return NextResponse.json({
+      error: "Failed to Delete Attendance",
+      details: error.message
+    }, { status: 500 });
+  }
+}
