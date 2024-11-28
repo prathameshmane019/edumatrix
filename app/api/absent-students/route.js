@@ -101,7 +101,7 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const date = new Date(searchParams.get("date"));
     const classId = searchParams.get("classId");
-
+   
     // Validate date and classId
     if (isNaN(date.getTime())) {
       return NextResponse.json({ error: "Invalid date" }, { status: 400 });

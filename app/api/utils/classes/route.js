@@ -6,14 +6,15 @@ export async function GET(req) {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
         const department = searchParams.get("department");
-
+        const year = searchParams.get("acadmicYear");
         let filter = {};
         if (department) filter.department = department;
+        if (year) filter.year = year;
 
         console.log("Filter criteria:", filter);
 
         const classes = await Classes.find(filter).select('_id subjects');
-          
+
         if (classes.length === 0) {
             console.log("No classes found for criteria:", filter);
             return NextResponse.json({ status: 404 });

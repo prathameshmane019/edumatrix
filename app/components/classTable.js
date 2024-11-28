@@ -35,6 +35,8 @@ import * as XLSX from "xlsx";
 import { FaFileDownload } from "react-icons/fa";
 import Image from "next/image";
 import { departmentOptions } from "../utils/department";
+import { getCurrentAcademicYear, getAcademicYears } from '@/app/utils/acadmicYears';
+import { Calendar } from "lucide-react";
 
 const columns = [
   { uid: "_id", name: "Class ID", sortable: true },
@@ -67,7 +69,7 @@ export default function ClassTable() {
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-
+  const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
   const [classToToggle, setClassToToggle] = useState(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -94,7 +96,7 @@ export default function ClassTable() {
     setIsLoadingTeachers(true);
     try {
       const [classesResponse, teachersResponse] = await Promise.all([
-        axios.get(`/api/classes?department=${selectedDepartment}`, { timeout: 10000 }),
+        axios.get(`/api/classes?department=${selectedDepartment}&acadmicYear=${academicYear}`, { timeout: 10000 }),
         axios.get('/api/fetchfaculty', { timeout: 10000 })
       ]);
 
@@ -273,6 +275,21 @@ export default function ClassTable() {
   return (
     <>
       <div className="flex justify-between my-4 gap-3 items-end">
+      <Select
+          placeholder="Select Year"
+          variant="bordered"
+          size="sm"
+          selectedKeys={academicYear ? [academicYear] : []}
+          onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
+          startContent={<Calendar className="w-4 h-4 text-default-400" />}
+          className="w-[40%]"
+        >
+          {getAcademicYears(10).map((year) => (
+            <SelectItem key={year.value} value={year.value}>
+              {year.label}
+            </SelectItem>
+          ))}
+        </Select>
         {profile?.role !== "admin" && (
           <Select
             placeholder="Select department"

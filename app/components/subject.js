@@ -166,7 +166,7 @@
 //             {cellValue ? "Active" : "Inactive"}
 //           </span>
 //         );
-     
+
 //       default:
 //         return <span>{cellValue}</span>;
 //     }
@@ -275,6 +275,8 @@ import {
   Input,
   Pagination,
   Spinner,
+  Select,
+  SelectItem,
 } from '@nextui-org/react';
 import { capitalize } from "@/app/utils/utils";
 import { PlusIcon } from "@/public/PlusIcon";
@@ -283,6 +285,8 @@ import { DeleteIcon } from "@/public/DeleteIcon";
 import { SearchIcon } from "@/public/SearchIcon";
 import SubjectModal from './subjectModal';
 import Image from 'next/image';
+import { getCurrentAcademicYear, getAcademicYears } from '@/app/utils/acadmicYears';
+import { Calendar } from 'lucide-react';
 
 const columns = [
   { uid: "_id", name: "ID", sortable: true },
@@ -309,11 +313,16 @@ export default function SubjectTable({ user }) {
   const [isLoading, setIsLoading] = useState(false);
   const [profile, setProfile] = useState(null);
   const [classes, setClasses] = useState([]);
+  const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
+  const [selectedSemester, setSelectedSemester] = useState('sem1');
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
       setProfile(JSON.parse(storedProfile));
+      // Set defaults from profile
+      setSelectedSemester(profile?.defaultSemester || 'sem1');
+      setAcademicYear(profile?.defaultAcademicYear || getCurrentAcademicYear());
     }
   }, []);
 
@@ -321,12 +330,17 @@ export default function SubjectTable({ user }) {
     if (profile && profile.department) {
       fetchData();
     }
-  }, [profile?.department]);
-
+  }, [profile?.department,academicYear,selectedSemester]);
+  useEffect(() => {
+    if (profile  ) {
+      setSelectedSemester(profile?.defaultSemester || 'sem1');
+      setAcademicYear(profile?.defaultAcademicYear || getCurrentAcademicYear());
+    }
+  }, [profile]);
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`/api/subjectData?department=${profile.department}`);
+      const response = await axios.get(`/api/subjectData?department=${profile.department}&acadmicYear=${academicYear}&sem=${selectedSemester}`);
       setSubjects(response.data.subjects);
       setClasses(response.data.classes);
     } catch (error) {
@@ -446,6 +460,39 @@ export default function SubjectTable({ user }) {
   return (
     <>
       <div className="flex justify-between my-4 gap-3 items-end">
+        <Select
+
+          placeholder="Select Year"
+          selectedKeys={academicYear ? [academicYear] : []}
+          onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0] )}
+          startContent={<Calendar className="w-4 h-4 text-default-400" />}
+          variant="bordered"
+          size="sm"
+          className="max-w-52"
+        >
+          {getAcademicYears(10).map((year) => (
+            <SelectItem key={year.value} value={year.value}>
+              {year.label}
+            </SelectItem>
+          ))}
+        </Select>
+
+        <Select
+          
+          placeholder="Select Semester"
+          selectedKeys={[selectedSemester]}
+          onSelectionChange={(keys) => setSelectedSemester(Array.from(keys)[0] )}
+          variant="bordered"
+          size="sm"
+          className="max-w-52"
+        >
+          <SelectItem key="sem1" value="sem1">
+            Semester 1
+          </SelectItem>
+          <SelectItem key="sem2" value="sem2">
+            Semester 2
+          </SelectItem>
+        </Select>
         <Input
           isClearable
           classNames={{ base: "w-full sm:max-w-[44%]", inputWrapper: "border-1" }}

@@ -897,6 +897,8 @@ export default function AdminAttendance({ adminId = '', department = '', role = 
   const [selectedDepartment, setSelectedDepartment] = useState(department);
   const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
   const [selectedSubjectType, setSelectedSubjectType] = useState('');
+
+  
   const fetchClasses = useCallback(async () => {
     if (selectedDepartment && selectedSemester && academicYear) {
       try {

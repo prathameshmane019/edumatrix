@@ -355,7 +355,7 @@
 //           {renderNotificationModalContent()}
 //         </ModalContent>
 //       </Modal>
-      
+
 //       <Modal isOpen={isStudentModalOpen} onClose={onStudentModalClose}>
 //         <ModalContent>
 //           <ModalHeader className="flex flex-col gap-1">Student Details</ModalHeader>
@@ -399,6 +399,8 @@ import { Textarea } from "@nextui-org/input";
 import { Spinner } from "@nextui-org/spinner";
 import { Tooltip } from "@nextui-org/tooltip";
 import { toast } from 'sonner';
+import { getCurrentAcademicYear, getAcademicYears } from '@/app/utils/acadmicYears';
+import { Calendar } from 'lucide-react';
 
 const AbsentStudentsPage = () => {
   const [date, setDate] = useState('');
@@ -416,15 +418,16 @@ const AbsentStudentsPage = () => {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [notificationTypes, setNotificationTypes] = useState([]);
+  const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
 
   const { isOpen: isStudentModalOpen, onOpen: onStudentModalOpen, onClose: onStudentModalClose } = useDisclosure();
- 
+
 
   const fetchClasses = async () => {
     if ((userProfile?.role === "admin" || userProfile?.role === "superadmin") && selectedDepartment) {
       try {
         setLoading(true);
-        const response = await axios.get(`/api/utils/classes?department=${selectedDepartment}`);
+        const response = await axios.get(`/api/utils/classes?department=${selectedDepartment}&acadmicYear=${academicYear}`);
         setClasses(response.data || []);
       } catch (error) {
         console.error('Error fetching classes:', error);
@@ -454,7 +457,7 @@ const AbsentStudentsPage = () => {
     if ((userProfile?.role === "admin" || userProfile?.role === "superadmin") && selectedDepartment) {
       fetchClasses();
     }
-  }, [userProfile, selectedDepartment]);
+  }, [userProfile, selectedDepartment,academicYear]);
 
   const classOptions = useMemo(() => {
     return Array.isArray(classes) ? classes : [];
@@ -652,21 +655,43 @@ const AbsentStudentsPage = () => {
           <h2 className="text-2xl font-bold">Absent Students Report</h2>
         </CardHeader>
         <CardBody>
-          <form onSubmit={handleSubmit} className="flex flex-col md:flex-row items-end gap-4">
+          <form onSubmit={handleSubmit} className="flex  flex-col md:flex-row items-center mx-auto w-[90%] gap-4">
+            <Select
+              placeholder="Select Year"
+              label="Select Year"
+              variant="bordered"
+              size="sm"
+              selectedKeys={academicYear ? [academicYear] : []}
+              onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
+              startContent={<Calendar className="w-4 h-4 text-default-400" />}
+              className="max-w-60"
+            >
+              {getAcademicYears(10).map((year) => (
+                <SelectItem key={year.value} value={year.value}>
+                  {year.label}
+                </SelectItem>
+              ))}
+            </Select>
             <Input
               type="date"
               label="Select Date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required
-              className="flex-1"
+              className="max-w-60"
+
+              variant="bordered"
+              size="sm"
             />
             <Select
               label="Select Class"
               selectedKeys={[selectedClass]}
               onSelectionChange={(keys) => setSelectedClass(Array.from(keys)[0])}
               required
-              className="flex-1"
+              className="max-w-60"
+
+              variant="bordered"
+              size="sm"
             >
               {classOptions.map((cls) => (
                 <SelectItem key={cls._id} value={cls._id}>
@@ -759,7 +784,7 @@ const AbsentStudentsPage = () => {
           {renderNotificationModalContent()}
         </ModalContent>
       </Modal>
-      
+
       <Modal isOpen={isStudentModalOpen} onClose={onStudentModalClose}>
         <ModalContent>
           <ModalHeader className="flex flex-col gap-1">Student Details</ModalHeader>

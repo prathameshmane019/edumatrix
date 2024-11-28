@@ -44,6 +44,8 @@ const columns = [
   { uid: "password", name: "Password", sortable: true },
   { uid: "actions", name: "Actions" },
 ];
+import { getCurrentAcademicYear, getAcademicYears } from '@/app/utils/acadmicYears';
+import { Calendar } from "lucide-react";
 
 const INITIAL_VISIBLE_COLUMNS = ["_id", "rollNumber", "name", "year", "department", "actions"];
 
@@ -67,6 +69,7 @@ export default function StudentTable() {
   const [allStudents, setAllStudents] = useState({});
   const [totalStudents, setTotalStudents] = useState(0);
   const [classes, setClasses] = useState([]);
+  const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
 
 
   useEffect(() => {
@@ -111,7 +114,7 @@ export default function StudentTable() {
     if ((profile?.role === "admin" || profile?.role === "superadmin") && selectedDepartment) {
       try {
         setIsLoading(true);
-        const response = await axios.get(`/api/utils/classes?department=${selectedDepartment}`);
+        const response = await axios.get(`/api/utils/classes?department=${selectedDepartment}&acadmicYear=${academicYear}`);
         setClasses(response.data || []);
       } catch (error) {
         console.error('Error fetching classes:', error);
@@ -381,7 +384,21 @@ export default function StudentTable() {
   return (
     <div>
       <div className="flex flex-row gap-2">
-        
+        <Select
+          placeholder="Select Year"
+          variant="bordered"
+          size="sm"
+          selectedKeys={academicYear ? [academicYear] : []}
+          onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
+          startContent={<Calendar className="w-4 h-4 text-default-400" />}
+         className="max-w-60 my-4"
+        >
+          {getAcademicYears(10).map((year) => (
+            <SelectItem key={year.value} value={year.value}>
+              {year.label}
+            </SelectItem>
+          ))}
+        </Select>
         {profile?.role === 'superadmin' && (
           <Select
             placeholder="Select a department"
@@ -389,8 +406,8 @@ export default function StudentTable() {
             size="sm"
             value={selectedDepartment}
             onChange={(value) =>
-            setSelectedDepartment(value.target.value)}
-            className="max-w-xs my-4"
+              setSelectedDepartment(value.target.value)}
+            className="max-w-60 my-4"
           >
             {departmentOptions.map((department) => (
               <SelectItem key={department.key} value={department.label}>
@@ -406,7 +423,7 @@ export default function StudentTable() {
           required
           variant="bordered"
           size="sm"
-          className="max-w-xs my-4"
+          className="max-w-60 my-4"
         >
           {classOptions.map((cls) => (
             <SelectItem key={cls._id} value={cls._id}>
