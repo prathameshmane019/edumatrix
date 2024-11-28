@@ -60,13 +60,13 @@ export async function PUT(req) {
         return NextResponse.json({ error: "Failed to Update" }, { status: 500 });
     }
 }
-
 export async function GET(req) {
     try {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
         const id = searchParams.get("_id");
         const department = searchParams.get("department");
+        const className = searchParams.get("class");
         const page = parseInt(searchParams.get("page")) || 1;
         const limit = parseInt(searchParams.get("limit")) || 15;
         const filterValue = searchParams.get("filterValue");
@@ -77,11 +77,12 @@ export async function GET(req) {
             if (!student) {
                 return NextResponse.json({ error: "Student not found" }, { status: 404 });
             }
-            return NextResponse.json( student , { status: 200 });
+            return NextResponse.json(student, { status: 200 });
         }
 
-        // Existing functionality for department and filter-based queries
         let filter = {};
+        let students;
+        let totalStudents;
 
         if (department) {
             filter.department = department;
@@ -96,10 +97,20 @@ export async function GET(req) {
 
         const skip = (page - 1) * limit;
 
-        const [students, totalStudents] = await Promise.all([
-            Student.find(filter).skip(skip).limit(limit),
-            Student.countDocuments(filter)
-        ]);
+        if (className) {
+            // Fetch students class-wise
+            filter.class = className;
+            [students, totalStudents] = await Promise.all([
+                Student.find(filter).skip(skip).limit(limit),
+                Student.countDocuments(filter)
+            ]);
+        } else {
+            // Fetch all students using existing logic when no class is chosen
+            [students, totalStudents] = await Promise.all([
+                Student.find(filter).skip(skip).limit(limit),
+                Student.countDocuments(filter)
+            ]);
+        }
 
         if (students.length === 0) {
             return NextResponse.json({ error: "No students found" }, { status: 404 });
@@ -111,7 +122,8 @@ export async function GET(req) {
         console.error("Error fetching students:", error);
         return NextResponse.json({ error: "Failed to Fetch Students" }, { status: 500 });
     }
-}// DELETE operation - Delete Student
+}
+// DELETE operation - Delete Student
 export async function DELETE(req) {
     try {
         await connectMongoDB();

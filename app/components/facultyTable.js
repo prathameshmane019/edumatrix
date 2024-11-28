@@ -88,6 +88,7 @@ export default function FacultyTable() {
 
   useEffect(() => {
     if (profile && selectedDepartment) {
+      setFaculty([])
       fetchFaculty();
     }
   }, [selectedDepartment]);

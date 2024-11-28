@@ -47,7 +47,7 @@ export default function TeachingPlanPage() {
       const response = await axios.get(`/api/subject?_id=${id}`)
       const subjectData = response.data.subject
       setSubject(subjectData)
-      
+
       if (subjectData.subType === 'tg') {
         setContent(subjectData.tgSessions || [])
       } else {
@@ -78,13 +78,13 @@ export default function TeachingPlanPage() {
     setIsLoading(true)
     try {
       let payload = {}
-      
+
       if (subject.subType === 'tg') {
         payload = {
           tgSessions: updatedContent.map(session => ({
             date: session.date,
-            pointsDiscussed: Array.isArray(session.pointsDiscussed) ? 
-              session.pointsDiscussed : 
+            pointsDiscussed: Array.isArray(session.pointsDiscussed) ?
+              session.pointsDiscussed :
               [session.pointsDiscussed]
           }))
         }
@@ -180,7 +180,7 @@ export default function TeachingPlanPage() {
       case 'practical':
         return <PracticalContent {...contentProps} subject={subject} />
       case 'tg':
-        return <TGContent {...contentProps} tg={subject.tgSessions}/>
+        return <TGContent {...contentProps} tg={subject.tgSessions} />
       default:
         return null
     }
@@ -214,11 +214,11 @@ export default function TeachingPlanPage() {
       </div>
 
       {isLoading && (
-  <div className="flex flex-col items-center my-4">
-    <Spinner />
-    <p className="mt-2 text-gray-500">Loading, please wait...</p>
-  </div>
-)}
+        <div className="flex flex-col items-center my-4">
+          <Spinner />
+          <p className="mt-2 text-gray-500">Loading, please wait...</p>
+        </div>
+      )}
 
 
       {subject && <SubjectInfo subject={subject} />}
@@ -254,7 +254,7 @@ export default function TeachingPlanPage() {
               Upload Content (Excel)
             </Button>
           </div>
-          
+
           <Button
             color="primary"
             onClick={handleFileDownload}

@@ -58,6 +58,7 @@ export default function StudentTable() {
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("add"); // 'view', 'edit', or 'add'
+  const [selectedClass, setSelectedClass] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [students, setStudents] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
@@ -65,8 +66,9 @@ export default function StudentTable() {
   const [profile, setProfile] = useState(null);
   const [allStudents, setAllStudents] = useState({});
   const [totalStudents, setTotalStudents] = useState(0);
+  const [classes, setClasses] = useState([]);
 
-  
+
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
@@ -74,23 +76,57 @@ export default function StudentTable() {
     }
   }, []);
 
+  const classOptions = useMemo(() => {
+    return Array.isArray(classes) ? classes : [];
+  }, [classes]);
+
   useEffect(() => {
     if (profile?.role !== "superadmin") {
+      setSelectedClass('')
       setSelectedDepartment(profile?.department);
     }
   }, [profile]);
 
   useEffect(() => {
-    if (selectedDepartment) {
+    if (selectedDepartment && selectedClass) {
+      setStudents([])
       fetchStudents();
     }
-  }, [selectedDepartment, page, rowsPerPage, filterValue]);
+  }, [selectedDepartment, page, rowsPerPage, filterValue, selectedClass]);
+
+  useEffect(() => {
+    if ((profile?.role === "admin" || profile?.role === "superadmin") && selectedDepartment) {
+      setSelectedClass('')
+      fetchClasses();
+    }
+  }, [profile, selectedDepartment]);
+
+  useEffect(() => {
+    setSelectedClass('')
+    setStudents([])
+  }, [selectedDepartment, selectedClass]);
+
+  const fetchClasses = async () => {
+    setSelectedClass('')
+    if ((profile?.role === "admin" || profile?.role === "superadmin") && selectedDepartment) {
+      try {
+        setIsLoading(true);
+        const response = await axios.get(`/api/utils/classes?department=${selectedDepartment}`);
+        setClasses(response.data || []);
+      } catch (error) {
+        console.error('Error fetching classes:', error);
+        toast.error("Failed to fetch classes. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
 
   const fetchStudents = async () => {
-    if (allStudents[page]) {
-      setStudents(allStudents[page]);
-      return;
-    }
+    // if (allStudents[page]) {
+    //   setStudents(allStudents[page]);
+    //   return;
+    // }
 
     try {
       setIsLoading(true);
@@ -99,10 +135,11 @@ export default function StudentTable() {
           department: selectedDepartment,
           filterValue,
           page,
-          limit: rowsPerPage
+          limit: rowsPerPage,
+          class: selectedClass
         }
       });
-      setAllStudents(prev => ({...prev, [page]: response.data.students}));
+      setAllStudents(prev => ({ ...prev, [page]: response.data.students }));
       setStudents(response.data.students);
       setTotalStudents(response.data.totalStudents);
     } catch (error) {
@@ -120,7 +157,7 @@ export default function StudentTable() {
       reader.onload = (e) => {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: "array" });
-        
+
         // Check if there are multiple sheets
         if (workbook.SheetNames.length > 1) {
           toast.error("Please ensure the file contains only one sheet.");
@@ -151,7 +188,7 @@ export default function StudentTable() {
     try {
       setIsLoading(true);
       const response = await axios.post('/api/upload', { students: studentsData });
-      
+
       if (response.data.errors && response.data.errors.length > 0) {
         const errorMessage = response.data.errors.map(error => `Row ${error.row}: ${error.message}`).join("\n");
         toast.error(`Some students could not be uploaded:\n${errorMessage}`);
@@ -172,7 +209,7 @@ export default function StudentTable() {
     try {
       setIsLoading(true);
       const response = await axios.get(`/api/student/download?department=${selectedDepartment}`);
-      
+
       // Group students by admission year
       const studentsByYear = response.data.reduce((acc, student) => {
         const year = student.year || 'Unknown';
@@ -218,7 +255,7 @@ export default function StudentTable() {
     return columns.filter((column) => visibleColumns.has(column.uid));
   }, [visibleColumns]);
 
- 
+
   useEffect(() => {
     if (filterValue) {
       setAllStudents({});
@@ -308,7 +345,7 @@ export default function StudentTable() {
     fileInput.click();
   }, []);
 
- 
+
   const bottomContent = (
     <div className="flex justify-between items-center">
       <span className="text-default-400 text-small">Total {students.length} students</span>
@@ -343,7 +380,8 @@ export default function StudentTable() {
 
   return (
     <div>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-row gap-2">
+        
         {profile?.role === 'superadmin' && (
           <Select
             placeholder="Select a department"
@@ -351,7 +389,7 @@ export default function StudentTable() {
             size="sm"
             value={selectedDepartment}
             onChange={(value) =>
-              setSelectedDepartment(value.target.value)}
+            setSelectedDepartment(value.target.value)}
             className="max-w-xs my-4"
           >
             {departmentOptions.map((department) => (
@@ -361,6 +399,22 @@ export default function StudentTable() {
             ))}
           </Select>
         )}
+        <Select
+          placeholder="Select a class"
+          value={selectedClass}
+          onSelectionChange={(keys) => setSelectedClass(Array.from(keys)[0])}
+          required
+          variant="bordered"
+          size="sm"
+          className="max-w-xs my-4"
+        >
+          {classOptions.map((cls) => (
+            <SelectItem key={cls._id} value={cls._id}>
+              {cls._id || cls.name}
+            </SelectItem>
+          ))}
+        </Select>
+
       </div>
       <div className="flex justify-between gap-3 items-end">
         <Input
@@ -466,7 +520,7 @@ export default function StudentTable() {
         </TableHeader>
         <TableBody
           isLoading={isLoading}
-          loadingContent={<Spinner label="Please wait... fetching Student Data" />}
+          loadingContent={<Spinner label="Please wait... fetching Data" />}
           emptyContent={
             <div className="flex flex-col items-center justify-center">
               <Image
