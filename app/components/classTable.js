@@ -313,7 +313,7 @@ export default function ClassTable() {
             base: "w-full sm:max-w-[44%]",
             inputWrapper: "border-1",
           }}
-          placeholder="Search by name, email, or faculty ID..."
+          placeholder="Search by class name ..."
           size="sm"
           startContent={<SearchIcon className="text-default-300" />}
           value={filterValue}

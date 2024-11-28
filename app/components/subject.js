@@ -496,7 +496,7 @@ export default function SubjectTable({ user }) {
         <Input
           isClearable
           classNames={{ base: "w-full sm:max-w-[44%]", inputWrapper: "border-1" }}
-          placeholder="Search by name, class, or teacher..."
+          placeholder="Search by Subject name,"
           size="sm"
           startContent={<SearchIcon className="text-default-300" />}
           value={filterValue}
