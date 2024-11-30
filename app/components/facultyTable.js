@@ -1,5 +1,5 @@
 "use client";
-// import { departmentOptions } from "../utils/department";
+import { departmentOptions } from "../utils/department";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import Image from "next/image";
@@ -122,7 +122,7 @@ export default function FacultyTable() {
 
   const deleteFaculty = async (_id) => {
     try {
-      await axios.delete(`/api/faculty?_id=${_id}`);
+      await axios.delete(`/api/v2/faculty?_id=${_id}`);
       fetchFaculty();
       toast.success('Faculty deleted successfully');
     } catch (error) {
