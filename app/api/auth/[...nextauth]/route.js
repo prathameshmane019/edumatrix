@@ -3,6 +3,8 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { connectMongoDB } from "@/lib/connectDb"
 import Faculty from '@/models/faculty'
 import Student from '@/models/student'
+import Institute from '@/models/Institute'
+import Department from '@/models/department'
 
 export const authOptions = {
   providers: [
@@ -16,40 +18,66 @@ export const authOptions = {
 
         try {
           await connectMongoDB()
-          const userId = credentials.userId
+          const identifier = credentials.userId
           const password = credentials.password
 
-          const faculty = await Faculty.findOne({ _id: userId })
-          const student = await Student.findOne({ _id: userId })
+          await connectMongoDB()
+          console.log(password);
 
-          if (!faculty && !student) {
+          // Try to find user across different models
+          const faculty = await Faculty.findOne({
+            $or: [
+              { phoneNo: identifier },
+              { id: identifier }
+            ]
+          }).populate('institute')
+
+          const student = await Student.findOne({
+            $or: [
+              { email: identifier },
+              { phoneNo: identifier },
+              { _id: identifier }
+            ]
+          }).populate('institute department')
+
+          const department = await Department.findOne({
+            $or: [
+              { name: identifier },
+              { id: identifier }
+            ]
+          }).populate('institute')
+
+          const institute = await Institute.findOne({
+            $or: [
+              { instituteCode: identifier }
+            ]
+          })
+
+          // Validate user
+          let user = faculty || student || department || institute
+          if (!user) {
             throw new Error('User not found')
           }
+          console.log(user);
 
-          let user
-          if (faculty) {
-            user = faculty
-          } else if (student) {
-            user = student
-          }
-
+          // Simple password check (replace with more secure method)
           if (user.password !== password) {
-            throw new Error('Invalid password')
+            throw new Error('Invalid credentials')
           }
 
-          let role
-          if (faculty) {
-            role = faculty.isAdmin ? "admin" : "faculty"
-          }
-          else {
-            role = "student"
-          }
-          role = 'superadmin'
+          // Determine user type and create profile
+          let userType = 'unknown'
+          if (faculty) userType = 'faculty'
+          else if (student) userType = 'student'
+          else if (department) userType = 'department'
+          else if (institute) userType = 'superadmin'
+
+
           // Create a profile object with all necessary user information
           const profile = {
             _id: user._id,
-            role,
-            department: user.department,
+            role:userType,
+            department: user?.department,
             name: user.name,
             email: user.email,
             // Add any other relevant fields from the user document

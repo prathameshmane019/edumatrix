@@ -52,7 +52,12 @@ const classSchema = new mongoose.Schema({
     },
     batches: {
         type: [BatchSchema],
-    }
+    },
+    institute: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Institute', 
+        required: true 
+      },
 }, { timestamps: true });
 
 const Classes = mongoose.models.Classes || mongoose.model('Classes', classSchema);

@@ -37,7 +37,12 @@ const StudentSchema = new mongoose.Schema({
     class: {
         type: String,
         ref: 'Classes'  
-    }
+    },
+    institute: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Institute', 
+        required: true 
+      },
 }, {
     timestamps: true,
 });

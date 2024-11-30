@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import Image from 'next/image';
 import Loader from './loader';
+import { Elsie } from 'next/font/google';
 
 export default function LoginComponent() {
   const [isVisible, setIsVisible] = useState(false);
@@ -34,20 +35,17 @@ export default function LoginComponent() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (status === 'authenticated' && session?.user?.role) {
-        console.log(session);
-        
-        const role = session.user.role === "admin" || session.user.role === "superadmin" ? "faculty" : session.user.role;
+        let role ;
+         if (session?.user?.role === "admin") role="department"
+         else if(session.user.role=== "superadmin") role ="institute" 
+         else role = session.user.role;
         const { _id } = session.user;
-        console.log(_id);
-        
         const storedProfile = sessionStorage.getItem('userProfile');
-        console.log(storedProfile);
-        
         if (storedProfile) {
           setUserProfile(JSON.parse(storedProfile));
         } else {
           try {
-            const res = await axios.get(`/api/${role}?_id=${_id}`);
+            const res = await axios.get(`/api/v2/${role}?_id=${_id}`);
             const profileData = Array.isArray(res.data) ? res.data[0] : res.data; // Ensure userProfile is an object
             profileData.role = session?.user?.role; // Add role to profile data
             sessionStorage.setItem('userProfile', JSON.stringify(profileData));

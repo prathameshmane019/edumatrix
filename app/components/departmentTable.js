@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import {
@@ -52,11 +51,31 @@ export default function DepartmentTable() {
   const [isLoading, setIsLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState(null);
-
+  const [profile, setProfile] = useState(null);
   useEffect(() => {
     fetchDepartments();
   }, []);
  
+  useEffect(() => {
+    const storedProfile = sessionStorage.getItem('userProfile');
+    if (storedProfile) {
+      console.log("Raw stored profile:", storedProfile);
+      try {
+        const parsedProfile = JSON.parse(storedProfile);
+        console.log("Parsed profile:", parsedProfile);
+        setProfile(parsedProfile);
+      } catch (error) {
+        console.error("Error parsing profile:", error);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    console.log("Updated profile state:", profile);
+    if (profile) {
+      console.log(profile);
+    }
+  }, [profile]);
   const fetchDepartments = async () => {
     try {
       setIsLoading(true);
@@ -170,11 +189,12 @@ export default function DepartmentTable() {
     try {
       if (editingDepartment) {
         console.log(editingDepartment);
-        
-        await axios.put(`/api/department?_id=${editingDepartment._id}`, formData);
+        const updatedFormData = { ...formData, institute: profile._id };
+
+        await axios.put(`/api/department?_id=${editingDepartment._id}`, updatedFormData);
         toast.success("Department updated successfully");
       } else {
-        await axios.post("/api/department", formData);
+        await axios.post("/api/department", updatedFormData);
         toast.success("Department added successfully");
       }
       fetchDepartments();
