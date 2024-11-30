@@ -48,14 +48,14 @@ export async function PUT(req) {
             email, 
             password, 
             isAdmin,
-            defaultAcademicYear,
-            defaultSemester 
+            currentYear,
+            sem 
         } = data;
 
-        if (!department) {
-            console.log("department is not found", department);
-            return NextResponse.json({ error: "department is missing" });
-        }
+        // if (!department) {
+        //     console.log("department is not found", department);
+        //     return NextResponse.json({ error: "department is missing" });
+        // }
 
         const updateData = {
             facultyId,
@@ -67,11 +67,11 @@ export async function PUT(req) {
         };
 
         // Only include default settings if they are provided
-        if (defaultAcademicYear) {
-            updateData.defaultAcademicYear = defaultAcademicYear;
+        if (currentYear) {
+            updateData.currentYear = currentYear;
         }
-        if (defaultSemester) {
-            updateData.defaultSemester = defaultSemester;
+        if (sem) {
+            updateData.sem = sem;
         }
 
         const existingFaculty = await Faculty.findByIdAndUpdate(

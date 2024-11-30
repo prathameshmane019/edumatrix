@@ -69,7 +69,7 @@ export default function StudentTable() {
   const [allStudents, setAllStudents] = useState({});
   const [totalStudents, setTotalStudents] = useState(0);
   const [classes, setClasses] = useState([]);
-  const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
+  const [academicYear, setAcademicYear] = useState(() => profile?.currentYear || getCurrentAcademicYear());
 
 
   useEffect(() => {
@@ -87,6 +87,9 @@ export default function StudentTable() {
     if (profile?.role !== "superadmin") {
       setSelectedClass('')
       setSelectedDepartment(profile?.department);
+    }
+    if (profile?.currentYear) {
+      setAcademicYear(profile?.currentYear); // Set default year from profile
     }
   }, [profile]);
 
@@ -391,7 +394,7 @@ export default function StudentTable() {
           selectedKeys={academicYear ? [academicYear] : []}
           onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
           startContent={<Calendar className="w-4 h-4 text-default-400" />}
-         className="max-w-60 my-4"
+          className="max-w-60 my-4"
         >
           {getAcademicYears(10).map((year) => (
             <SelectItem key={year.value} value={year.value}>

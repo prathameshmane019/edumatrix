@@ -10,10 +10,6 @@ const FacultySchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    subjects: [{
-        type: String,
-        ref: 'Subject'  // Ensure correct reference to Subject model
-    }],
     classes: {
         type: String,
         ref: 'Classes'  // Ensure correct reference to Class model
@@ -27,8 +23,11 @@ const FacultySchema = new mongoose.Schema({
     isSuper: {
         type: Boolean
     },
-    isAdmin: {
-        type: Boolean
+    currentYear:{
+        type:String
+    },
+    sem:{
+        type:String
     },
     email: {
         type: String,

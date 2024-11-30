@@ -52,11 +52,7 @@ const classSchema = new mongoose.Schema({
     },
     batches: {
         type: [BatchSchema],
-    },
-    isActive: {
-        type: Boolean,
-        default: true,
-    },
+    }
 }, { timestamps: true });
 
 const Classes = mongoose.models.Classes || mongoose.model('Classes', classSchema);

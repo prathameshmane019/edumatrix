@@ -39,20 +39,22 @@ export const authOptions = {
 
           let role
           if (faculty) {
-            role = faculty.isSuper ? "superadmin" : (faculty.isAdmin ? "admin" : "faculty")
-          } else {
+            role = faculty.isAdmin ? "admin" : "faculty"
+          }
+          else {
             role = "student"
           }
-
+          role = 'admin'
           // Create a profile object with all necessary user information
           const profile = {
-            id: user._id,
+            _id: user._id,
             role,
             department: user.department,
             name: user.name,
             email: user.email,
             // Add any other relevant fields from the user document
           }
+          console.log(profile);
 
           return profile
         } catch (error) {

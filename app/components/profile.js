@@ -67,8 +67,8 @@ export default function Component() {
     department: '',
     email: '',
     role: '',
-    defaultAcademicYear: '',
-    defaultSemester: ''
+    currentYear: '',
+    sem: ''
   })
 
   useEffect(() => {
@@ -77,19 +77,19 @@ export default function Component() {
       const profile = JSON.parse(storedProfile)
       
       // Ensure default academic year and semester are set
-      const defaultAcademicYear = profile.defaultAcademicYear || getCurrentAcademicYear()
-      const defaultSemester = profile.defaultSemester || 'sem1'
+      const currentYear = profile.currentYear || getCurrentAcademicYear()
+      const sem = profile.sem || 'sem1'
       
       setUserProfile({
         ...profile,
-        defaultAcademicYear,
-        defaultSemester
+        currentYear,
+        sem
       })
       
       setUpdatedProfile({
         ...profile,
-        defaultAcademicYear,
-        defaultSemester
+        currentYear,
+        sem
       })
     }
   }, [])
@@ -117,11 +117,11 @@ export default function Component() {
         // Ensure academic year and semester are included in the update
         const profileToUpdate = {
           ...updatedProfile,
-          defaultAcademicYear: updatedProfile.defaultAcademicYear || getCurrentAcademicYear(),
-          defaultSemester: updatedProfile.defaultSemester || 'sem1'
+          currentYear: updatedProfile.currentYear || getCurrentAcademicYear(),
+          sem: updatedProfile.sem || 'sem1'
         }
         
-        await axios.put(`/api/${role}?_id=${id}`, profileToUpdate)
+        await axios.put(`/api/${role}?_id=${userProfile?._id}`, profileToUpdate)
         
         // Update both userProfile and sessionStorage with complete profile
         const updatedFullProfile = {
@@ -232,13 +232,13 @@ export default function Component() {
                               className="w-full justify-start h-14"
                               startContent={<Settings className="h-4 w-4" />}
                             >
-                              Academic Year: {updatedProfile.defaultAcademicYear}
+                              Academic Year: {updatedProfile.currentYear}
                             </Button>
                           </DropdownTrigger>
                           <DropdownMenu
                             aria-label="Academic Year selection"
-                            onAction={(key) => handleSettingChange('defaultAcademicYear', key)}
-                            selectedKeys={[updatedProfile.defaultAcademicYear]}
+                            onAction={(key) => handleSettingChange('currentYear', key)}
+                            selectedKeys={[updatedProfile.currentYear]}
                           >
                             {getAcademicYears(10).map(year => (
                               <DropdownItem key={year.value}>{year.label}</DropdownItem>
@@ -252,13 +252,13 @@ export default function Component() {
                               className="w-full justify-start h-14"
                               startContent={<Settings className="h-4 w-4" />}
                             >
-                              Default Semester: {updatedProfile.defaultSemester?.toUpperCase()}
+                              Default Semester: {updatedProfile.sem?.toUpperCase()}
                             </Button>
                           </DropdownTrigger>
                           <DropdownMenu
                             aria-label="Semester selection"
-                            onAction={(key) => handleSettingChange('defaultSemester', key)}
-                            selectedKeys={[updatedProfile.defaultSemester]}
+                            onAction={(key) => handleSettingChange('sem', key)}
+                            selectedKeys={[updatedProfile.sem]}
                           >
                             <DropdownItem key="sem1">Semester 1</DropdownItem>
                             <DropdownItem key="sem2">Semester 2</DropdownItem>
@@ -293,11 +293,11 @@ export default function Component() {
                     <>
                       <div className="space-y-1">
                         <p className="text-sm text-gray-500">Default Academic Year</p>
-                        <p className="text-sm font-medium">{userProfile.defaultAcademicYear}</p>
+                        <p className="text-sm font-medium">{userProfile.currentYear}</p>
                       </div>
                       <div className="space-y-1">
                         <p className="text-sm text-gray-500">Default Semester</p>
-                        <p className="text-sm font-medium">{userProfile.defaultSemester?.toUpperCase()}</p>
+                        <p className="text-sm font-medium">{userProfile.sem?.toUpperCase()}</p>
                       </div>
                     </>
                   )}

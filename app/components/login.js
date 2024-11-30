@@ -37,8 +37,8 @@ export default function LoginComponent() {
         console.log(session);
         
         const role = session.user.role === "admin" || session.user.role === "superadmin" ? "faculty" : session.user.role;
-        const { id } = session.user;
-        console.log(id);
+        const { _id } = session.user;
+        console.log(_id);
         
         const storedProfile = sessionStorage.getItem('userProfile');
         console.log(storedProfile);
@@ -47,7 +47,7 @@ export default function LoginComponent() {
           setUserProfile(JSON.parse(storedProfile));
         } else {
           try {
-            const res = await axios.get(`/api/${role}?_id=${id}`);
+            const res = await axios.get(`/api/${role}?_id=${_id}`);
             const profileData = Array.isArray(res.data) ? res.data[0] : res.data; // Ensure userProfile is an object
             profileData.role = session?.user?.role; // Add role to profile data
             sessionStorage.setItem('userProfile', JSON.stringify(profileData));

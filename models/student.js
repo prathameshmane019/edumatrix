@@ -37,11 +37,7 @@ const StudentSchema = new mongoose.Schema({
     class: {
         type: String,
         ref: 'Classes'  
-    },
-    subjects: [{
-        type: String,
-        ref: 'Subject' 
-    }]
+    }
 }, {
     timestamps: true,
 });

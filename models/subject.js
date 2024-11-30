@@ -66,7 +66,10 @@ const TGSessionSchema = new mongoose.Schema({
     _id: true
 });
 const SubjectSchema = new mongoose.Schema({
-    _id: String,
+    subCode: {
+        type: String,
+        required: true
+    },
     name: {
         type: String,
         required: true
@@ -89,14 +92,10 @@ const SubjectSchema = new mongoose.Schema({
     },
     department: {
         type: String
-    },
-    reports: {
-        type: [ObjectId],
-        ref: 'Attendance'
-    },
-    isActive: {
-        type: Boolean,
-        default: true,
+    }, 
+    instituteId: {
+        type: String,
+        required: true
     },
     content: {
         type: [ContentSchema],

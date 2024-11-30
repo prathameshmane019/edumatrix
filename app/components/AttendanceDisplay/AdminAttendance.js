@@ -885,19 +885,24 @@ import * as XLSX from 'xlsx';
 import { getCurrentAcademicYear, getAcademicYears } from '@/app/utils/acadmicYears';
 import { departmentOptions } from '@/app/utils/department';
 
-export default function AdminAttendance({ adminId = '', department = '', role = '' }) {
+export default function AdminAttendance({ adminId = '', department = '', role = '' ,year,sem}) {
   const [attendanceData, setAttendanceData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedClass, setSelectedClass] = useState('');
-  const [selectedSemester, setSelectedSemester] = useState('sem1');
+  const [selectedSemester, setSelectedSemester] = useState(sem || 'sem1');
   const [classes, setClasses] = useState([]);
   const [viewType, setViewType] = useState('cumulative');
   const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState(department);
-  const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
+  const [academicYear, setAcademicYear] = useState(() => year || getCurrentAcademicYear());
   const [selectedSubjectType, setSelectedSubjectType] = useState('');
 
+useEffect(()=>{
+  if(year) setAcademicYear(year)
+    if(sem) setSelectedSemester(sem)
+
+},[year])
   
   const fetchClasses = useCallback(async () => {
     if (selectedDepartment && selectedSemester && academicYear) {

@@ -6,5 +6,6 @@ export const AuthProvider = ({ children }) => {
   return ( 
   <NextUIProvider>
     <SessionProvider>{children}
-    <Toaster richColors /></SessionProvider></NextUIProvider>)
+    <Toaster richColors /></SessionProvider>
+    </NextUIProvider>)
 };

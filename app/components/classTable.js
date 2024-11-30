@@ -69,10 +69,10 @@ export default function ClassTable() {
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
+  const [academicYear, setAcademicYear] = useState(() => profile?.currentYear || getCurrentAcademicYear());
   const [classToToggle, setClassToToggle] = useState(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
-
+  
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
@@ -81,9 +81,12 @@ export default function ClassTable() {
       if (parsedProfile.role !== "superadmin") {
         setSelectedDepartment(parsedProfile.department);
       }
+      if (parsedProfile.currentYear) {
+        setAcademicYear(parsedProfile.currentYear); // Set default year from profile
+      }
     }
   }, []);
-
+  
   useEffect(() => {
     if (selectedDepartment) {
       fetchData();
@@ -212,6 +215,8 @@ export default function ClassTable() {
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
   }, [sortDescriptor, items]);
+
+  console.log(profile);
 
   const renderCell = useCallback((cls, columnKey) => {
     const cellValue = cls[columnKey];

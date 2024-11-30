@@ -418,7 +418,9 @@ const AbsentStudentsPage = () => {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [notificationTypes, setNotificationTypes] = useState([]);
-  const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
+  const [academicYear, setAcademicYear] = useState(() => userProfile?.currentYear || getCurrentAcademicYear());
+
+
 
   const { isOpen: isStudentModalOpen, onOpen: onStudentModalOpen, onClose: onStudentModalClose } = useDisclosure();
 
@@ -449,6 +451,9 @@ const AbsentStudentsPage = () => {
       if (profile.role === "teacher" && profile.classes) {
         setSelectedClass(profile.classes);
         setClasses([{ _id: profile.classes, name: profile.classes }]);
+      }
+      if (profile?.currentYear) {
+        setAcademicYear(profile?.currentYear); // Set default year from profile
       }
     }
   }, []);
