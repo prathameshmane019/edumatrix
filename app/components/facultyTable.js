@@ -1,5 +1,5 @@
 "use client";
-import { departmentOptions } from "../utils/department";
+// import { departmentOptions } from "../utils/department";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import Image from "next/image";
