@@ -44,7 +44,7 @@ export const authOptions = {
           else {
             role = "student"
           }
-          role = 'admin'
+          role = 'superadmin'
           // Create a profile object with all necessary user information
           const profile = {
             _id: user._id,

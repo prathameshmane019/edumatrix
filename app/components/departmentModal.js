@@ -19,26 +19,12 @@ const DepartmentModal = ({ isOpen, onClose, mode,onSubmit, editingDepartment,dep
     if (editingDepartment) {
       setFormData({
         department: editingDepartment.department,
-        password: "", // Don't populate password for security reasons
+        password: editingDepartment.password, // Don't populate password for security reasons
       });
     } else {
       resetForm();
     }
   }, [editingDepartment]);
-  // useEffect(() => {
-  //   if (mode === "edit" && departments) {
-  //     setFormData({
-        
-  //       department: departments.department,
-       
-  //       password: departments.password,
-      
-  //     });
-  //   } else {
-  //     handleClear();
-  //   }
-  // }, [mode, departments]);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevState) => ({
@@ -76,7 +62,6 @@ const DepartmentModal = ({ isOpen, onClose, mode,onSubmit, editingDepartment,dep
               onChange={handleChange}
               isRequired
             />
-            {!editingDepartment && (
               <Input
                 label="Password"
                 placeholder="Enter password"
@@ -86,7 +71,7 @@ const DepartmentModal = ({ isOpen, onClose, mode,onSubmit, editingDepartment,dep
                 onChange={handleChange}
                 isRequired
               />
-            )}
+
           </ModalBody>
           <ModalFooter>
             <Button color="danger" variant="light" onPress={onClose}>

@@ -169,6 +169,8 @@ export default function DepartmentTable() {
   const handleModalSubmit = async (formData) => {
     try {
       if (editingDepartment) {
+        console.log(editingDepartment);
+        
         await axios.put(`/api/department?_id=${editingDepartment._id}`, formData);
         toast.success("Department updated successfully");
       } else {
@@ -288,7 +290,7 @@ export default function DepartmentTable() {
           wrapper: "max-h-[382px]",
         }}
         selectedKeys={selectedKeys}
-        selectionMode="multiple"
+        selectionMode="none"
         sortDescriptor={sortDescriptor}
         topContent={topContent}
         topContentPlacement="outside"

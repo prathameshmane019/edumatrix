@@ -11,7 +11,6 @@ export async function POST(req) {
     console.log(data);
     const newDepartment = new Department({
       department,
-
       password,
     });
 
@@ -33,9 +32,12 @@ export async function PUT(req) {
     const data = await req.json();
     console.log(data);
     const { department, password } = data;
-    const existingDepartment = await Department.findByIdAndUpdate(
-      { _id: department },
+    const { searchParams } = new URL(req.url);
+        const _id = searchParams.get("_id");
+        const existingDepartment = await Department.findByIdAndUpdate(
+      _id,
       {
+        department,
         password,
       },
       { new: true }
@@ -59,7 +61,6 @@ export async function GET() {
   try {
     await connectMongoDB();
     const departments = await Department.find();
-
     console.log("Fetched Data Successfully", departments);
     return NextResponse.json(departments);
   } catch (error) {
