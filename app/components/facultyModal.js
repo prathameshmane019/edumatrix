@@ -7,7 +7,7 @@ import { departmentOptions } from "../utils/department";
 
 const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
   const [formData, setFormData] = useState({
-    facultyId: "",
+    // facultyId: "",
     name: "",
     department: "",
     email: "",
@@ -31,7 +31,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
       });
     } else {
       setFormData({
-        facultyId: "",
+        // facultyId: "",
         name: "",
         department: profile?.role === "superadmin" ? "" : profile?.department,
         email: "",
@@ -56,7 +56,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
 
   const handleClear = () => {
     setFormData({
-      facultyId: "",
+      // facultyId: "",
       name: "",
       department: profile?.role === "superadmin" ? "" : profile?.department,
       email: "",
@@ -99,7 +99,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
       <ModalContent>
         <ModalHeader>{mode === "add" ? "Add Faculty" : "Edit Faculty"}</ModalHeader>
         <ModalBody>
-          <Input
+          {/* <Input
             label="Faculty ID"
             name="facultyId"
             value={formData.facultyId}
@@ -108,7 +108,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
             disabled={mode !== "add"}
             variant="bordered"
             size="sm"
-          />
+          /> */}
           <Input
             label="Name"
             name="name"
