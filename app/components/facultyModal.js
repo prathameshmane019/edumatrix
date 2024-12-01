@@ -203,7 +203,9 @@ import { departmentOptions } from "../utils/department";
 
 const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
   const [formData, setFormData] = useState({
+
     id: "",
+
     name: "",
     department: "",
     email: "",
@@ -230,7 +232,10 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
       });
     } else {
       setFormData({
+
+
         id: "",
+
         name: "",
         department: profile?.role === "superadmin" ? "" : profile?.department,
         email: "",
@@ -260,7 +265,9 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
 
   const handleClear = () => {
     setFormData({
+
       id: "",
+
       name: "",
       department: profile?.role === "superadmin" ? "" : profile?.department,
       email: "",

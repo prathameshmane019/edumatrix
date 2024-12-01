@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const BatchSchema = new mongoose.Schema({
-    _id: {
+    id: {
         type: String,
         required: true,
     },
@@ -14,10 +14,10 @@ const BatchSchema = new mongoose.Schema({
         type: String,
         ref: 'Student',
     }]
-}, { _id: false });
+}, { id: false });
 
 const classSchema = new mongoose.Schema({
-    _id: {
+    id: {
         type: String,
         required: true,
     },
