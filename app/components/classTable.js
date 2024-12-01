@@ -39,7 +39,7 @@ import { getCurrentAcademicYear, getAcademicYears } from '@/app/utils/acadmicYea
 import { Calendar } from "lucide-react";
 
 const columns = [
-  { uid: "_id", name: "Class ID", sortable: true },
+  { uid: "id", name: "Class ID", sortable: true },
   { uid: "teacher", name: "Class Coordinator" },
   { uid: "students", name: "Students" }, 
   { uid: "year", name: "Admission Year" },

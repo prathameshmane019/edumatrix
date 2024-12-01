@@ -1,5 +1,5 @@
 "use client";
-// import { departmentOptions } from "../utils/department";
+import { departmentOptions } from "../utils/department";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import Image from "next/image";
@@ -35,7 +35,7 @@ import FacultyModal from "./facultyModal";
 import * as XLSX from "xlsx";
 
 const columns = [
-  // { uid: "_id", name: "Faculty ID", sortable: true },
+  { uid: "_id", name: "Faculty ID", sortable: true },
   { uid: "name", name: "Name", sortable: true },
   { uid: "department", name: "Department", sortable: true },
   { uid: "email", name: "Email", sortable: true },
@@ -43,7 +43,7 @@ const columns = [
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = [ "name", "department", "email", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["_id", "name", "department", "email", "actions"];
 
 export default function FacultyTable() {
   const [filterValue, setFilterValue] = useState("");
@@ -51,7 +51,7 @@ export default function FacultyTable() {
   const [visibleColumns, setVisibleColumns] = useState(new Set(INITIAL_VISIBLE_COLUMNS));
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [sortDescriptor, setSortDescriptor] = useState({
-    column: "name",
+    column: "_id",
     direction: "ascending",
   });
   const [page, setPage] = useState(1);
@@ -122,7 +122,7 @@ export default function FacultyTable() {
 
   const deleteFaculty = async (_id) => {
     try {
-      await axios.delete(`/api/faculty?_id=${_id}`);
+      await axios.delete(`/api/v2/faculty?_id=${_id}`);
       fetchFaculty();
       toast.success('Faculty deleted successfully');
     } catch (error) {
@@ -272,7 +272,7 @@ export default function FacultyTable() {
               base: "w-full sm:max-w-[44%]",
               inputWrapper: "border-1",
             }}
-            placeholder="Search by name, email ..."
+            placeholder="Search by name, email, or faculty ID..."
             size="sm"
             startContent={<SearchIcon className="text-default-300" />}
             value={filterValue}

@@ -19,7 +19,7 @@ import { departmentOptions } from "../utils/department";
 
 const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) => {
   const [formData, setFormData] = useState({
-    _id: "",
+    id: "",
     className: "",
     classCoordinator: "",
     year: "",
@@ -53,7 +53,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
     if (isOpen) {
       if (mode === "edit" && classData) {
         setFormData({
-          _id: classData._id || "",
+          // id: classData._id || "",
           className: classData.className || "",
           classCoordinator: classData.teacher?._id || "",
           department: classData.department || "",
@@ -131,7 +131,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
   }, []);
 
   const addBatch = useCallback(() => {
-    setBatches(prev => [...prev, { _id: "", type: "", students: [] }]);
+    setBatches(prev => [...prev, { id: "", type: "", students: [] }]);
   }, []);
 
   const removeBatch = useCallback((index) => {
@@ -139,7 +139,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
   }, []);
 
   const validateForm = useCallback(() => {
-    if (!formData._id || !formData.classCoordinator || !formData.year || !formData.department) {
+    if (!formData.id || !formData.classCoordinator || !formData.year || !formData.department) {
       toast.error("Please fill in all required fields.");
       return false;
     }
@@ -190,7 +190,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
 
   const resetForm = () => {
     setFormData({
-      _id: "", 
+      id: "", 
       classCoordinator: "",
       year: "",
       department: profile?.role !== "superadmin" ? profile?.department : ""
@@ -216,8 +216,8 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Input
               label="Class ID"
-              name="_id"
-              value={formData._id}
+              name="id"
+              value={formData.id}
               onChange={handleChange}
               required
               disabled={mode !== "add"}
@@ -315,8 +315,8 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, teachers }) =>
                 <Input
                   label="Batch ID"
                   name={`batch-${index}-id`}
-                  value={batch._id}
-                  onChange={(e) => handleBatchChange(index, '_id', e.target.value)}
+                  value={batch.id}
+                  onChange={(e) => handleBatchChange(index, 'id', e.target.value)}
                   required
                   variant="bordered"
                   size="sm"

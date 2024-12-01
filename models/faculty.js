@@ -1,11 +1,13 @@
 import mongoose from 'mongoose';
 
 const FacultySchema = new mongoose.Schema({
-    // _id: {
-    //     type: String,
-    //     required: true,
-    //     unique: true
-    // },
+
+    id: {
+        type: String,
+        required: true,
+        unique: true
+    },
+
     name: {
         type: String,
         required: true
@@ -20,9 +22,7 @@ const FacultySchema = new mongoose.Schema({
     password: {
         type: String
     },
-    isSuper: {
-        type: Boolean
-    },
+
     currentYear:{
         type:String
     },
@@ -34,6 +34,11 @@ const FacultySchema = new mongoose.Schema({
         required: true,
         unique: true
     },
+    institute: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Institute', 
+    required: true 
+  },
 }, {
     timestamps: true,
 });

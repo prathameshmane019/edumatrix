@@ -8,12 +8,14 @@ const departmentSchema = new Schema(
       type: String,
       required: true,
     },
-
-    
-
     password: {
       type: String,
       required: true,
+    },
+    institute: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'Institute', 
+      required: true 
     },
   },
   {

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const BatchSchema = new mongoose.Schema({
-    _id: {
+    id: {
         type: String,
         required: true,
     },
@@ -14,10 +14,10 @@ const BatchSchema = new mongoose.Schema({
         type: String,
         ref: 'Student',
     }]
-}, { _id: false });
+}, { id: false });
 
 const classSchema = new mongoose.Schema({
-    _id: {
+    id: {
         type: String,
         required: true,
     },
@@ -52,7 +52,12 @@ const classSchema = new mongoose.Schema({
     },
     batches: {
         type: [BatchSchema],
-    }
+    },
+    institute: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Institute', 
+        required: true 
+      },
 }, { timestamps: true });
 
 const Classes = mongoose.models.Classes || mongoose.model('Classes', classSchema);

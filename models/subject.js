@@ -93,10 +93,11 @@ const SubjectSchema = new mongoose.Schema({
     department: {
         type: String
     }, 
-    instituteId: {
-        type: String,
-        required: true
-    },
+    institute: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Institute', 
+        required: true 
+      },
     content: {
         type: [ContentSchema],
         default: undefined,
