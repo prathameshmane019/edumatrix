@@ -30,13 +30,14 @@ import { PlusIcon } from "@/public/PlusIcon";
 import { EditIcon } from "@/public/EditIcon";
 import { DeleteIcon } from "@/public/DeleteIcon";
 import { SearchIcon } from "@/public/SearchIcon";
-import ClassModal from "./classModal";
+
 import * as XLSX from "xlsx";
 import { FaFileDownload } from "react-icons/fa";
 import Image from "next/image";
 import { departmentOptions } from "../utils/department";
 import { getCurrentAcademicYear, getAcademicYears } from '@/app/utils/acadmicYears';
 import { Calendar } from "lucide-react";
+import ClassModal from "./classModal";
 
 const columns = [
   { uid: "id", name: "Class ID", sortable: true },
@@ -399,6 +400,10 @@ export default function ClassTable() {
         classData={selectedClass}
         onSubmit={fetchData}
         teachers={teachers}
+        userRole={profile?.role}
+        department={selectedDepartment}
+        instituteId={profile?.role === 'superadmin' ? profile?._id : profile?.institute}
+      
       />
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalContent>

@@ -143,6 +143,8 @@ export async function POST(req) {
         session.startTransaction();
 
         const data = await req.json();
+        console.log(data);
+        
         const { _id, classCoordinator, department, year, students, batches } = data;
 
         const newClass = new Classes({

@@ -22,8 +22,6 @@ export const authOptions = {
           const password = credentials.password
 
           await connectMongoDB()
-          console.log(password);
-
           // Try to find user across different models
           const faculty = await Faculty.findOne({
             $or: [

@@ -39,7 +39,7 @@ const classSchema = new mongoose.Schema({
                 ref: 'Subject' // Assuming you have a Subject model
             }]
         },
-        required: true // Ensure subjects are required
+        // required: true // Ensure subjects are required
     },
     students: [{
         type: String,
