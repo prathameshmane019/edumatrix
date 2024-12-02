@@ -145,14 +145,14 @@ export async function POST(req) {
         const data = await req.json();
         console.log(data);
         
-        const { id, teacher,institute, department, year, students, batches } = data;
+        const { id,academicYear, teacher,institute, department, students, batches } = data;
 
         const newClass = new Classes({
             id,
             students,
             teacher,
             department,
-            year,
+            year:academicYear,
             batches,
             institute
         });
@@ -243,7 +243,7 @@ export async function PUT(req) {
         const _id = searchParams.get("_id");
 
         const data = await req.json();
-        const { teacher,institute, department, year, students, batches } = data;
+        const { teacher,institute, department, academicYear, students, batches } = data;
 
         // Use findOne with session instead of findById
         const existingClass = await Classes.findOne({ _id }).session(session);
@@ -258,7 +258,7 @@ export async function PUT(req) {
 
         existingClass.teacher = teacher;
         existingClass.department = department;
-        existingClass.year = year;
+        existingClass.year = academicYear;
         existingClass.students = students;
         existingClass.batches = batches;
         existingClass.institute=institute;
@@ -278,7 +278,7 @@ export async function PUT(req) {
         );
 
         // Update faculty references
-        if (previousClassCoordinator && previousClassCoordinator !== classCoordinator) {
+        if (previousClassCoordinator && previousClassCoordinator !== teacher) {
             await Faculty.updateOne(
                 { _id: previousClassCoordinator },
                 { $unset: { classes: "" } },

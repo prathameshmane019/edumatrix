@@ -644,7 +644,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit,department, use
         })),
         institute: instituteId
       };
-      const url = mode === "add" ? "/api/v2/classes" : `/api/v2/classes?id=${formData.id}`;
+      const url = mode === "add" ? "/api/v2/classes" : `/api/v2/classes?_id=${classData._id}`;
       const method = mode === "add" ? "POST" : "PUT";
       
       const response = await fetch(url, {
