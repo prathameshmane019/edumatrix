@@ -15,7 +15,8 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
     email: "",
     phoneNo: "",
     password: "",
-    year: ""
+    year: "",
+    institute: null
   });
 
   useEffect(() => {
@@ -44,7 +45,8 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
         email: student.email,
         phoneNo: student.phoneNo,
         password: student.password,
-        year: student.year
+        year: student.year,
+        institute: profile?.instituteId || null
       });
     } else {
       handleClear();
@@ -81,7 +83,9 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
       phoneNo: "",
       email: "",
       password: "",
-      year: ""
+      year: "",
+      institute: profile?.instituteId || null
+
     });
   };
 
@@ -90,10 +94,10 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
       console.log(formData);
       let response;
       if (mode === "add") {
-        response = await axios.post("/api/student", formData);
+        response = await axios.post("/api/v2/student", formData);
         toast.success("Student added successfully");
       } else if (mode === "edit") {
-        response = await axios.put(`/api/student?_id=${formData._id}`, formData);
+        response = await axios.put(`/api/v2/student?_id=${formData._id}`, formData);
         toast.success("Student updated successfully");
       }
       onSubmit();

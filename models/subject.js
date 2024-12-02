@@ -18,7 +18,7 @@ const BatchStatusSchema = new mongoose.Schema({
     completedDate: {
         type: String
     }
-}, { _id: false });
+}, { id: false });
 
 const ContentSchema = new mongoose.Schema({
     title: {
@@ -50,7 +50,7 @@ const ContentSchema = new mongoose.Schema({
         }
     }
 }, {
-    _id: true,
+    id: true,
 });
 
 const TGSessionSchema = new mongoose.Schema({
@@ -63,7 +63,7 @@ const TGSessionSchema = new mongoose.Schema({
         default: undefined
     },
 }, {
-    _id: true
+    id: true
 });
 const SubjectSchema = new mongoose.Schema({
     subCode: {
