@@ -34,7 +34,8 @@ import { SearchIcon } from "@/public/SearchIcon";
 import * as XLSX from "xlsx";
 import { FaFileDownload } from "react-icons/fa";
 import Image from "next/image";
-import { departmentOptions } from "../utils/department";
+
+import { DepartmentDropdown } from "./department/DepartmentDropDowns";
 import { getCurrentAcademicYear, getAcademicYears } from '@/app/utils/acadmicYears';
 import { Calendar } from "lucide-react";
 import ClassModal from "./classModal";
@@ -93,6 +94,12 @@ export default function ClassTable() {
       fetchData();
     }
   }, [selectedDepartment]);
+
+
+  const handleDepartmentSelect = (departmentId) => {
+    console.log(departmentId.target.value);
+    setSelectedDepartment(departmentId.target.value)
+  }
   const fetchData = useCallback(async () => {
     if (!selectedDepartment) return;
 
@@ -297,21 +304,12 @@ export default function ClassTable() {
           ))}
         </Select>
         {profile?.role !== "admin" && (
-          <Select
-            placeholder="Select department"
-            name="department"
-            className="w-[40%]"
-            selectedKeys={[selectedDepartment]}
-            onSelectionChange={(value) => handleSelectChange(value.currentKey)}
-            variant="bordered"
-            size="sm"
-          >
-            {departmentOptions.map((department) => (
-              <SelectItem key={department.key} textValue={department.label}>
-                {department.label}
-              </SelectItem>
-            ))}
-          </Select>
+          <DepartmentDropdown 
+          instituteId={profile?.role==="superadmin"? profile?._id:profile?.institute}
+          onSelect={handleDepartmentSelect}
+          className="w-full"
+          selectedDepartment={selectedDepartment}
+        />
         )}
         <Input
           isClearable

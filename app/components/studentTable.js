@@ -31,7 +31,7 @@ import { SearchIcon } from "@/public/SearchIcon";
 import StudentModal from "./studentModal";
 import * as XLSX from "xlsx";
 import Image from "next/image"; // Import Image from next/image
-
+import { ClassDropdown } from "./Class/ClassDropdown";
 const columns = [
   { uid: "_id", name: "ID", sortable: true },
   { uid: "rollNumber", name: "Roll Number", sortable: true },
@@ -46,6 +46,7 @@ const columns = [
 ];
 import { getCurrentAcademicYear, getAcademicYears } from '@/app/utils/acadmicYears';
 import { Calendar } from "lucide-react";
+import { DepartmentDropdown } from "./department/DepartmentDropDowns";
 
 const INITIAL_VISIBLE_COLUMNS = ["_id", "rollNumber", "name", "year", "department", "actions"];
 
@@ -68,7 +69,6 @@ export default function StudentTable() {
   const [profile, setProfile] = useState(null);
   const [allStudents, setAllStudents] = useState({});
   const [totalStudents, setTotalStudents] = useState(0);
-  const [classes, setClasses] = useState([]);
   const [academicYear, setAcademicYear] = useState(() => profile?.currentYear || getCurrentAcademicYear());
 
 
@@ -78,10 +78,6 @@ export default function StudentTable() {
       setProfile(JSON.parse(storedProfile));
     }
   }, []);
-
-  const classOptions = useMemo(() => {
-    return Array.isArray(classes) ? classes : [];
-  }, [classes]);
 
   useEffect(() => {
     if (profile?.role !== "superadmin") {
@@ -103,7 +99,7 @@ export default function StudentTable() {
   useEffect(() => {
     if ((profile?.role === "admin" || profile?.role === "superadmin") && selectedDepartment) {
       setSelectedClass('')
-      fetchClasses();
+
     }
   }, [profile, selectedDepartment]);
 
@@ -112,27 +108,7 @@ export default function StudentTable() {
     setStudents([])
   }, [selectedDepartment, selectedClass]);
 
-  const fetchClasses = async () => {
-    setSelectedClass('')
-    if ((profile?.role === "admin" || profile?.role === "superadmin") && selectedDepartment) {
-      try {
-        setIsLoading(true);
-        const response = await axios.get(`/api/utils/classes?department=${selectedDepartment}&acadmicYear=${academicYear}`);
-        setClasses(response.data || []);
-      } catch (error) {
-        console.error('Error fetching classes:', error);
-        toast.error("Failed to fetch classes. Please try again.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  };
-
   const fetchStudents = async () => {
-    // if (allStudents[page]) {
-    //   setStudents(allStudents[page]);
-    //   return;
-    // }
 
     try {
       setIsLoading(true);
@@ -256,6 +232,13 @@ export default function StudentTable() {
     }
   };
 
+  const handleDepartmentSelect = (e) => {
+    console.log(e.target.value);
+    setSelectedDepartment(e.target.value)
+  }
+  const handleClassSelect = (value) => {
+    setSelectedClass(value)
+  }
   const headerColumns = useMemo(() => {
     if (visibleColumns === "all") return columns;
     return columns.filter((column) => visibleColumns.has(column.uid));
@@ -402,39 +385,22 @@ export default function StudentTable() {
             </SelectItem>
           ))}
         </Select>
-        {profile?.role === 'superadmin' && (
-          <Select
-            placeholder="Select a department"
-            variant="bordered"
-            size="sm"
-            value={selectedDepartment}
-            onChange={(value) =>
-              setSelectedDepartment(value.target.value)}
-            className="max-w-60 my-4"
-          >
-            {departmentOptions.map((department) => (
-              <SelectItem key={department.key} value={department.label}>
-                {department.label}
-              </SelectItem>
-            ))}
-          </Select>
+        {profile?.role !== "admin" && (
+          <DepartmentDropdown
+            instituteId={profile?.role === "superadmin" ? profile?._id : profile?.institute}
+            onSelect={handleDepartmentSelect}
+            className="w-full"
+            selectedDepartment={selectedDepartment}
+          />
         )}
-        <Select
-          placeholder="Select a class"
-          value={selectedClass}
-          onSelectionChange={(keys) => setSelectedClass(Array.from(keys)[0])}
-          required
-          variant="bordered"
-          size="sm"
-          className="max-w-60 my-4"
-        >
-          {classOptions.map((cls) => (
-            <SelectItem key={cls._id} value={cls._id}>
-              {cls._id || cls.name}
-            </SelectItem>
-          ))}
-        </Select>
-
+        <ClassDropdown
+          id="class-select"
+          instituteId={profile?.role === "superadmin" ? profile?._id : profile?.institute}
+          onSelect={handleClassSelect}
+          selectedClass={selectedClass}
+          acadmicYear={academicYear}
+          selectedDepartment={selectedDepartment}   
+        />
       </div>
       <div className="flex justify-between gap-3 items-end">
         <Input
@@ -579,6 +545,8 @@ export default function StudentTable() {
         mode={modalMode}
         student={selectedStudent}
         onSubmit={handleModalSubmit}
+        institute={profile?.role === 'superadmin' ? profile?._id : profile?.institute}
+
       />
     </div>
   );

@@ -4,10 +4,16 @@ const { Schema, model } = mongoose;
 
 const departmentSchema = new Schema(
   {
-    department: {
+    id: {
+      type: String,
+      required: true,
+      unique: true
+    },
+    name: {
       type: String,
       required: true,
     },
+
     password: {
       type: String,
       required: true,
@@ -23,7 +29,6 @@ const departmentSchema = new Schema(
   }
 );
 
-const Department =
-  mongoose.models.Department || model("Department", departmentSchema);
+const Department =  mongoose.models.Department || model("Department", departmentSchema);
 
 export default Department;

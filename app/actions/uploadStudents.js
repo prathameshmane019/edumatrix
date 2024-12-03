@@ -87,7 +87,7 @@ export async function uploadStudents(formData) {
         studentsAlreadyPresent.push(existingStudentMap.get(record.rollNumber));
       } else {
         studentsToInsert.push({
-          _id: record.rollNumber,
+          _id: record._id,
           rollNumber: record.rollNumber,
           name: record.name,
           email: record.email || '',

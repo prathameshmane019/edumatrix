@@ -33,6 +33,7 @@ import { DeleteIcon } from "@/public/DeleteIcon";
 import { SearchIcon } from "@/public/SearchIcon";
 import FacultyModal from "./facultyModal";
 import * as XLSX from "xlsx";
+import { DepartmentDropdown } from "./department/DepartmentDropDowns";
 
 const columns = [
   { uid: "_id", name: "Faculty ID", sortable: true },
@@ -103,7 +104,7 @@ export default function FacultyTable() {
       if (profile.role !== "superadmin") {
         facultyData = facultyData.filter(member => !member.isAdmin);
       }
-  
+
       setFaculty(facultyData);
       setIsLoading(false)
     } catch (error) {
@@ -131,7 +132,7 @@ export default function FacultyTable() {
     }
   };
 
-  
+
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -159,7 +160,7 @@ export default function FacultyTable() {
     }
   };
 
-  
+
 
   const pages = Math.ceil(faculty.length / rowsPerPage);
 
@@ -237,6 +238,11 @@ export default function FacultyTable() {
     }
   }, []);
 
+  const handleDepartmentSelect = (departmentId) => {
+    console.log(departmentId.target.value);
+    setSelectedDepartment(departmentId.target.value)
+  }
+  
   const onRowsPerPageChange = useCallback((e) => {
     setRowsPerPage(Number(e.target.value));
     setPage(1);
@@ -263,8 +269,8 @@ export default function FacultyTable() {
 
   const topContent = useMemo(() => {
     return (
-        <div className="flex flex-col gap-4">
-        
+      <div className="flex flex-col gap-4">
+
         <div className="flex justify-between gap-3 items-end">
           <Input
             isClearable
@@ -319,21 +325,21 @@ export default function FacultyTable() {
               Add New
             </Button>
             <Button
-          color="primary"
-          variant="ghost"
-          size="sm"
-          onClick={() => document.getElementById('upload-input').click()}
-          endContent={<FaFileUpload />}
-        >
-          Upload File
-        </Button>
-        <input
-          id="upload-input"
-          type="file"
-          accept=".xlsx, .xls"
-          onChange={handleFileUpload}
-          style={{ display: 'none' }}
-        />
+              color="primary"
+              variant="ghost"
+              size="sm"
+              onClick={() => document.getElementById('upload-input').click()}
+              endContent={<FaFileUpload />}
+            >
+              Upload File
+            </Button>
+            <input
+              id="upload-input"
+              type="file"
+              accept=".xlsx, .xls"
+              onChange={handleFileUpload}
+              style={{ display: 'none' }}
+            />
             <Button
               color="primary"
               size="sm"
@@ -408,25 +414,17 @@ export default function FacultyTable() {
   };
   return (
     <>
-    <div className="flex flex-col gap-4">
-        {profile?.role !== 'admin' && (
-            <Select
-              placeholder="Select a department"
-              variant="bordered"
-              size="sm"
-              value={selectedDepartment}
-              onChange={(e) => setSelectedDepartment(e.target.value)}
-              className="max-w-xs my-4"
-            >
-              {departmentOptions.map((department) => (
-                <SelectItem key={department.key} value={department.label}>
-                  {department.label}
-                </SelectItem>
-              ))}
-            </Select>
-          )}
-          </div>
-    
+      <div className="flex flex-col gap-4">
+        {profile?.role !== "admin" && (
+          <DepartmentDropdown
+            instituteId={profile?.role === "superadmin" ? profile?._id : profile?.institute}
+            onSelect={handleDepartmentSelect}
+            className="w-full"
+            selectedDepartment={selectedDepartment}
+          />
+        )}
+      </div>
+
       <Table
         isCompact
         removeWrapper

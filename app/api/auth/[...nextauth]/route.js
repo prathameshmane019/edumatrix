@@ -40,7 +40,7 @@ export const authOptions = {
 
           const department = await Department.findOne({
             $or: [
-              { name: identifier },
+              { department: identifier },
               { id: identifier }
             ]
           }).populate('institute')
@@ -67,7 +67,7 @@ export const authOptions = {
           let userType = 'unknown'
           if (faculty) userType = 'faculty'
           else if (student) userType = 'student'
-          else if (department) userType = 'department'
+          else if (department) userType = 'admin'
           else if (institute) userType = 'superadmin'
 
 
@@ -75,7 +75,7 @@ export const authOptions = {
           const profile = {
             _id: user._id,
             role:userType,
-            department: user?.department,
+            department: user.role==="admin"?user?.id: user?.department,
             name: user.name,
             email: user.email,
             // Add any other relevant fields from the user document

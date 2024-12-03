@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { departmentOptions } from "../utils/department";
 
-const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
+const StudentModal = ({ isOpen, onClose, mode, student, onSubmit ,institute}) => {
   const [profile, setProfile] = useState(null);
   const [formData, setFormData] = useState({
     _id: "",
@@ -16,7 +16,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
     phoneNo: "",
     password: "",
     year: "",
-    institute: null
+    institute:institute
   });
 
   useEffect(() => {
@@ -30,10 +30,11 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
     if (profile?.role !== "superadmin") {
       setFormData((prev) => ({
         ...prev,
-        department: profile?.department,
+        department: profile?.department
       }));
     }
   }, [profile]);
+
 
   useEffect(() => {
     if (mode === "edit" && student) {
@@ -46,7 +47,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
         phoneNo: student.phoneNo,
         password: student.password,
         year: student.year,
-        institute: profile?.instituteId || null
+        institute:institute
       });
     } else {
       handleClear();
@@ -84,7 +85,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit }) => {
       email: "",
       password: "",
       year: "",
-      institute: profile?.instituteId || null
+      institute:institute
 
     });
   };

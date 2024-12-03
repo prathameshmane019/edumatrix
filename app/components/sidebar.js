@@ -51,7 +51,6 @@ const Sidebar = () => {
       case "admin":
         return [
           { name: "Profile", href: "/admin", icon: MdPortrait },
-          { name: "Manage Department", href: "/admin/department", icon: GiTeacher },
           { name: "Manage Faculty", href: "/admin/faculty", icon: GiTeacher },
           { name: "Manage Students", href: "/admin/students", icon: PiStudentBold },
           { name: "Manage Class", href: "/admin/classes", icon: SiGoogleclassroom },

@@ -11,14 +11,16 @@ import {
 
 const DepartmentModal = ({ isOpen, onClose, mode,onSubmit, editingDepartment,departments }) => {
   const [formData, setFormData] = useState({
-    department: "",
+    name: "",
     password: "",
+    id:''
   });
 
   useEffect(() => {
     if (editingDepartment) {
       setFormData({
-        department: editingDepartment.department,
+        id:editingDepartment.id,
+        name: editingDepartment.name,
         password: editingDepartment.password, // Don't populate password for security reasons
       });
     } else {
@@ -41,7 +43,8 @@ const DepartmentModal = ({ isOpen, onClose, mode,onSubmit, editingDepartment,dep
   };
   const resetForm = () => {
     setFormData({
-      department: "",
+      id:"",
+      name: "",
       password: "",
     });
   };
@@ -54,11 +57,19 @@ const DepartmentModal = ({ isOpen, onClose, mode,onSubmit, editingDepartment,dep
             {editingDepartment ? "Update Department" : "Add Department"}
           </ModalHeader>
           <ModalBody>
+          <Input
+              label="Department Id"
+              placeholder="Enter department Id"
+              name="id"
+              value={formData.id}
+              onChange={handleChange}
+              isRequired
+            />
             <Input
-              label="Department"
+              label="Name"
               placeholder="Enter department name"
-              name="department"
-              value={formData.department}
+              name="name"
+              value={formData.name}
               onChange={handleChange}
               isRequired
             />

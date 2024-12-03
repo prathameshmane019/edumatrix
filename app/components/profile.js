@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  Card, 
-  CardBody, 
+import {
+  Card,
+  CardBody,
   CardHeader,
   Avatar,
   Button,
@@ -14,18 +14,18 @@ import {
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
-  DropdownItem 
+  DropdownItem
 } from '@nextui-org/react'
 import { toast } from 'sonner'
-import { 
-  PencilIcon, 
-  SaveIcon, 
-  XIcon, 
-  UserIcon, 
-  BriefcaseIcon, 
-  MailIcon, 
+import {
+  PencilIcon,
+  SaveIcon,
+  XIcon,
+  UserIcon,
+  BriefcaseIcon,
+  MailIcon,
   KeyIcon,
-  Settings 
+  Settings
 } from 'lucide-react'
 import axios from 'axios'
 
@@ -34,18 +34,18 @@ export const getCurrentAcademicYear = () => {
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
-  
+
   // Academic year typically starts in July/August
   const academicYearStart = currentMonth >= 6 ? currentYear : currentYear - 1;
   const academicYearEnd = academicYearStart + 1;
-  
+
   return `${academicYearStart}-${academicYearEnd}`;
 };
 
 export const getAcademicYears = (count = 5) => {
   const currentYear = new Date().getFullYear();
   const years = [];
-  
+
   for (let i = 0; i < count; i++) {
     const startYear = currentYear - i;
     const endYear = startYear + 1;
@@ -54,7 +54,7 @@ export const getAcademicYears = (count = 5) => {
       label: `${startYear}-${endYear}`
     });
   }
-  
+
   return years;
 };
 
@@ -75,17 +75,17 @@ export default function Component() {
     const storedProfile = sessionStorage.getItem('userProfile')
     if (storedProfile) {
       const profile = JSON.parse(storedProfile)
-      
+
       // Ensure default academic year and semester are set
       const currentYear = profile.currentYear || getCurrentAcademicYear()
       const sem = profile.sem || 'sem1'
-      
+
       setUserProfile({
         ...profile,
         currentYear,
         sem
       })
-      
+
       setUpdatedProfile({
         ...profile,
         currentYear,
@@ -120,18 +120,18 @@ export default function Component() {
           currentYear: updatedProfile.currentYear || getCurrentAcademicYear(),
           sem: updatedProfile.sem || 'sem1'
         }
-        
+
         await axios.put(`/api/${role}?_id=${userProfile?._id}`, profileToUpdate)
-        
+
         // Update both userProfile and sessionStorage with complete profile
         const updatedFullProfile = {
           ...userProfile,
           ...profileToUpdate
         }
-        
+
         setUserProfile(updatedFullProfile)
         sessionStorage.setItem('userProfile', JSON.stringify(updatedFullProfile))
-        
+
         setIsEditing(false)
         toast.success("Profile Updated", {
           description: "Your profile has been successfully updated.",
@@ -227,7 +227,7 @@ export default function Component() {
                       <>
                         <Dropdown>
                           <DropdownTrigger>
-                            <Button 
+                            <Button
                               variant="bordered"
                               className="w-full justify-start h-14"
                               startContent={<Settings className="h-4 w-4" />}
@@ -247,7 +247,7 @@ export default function Component() {
                         </Dropdown>
                         <Dropdown>
                           <DropdownTrigger>
-                            <Button 
+                            <Button
                               variant="bordered"
                               className="w-full justify-start h-14"
                               startContent={<Settings className="h-4 w-4" />}
@@ -275,20 +275,24 @@ export default function Component() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <p className="text-sm text-gray-500">ID</p>
-                    <p className="text-sm font-medium">{userProfile._id}</p>
+                    <p className="text-sm font-medium">{userProfile.role !== "student" ? userProfile.id : userProfile._id}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm text-gray-500">Name</p>
                     <p className="text-sm font-medium">{userProfile.name}</p>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-sm text-gray-500">Department</p>
-                    <p className="text-sm font-medium">{userProfile.department}</p>
-                  </div>
+                  {userProfile.role !== "superadmin" &&
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-500">Department</p>
+                      <p className="text-sm font-medium">{userProfile.role !== "admin" ? userProfile.department : userProfile.id}</p>
+                    </div>
+                  }
+
                   <div className="space-y-1">
                     <p className="text-sm text-gray-500">Email</p>
                     <p className="text-sm font-medium">{userProfile.email}</p>
                   </div>
+
                   {(userProfile.role === 'faculty' || userProfile.role === 'admin' || userProfile.role === 'superadmin') && (
                     <>
                       <div className="space-y-1">

@@ -8,7 +8,6 @@ export async function POST(req) {
         await connectMongoDB();
         const data = await req.json();
         const { _id, rollNumber, name, year, email, phoneNo, password, department, class: classId, institute } = data;
-
         if (!year || !institute || !rollNumber || !name) {
             return NextResponse.json({ error: "Missing required fields: year, institute, rollNumber, or name" }, { status: 400 });
         }
@@ -61,7 +60,7 @@ export async function PUT(req) {
             { new: true }
         );
 
-        if (!updatedStudent) {
+     if (!updatedStudent) {
             return NextResponse.json({ error: "Student not found" }, { status: 404 });
         }
 

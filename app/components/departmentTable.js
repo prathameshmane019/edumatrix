@@ -28,12 +28,13 @@ import { capitalize } from "@/app/utils/utils";
 import DepartmentModal from "./departmentModal";
 
 const columns = [
-  { uid: "department", name: "Department", sortable: true },
+  { uid: "id", name: "ID", sortable: true },
+  { uid: "name", name: "Name", sortable: true },
   { uid: "password", name: "Password", sortable: true },
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["department", "Password","actions"];
+const INITIAL_VISIBLE_COLUMNS = ["id","name", "password","actions"];
 
 export default function DepartmentTable() {
   const [filterValue, setFilterValue] = useState("");
@@ -43,7 +44,7 @@ export default function DepartmentTable() {
   );
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortDescriptor, setSortDescriptor] = useState({
-    column: "department",
+    column: "id",
     direction: "ascending",
   });
   const [page, setPage] = useState(1);
@@ -70,16 +71,10 @@ export default function DepartmentTable() {
     }
   }, []);
 
-  useEffect(() => {
-    console.log("Updated profile state:", profile);
-    if (profile) {
-      console.log(profile);
-    }
-  }, [profile]);
   const fetchDepartments = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get("/api/department");
+      const response = await axios.get("/api/v2/department");
       setDepartments(response.data);
       setIsLoading(false);
     } catch (error) {
@@ -90,7 +85,7 @@ export default function DepartmentTable() {
 
   const deleteDepartment = async (_id) => {
     try {
-      await axios.delete(`/api/department?_id=${_id}`);
+      await axios.delete(`/api/v2/department?_id=${_id}`);
       fetchDepartments();
       toast.success("Department deleted successfully");
     } catch (error) {
@@ -191,10 +186,12 @@ export default function DepartmentTable() {
         console.log(editingDepartment);
         const updatedFormData = { ...formData, institute: profile._id };
 
-        await axios.put(`/api/department?_id=${editingDepartment._id}`, updatedFormData);
+        await axios.put(`/api/v2/department?_id=${editingDepartment._id}`, updatedFormData);
         toast.success("Department updated successfully");
       } else {
-        await axios.post("/api/department", updatedFormData);
+        const updatedFormData = { ...formData, institute: profile._id };
+
+        await axios.post("/api/v2/department", updatedFormData);
         toast.success("Department added successfully");
       }
       fetchDepartments();
