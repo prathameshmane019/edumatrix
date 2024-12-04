@@ -35,7 +35,7 @@ const StudentSchema = new mongoose.Schema({
         type: String
     },
     class: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'Classes'  
     },
     institute: { 

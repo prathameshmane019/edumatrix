@@ -295,7 +295,7 @@ export default function ClassTable() {
           selectedKeys={academicYear ? [academicYear] : []}
           onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
           startContent={<Calendar className="w-4 h-4 text-default-400" />}
-          className="w-[40%]"
+          className="w-[40%] my-4"
         >
           {getAcademicYears(10).map((year) => (
             <SelectItem key={year.value} value={year.value}>
@@ -314,7 +314,7 @@ export default function ClassTable() {
         <Input
           isClearable
           classNames={{
-            base: "w-full sm:max-w-[44%]",
+            base: "w-full sm:max-w-[44%] my-4",
             inputWrapper: "border-1",
           }}
           placeholder="Search by class name ..."
@@ -325,11 +325,12 @@ export default function ClassTable() {
           onClear={() => setFilterValue("")}
           onChange={(e) => setFilterValue(e.target.value)}
         />
-        <div className="gap-4 items-center flex">
+        <div className="gap-4 my-4 items-center flex">
           <Button
             color="primary"
             startContent={<PlusIcon />}
             size="sm"
+
             auto
             onClick={() => {
               setModalMode("add");

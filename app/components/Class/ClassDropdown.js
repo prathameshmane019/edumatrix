@@ -10,8 +10,6 @@ export function ClassDropdown({ instituteId, onSelect, selectedClass, selectedDe
 
     useEffect(() => {
         async function fetchClasses() {
-            console.log(instituteId, selectedDepartment, acadmicYear);
-
             if (!instituteId || !selectedDepartment || !acadmicYear) {
                 setClasses([])
                 return
@@ -24,7 +22,6 @@ export function ClassDropdown({ instituteId, onSelect, selectedClass, selectedDe
                 if (!response.ok) throw new Error('Failed to fetch classes')
                 const data = await response.json()
                 setClasses(data)
-                console.log(data);
             } catch (error) {
                 console.error('Error:', error)
                 setError('Failed to load classes')
@@ -39,15 +36,15 @@ export function ClassDropdown({ instituteId, onSelect, selectedClass, selectedDe
         onSelect(e.target.value)
     }
 
-    if (isLoading) return <div>Loading classes...</div>
     if (error) return <div>Error: {error}</div>
 
     return (
         <Select
-            placeholder="Select a class"
+            placeholder={isLoading ? "Loading... class data " : "Select a class"}
             variant="bordered"
             size="sm"
             value={selectedClass}
+            selectedKeys={selectedClass ? [selectedClass] : []}
             onChange={handleSelectChange}
             className={`max-w-xs my-4 ${className}`}
         >

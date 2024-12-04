@@ -18,7 +18,7 @@ const BatchStatusSchema = new mongoose.Schema({
     completedDate: {
         type: String
     }
-}, { id: false });
+}, { _id: false });
 
 const ContentSchema = new mongoose.Schema({
     title: {
@@ -50,7 +50,7 @@ const ContentSchema = new mongoose.Schema({
         }
     }
 }, {
-    id: true,
+    _id: true,
 });
 
 const TGSessionSchema = new mongoose.Schema({
@@ -63,10 +63,10 @@ const TGSessionSchema = new mongoose.Schema({
         default: undefined
     },
 }, {
-    id: true
+    _id: true
 });
 const SubjectSchema = new mongoose.Schema({
-    subCode: {
+    id: {
         type: String,
         required: true
     },
@@ -80,11 +80,11 @@ const SubjectSchema = new mongoose.Schema({
         required: true
     },
     class: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'Classes'
     },
     teacher: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'Faculty'
     },
     batch: {

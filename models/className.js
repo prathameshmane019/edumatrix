@@ -14,7 +14,7 @@ const BatchSchema = new mongoose.Schema({
         type: String,
         ref: 'Student',
     }]
-}, { id: false });
+}, { _id: false });
 
 const classSchema = new mongoose.Schema({
     id: {
@@ -31,11 +31,11 @@ const classSchema = new mongoose.Schema({
     subjects: {
         type: {
             sem1: [{
-                type: String,
+                type: mongoose.Schema.Types.ObjectId,
                 ref: 'Subject' // Assuming you have a Subject model
             }],
             sem2: [{
-                type: String,
+                type: mongoose.Schema.Types.ObjectId,
                 ref: 'Subject' // Assuming you have a Subject model
             }]
         },
@@ -43,10 +43,10 @@ const classSchema = new mongoose.Schema({
     },
     students: [{
         type: String,
-        ref: 'Student',
+        ref: 'Student'
     }],
     teacher: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'Faculty',
         required: true,
     },

@@ -13,7 +13,7 @@ const FacultySchema = new mongoose.Schema({
         required: true
     },
     classes: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'Classes'  // Ensure correct reference to Class model
     },
     department: {
