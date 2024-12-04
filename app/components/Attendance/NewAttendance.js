@@ -166,13 +166,13 @@ export default function AttendanceSystem() {
         }
     }, []);
 
-    const handleSubjectSelection = (value, type) => {
+    const handleSubjectSelection = useCallback((value, type) => {
         console.log('Selected subject:', value, 'Type:', type);
         setSelectedSubject(value);
         setSelectedSubjectType(type);
         setSelectedBatch(null);
         setIsTableVisible(false);
-    }
+      }, []);
 
     const handleBatchSelection = useCallback((value) => {
         setSelectedBatch(value);

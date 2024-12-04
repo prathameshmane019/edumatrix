@@ -5,19 +5,20 @@ import axios from 'axios'
 
 
 
-export function SubjectDropdown({
-  facultyId,
-  instituteId,
-  selectedClass,
-  onSelect,
-  selectedSubject,
-  className = ''
+export function SubjectDropdown({ 
+  facultyId, 
+  instituteId, 
+  selectedClass, 
+  onSelect, 
+  selectedSubject, 
+  className = '' 
 }) {
   const [subjects, setSubjects] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  console.log(selectedSubject, instituteId, facultyId);
+  console.log(selectedSubject,instituteId,facultyId);
+  
   useEffect(() => {
     async function fetchSubjects() {
       if (!facultyId || !instituteId) {
@@ -29,6 +30,10 @@ export function SubjectDropdown({
 
       try {
         const response = await axios.get(`/api/v2/utils/subjects?faculty=${facultyId}&institute=${instituteId}&class=${selectedClass}`)
+       
+        const data =  response.data
+        console.log(response.data);
+
         setSubjects(response.data)
       } catch (error) {
         console.error('Error fetching subjects:', error)
@@ -39,18 +44,13 @@ export function SubjectDropdown({
     }
 
     fetchSubjects()
-  }, [facultyId, instituteId, selectedClass])
+  }, [facultyId, instituteId])
 
-  const handleSelectionChange = (e) => {
-    console.log(e.target.value);
-
-    const selectedKey =e.target.value
-
-    const selectedSubjectData = subjects.find(subject => subject.value === selectedKey)
-    onSelect(selectedKey, selectedSubjectData)
-    console.log(selectedSubjectData);
-    
+  const handleSelectChange = (e) => {
+    onSelect(e.target.value)
   }
+
+console.log(subjects);
 
   return (
     <Select
@@ -58,13 +58,16 @@ export function SubjectDropdown({
       variant="bordered"
       size="sm"
       selectedKeys={selectedSubject ? [selectedSubject] : []}
-      onChange={handleSelectionChange}
+      onSelectionChange={(keys) => {
+        const selectedKey = Array.from(keys)[0] 
+        onSelect(selectedKey)
+      }}
       className={`max-w-xs my-4 ${className}`}
       isDisabled={isLoading || subjects.length === 0}
     >
       {subjects.map((subject) => (
-        <SelectItem
-          key={subject.value}
+        <SelectItem 
+          key={subject.value} 
           value={subject.value}
         >
           {subject.label}
