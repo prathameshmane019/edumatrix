@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import axios from 'axios'
@@ -9,6 +8,8 @@ import PracticalContent from './PracticalContent'
 import TGContent from './TGContent'
 import SubjectInfo from './subjectInfo'
 import { handleExcelUpload, handleExcelDownload } from '@/app/utils/excelHandlers'
+import CourseContentManager from './CourseContentManager'
+import { Pencil, PencilIcon } from 'lucide-react'
 
 export default function TeachingPlanPage() {
   const [subjectId, setSubjectId] = useState('')
@@ -94,7 +95,7 @@ export default function TeachingPlanPage() {
         }
       }
 
-      const response = await axios.put(`/api/v1/contents?_id=${subjectId}`, payload)
+      const response = await axios.put(`/api/v2/teaching-plan?_id=${subjectId}`, payload)
 
       if (response.status === 200) {
         toast.success('Content updated successfully')
@@ -153,7 +154,7 @@ export default function TeachingPlanPage() {
     }
     setIsLoading(true)
     try {
-      await handleExcelDownload(content, subject)
+      handleExcelDownload(content, subject)
       toast.success('File downloaded successfully')
     } catch (error) {
       console.error('Error downloading file:', error)
@@ -184,7 +185,27 @@ export default function TeachingPlanPage() {
       default:
         return null
     }
-  }
+  } 
+  const handleContentUpdate = async (newContent) => {
+    try {
+      const payload = subject.subType === 'tg' 
+        ? { tgSessions: newContent } 
+        : { content: newContent };
+  
+      const response = await axios.put(`/api/v2/teaching-plan?_id=${subjectId}`, payload);
+      
+      setContent(newContent);
+      setSubject(prev => ({
+        ...prev,
+        [subject.subType === 'tg' ? 'tgSessions' : 'content']: newContent
+      }));
+      
+      toast.success('Content updated successfully');
+    } catch (error) {
+      console.error('Error updating content:', error);
+      toast.error('Failed to update content');
+    }
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -219,13 +240,11 @@ export default function TeachingPlanPage() {
           <p className="mt-2 text-gray-500">Loading, please wait...</p>
         </div>
       )}
-
-
       {subject && <SubjectInfo subject={subject} />}
-
       {subjectId && !isEditing && !isLoading && (
         <div className="mt-4">
           <Button
+          startContent={<PencilIcon className="h-5"/>}
             color="primary"
             onClick={() => setIsEditing(true)}
             className="mb-4"
@@ -238,31 +257,37 @@ export default function TeachingPlanPage() {
       {renderContent()}
 
       {subjectId && !isLoading && (
-        <div className="flex gap-4 mt-4">
-          <div>
-            <input
-              type="file"
-              accept=".xlsx, .xls"
-              onChange={handleFileUpload}
-              className="hidden"
-              ref={fileInputRef}
-            />
-            <Button
-              color="secondary"
-              onClick={() => fileInputRef.current.click()}
-            >
-              Upload Content (Excel)
-            </Button>
-          </div>
+        // <div className="flex gap-4 mt-4">
+        //   <div>
+        //     <input
+        //       type="file"
+        //       accept=".xlsx, .xls"
+        //       onChange={handleFileUpload}
+        //       className="hidden"
+        //       ref={fileInputRef}
+        //     />
+        //     <Button
+        //       color="secondary"
+        //       onClick={() => fileInputRef.current.click()}
+        //     >
+        //       Upload Content (Excel)
+        //     </Button>
+        //   </div>
 
-          <Button
-            color="primary"
-            onClick={handleFileDownload}
-            isDisabled={!content || content.length === 0}
-          >
-            Download Content (Excel)
-          </Button>
-        </div>
+        //   <Button
+        //     color="primary"
+        //     onClick={handleFileDownload}
+        //     isDisabled={!content || content.length === 0}
+        //   >
+        //     Download Content (Excel)
+        //   </Button>
+        // </div>
+        <CourseContentManager
+          subjectType={subject.subType}
+          content={content}
+          onContentUpdate={handleContentUpdate}
+          availableBatches={subject.batch}
+        />
       )}
     </div>
   )

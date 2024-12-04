@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Input, Table, TableBody, TableCell, TableHeader, TableColumn, TableRow, Button, Checkbox } from '@nextui-org/react'
+import { formatDateForPicker, formatDateForStorage } from '../utils/dateFormater'
 
 export default function TheoryContent({ content, isEditing, isLoading, onSubmit, onCancel }) {
   const [localContent, setLocalContent] = useState([])
@@ -13,10 +14,13 @@ export default function TheoryContent({ content, isEditing, isLoading, onSubmit,
 
   const handleContentChange = (index, field, value) => {
     const newContent = [...localContent]
-    newContent[index][field] = value
+    if (field === 'proposedDate' || field === 'completedDate') {
+      newContent[index][field] = formatDateForStorage(value)
+    } else {
+      newContent[index][field] = value
+    }
     setLocalContent(newContent)
   }
-
   const handleStatusChange = (index) => {
     const newContent = [...localContent]
     newContent[index].status = newContent[index].status === 'covered' ? 'not_covered' : 'covered'
@@ -73,8 +77,8 @@ export default function TheoryContent({ content, isEditing, isLoading, onSubmit,
             <TableRow key={index}>
               <TableCell>{item.title}</TableCell>
               <TableCell>{item.description}</TableCell>
-              <TableCell>{item.proposedDate || 'N/A'}</TableCell>
-              <TableCell>{item.completedDate || 'N/A'}</TableCell>
+              <TableCell>{formatDateForDisplay(item.proposedDate) || 'N/A'}</TableCell>
+              <TableCell>{formatDateForDisplay(item.completedDate) || 'N/A'}</TableCell>
               <TableCell>{item.references || 'N/A'}</TableCell>
               <TableCell>{item.courseOutcomes || 'N/A'}</TableCell>
               <TableCell>{item.programOutcomes || 'N/A'}</TableCell>
@@ -105,15 +109,15 @@ export default function TheoryContent({ content, isEditing, isLoading, onSubmit,
             onChange={(e) => handleContentChange(index, 'description', e.target.value)}
             required
           />
-          <input
+           <input
             type="date"
-            value={item.proposedDate || ''}
+            value={formatDateForPicker(item.proposedDate)}
             onChange={(e) => handleContentChange(index, 'proposedDate', e.target.value)}
             className="border p-2 rounded-md"
           />
           <input
             type="date"
-            value={item.completedDate || ''}
+            value={formatDateForPicker(item.completedDate)}
             onChange={(e) => handleContentChange(index, 'completedDate', e.target.value)}
             className="border p-2 rounded-md"
           />

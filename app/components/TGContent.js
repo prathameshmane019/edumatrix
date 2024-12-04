@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHeader, TableColumn, TableRow, Button, Textarea } from '@nextui-org/react';
 import { format, parseISO } from 'date-fns';
+import { formatDateForDisplay, formatDateForPicker, formatDateForStorage } from '../utils/dateFormater';
 
 export default function TGContent({ tg, isEditing, isLoading, onSubmit, onCancel }) {
   const [localSessions, setLocalSessions] = useState(Array.isArray(tg) ? tg : []);
@@ -16,13 +17,19 @@ export default function TGContent({ tg, isEditing, isLoading, onSubmit, onCancel
 
   const handleSessionChange = (index, field, value) => {
     const newSessions = [...localSessions];
-    newSessions[index] = {
-      ...newSessions[index],
-      [field]: field === 'pointsDiscussed' ? value.split('\n').filter(point => point.trim()) : value
-    };
+    if (field === 'date') {
+      newSessions[index] = {
+        ...newSessions[index],
+        [field]: formatDateForStorage(value)
+      };
+    } else {
+      newSessions[index] = {
+        ...newSessions[index],
+        [field]: field === 'pointsDiscussed' ? value.split('\n').filter(point => point.trim()) : value
+      };
+    }
     setLocalSessions(newSessions);
   };
-
   const handleAddSession = () => {
     setLocalSessions([...localSessions, { date: '', pointsDiscussed: [] }]);
   };
@@ -45,7 +52,7 @@ export default function TGContent({ tg, isEditing, isLoading, onSubmit, onCancel
             <TableBody>
               {localSessions.map((session, index) => (
                 <TableRow key={index}>
-                  <TableCell>{formatDate(session.date)}</TableCell>
+                  <TableCell>{formatDateForDisplay(session.date)}</TableCell>
                   <TableCell>
                     <ul className="list-disc pl-4">
                       {session.pointsDiscussed?.map((point, pointIndex) => (
@@ -72,7 +79,7 @@ export default function TGContent({ tg, isEditing, isLoading, onSubmit, onCancel
           <input
             type="date"
             label="Date"
-            value={formatDate(session.date)}
+            value={formatDateForPicker(session.date)}
             onChange={(e) => handleSessionChange(index, 'date', e.target.value)}
             required
             className="p-2 border rounded"
