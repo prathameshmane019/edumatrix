@@ -1,83 +1,80 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
-import { toast } from 'sonner'
-import axios from 'axios'
-import { Button, Select, SelectItem, Spinner } from '@nextui-org/react'
-import TheoryContent from './TheoryContent'
-import PracticalContent from './PracticalContent'
-import TGContent from './TGContent'
-import SubjectInfo from './subjectInfo'
-import { handleExcelUpload, handleExcelDownload } from '@/app/utils/excelHandlers'
+import React, { useState, useEffect, useRef } from 'react';
+import { toast } from 'sonner';
+import axios from 'axios';
+import { Button, Spinner } from '@nextui-org/react';
+import TheoryContent from './TheoryContent';
+import PracticalContent from './PracticalContent';
+import TGContent from './TGContent';
+import SubjectInfo from './subjectInfo';
+import { handleExcelUpload, handleExcelDownload } from '@/app/utils/excelHandlers';
+import { SubjectDropdown } from './subject/SubjectDropdown';
 
 export default function TeachingPlanPage() {
-  const [subjectId, setSubjectId] = useState('')
-  const [subjectIds, setSubjectIds] = useState([])
-  const [subject, setSubject] = useState(null)
-  const [content, setContent] = useState([])
-  const [isEditing, setIsEditing] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const fileInputRef = useRef(null)
+  const [subjectId, setSubjectId] = useState('');
+  const [subject, setSubject] = useState(null);
+  const [content, setContent] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
-    fetchSubjects()
-  }, [])
+    fetchSubjects();
+  }, []);
 
   const fetchSubjects = async () => {
     try {
-      const userProfile = JSON.parse(sessionStorage.getItem('userProfile'))
-      const userSubjectIds = userProfile?.subjects || []
-      setSubjectIds(userSubjectIds)
-
+      const userProfile = JSON.parse(sessionStorage.getItem('userProfile'));
+      const userSubjectIds = userProfile?.subjects || [];
       if (userSubjectIds.length === 1) {
-        setSubjectId(userSubjectIds[0])
-        fetchSubjectInfo(userSubjectIds[0])
+        setSubjectId(userSubjectIds[0]);
+        fetchSubjectInfo(userSubjectIds[0]);
       }
     } catch (error) {
-      console.error('Error fetching subjects:', error)
-      toast.error('Failed to fetch subjects')
+      console.error('Error fetching subjects:', error);
+      toast.error('Failed to fetch subjects');
     }
-  }
+  };
 
   const fetchSubjectInfo = async (id) => {
-    if (!id) return
+    if (!id) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const response = await axios.get(`/api/subject?_id=${id}`)
-      const subjectData = response.data.subject
-      setSubject(subjectData)
+      const response = await axios.get(`/api/subject?_id=${id}`);
+      const subjectData = response.data.subject;
+      setSubject(subjectData);
 
       if (subjectData.subType === 'tg') {
-        setContent(subjectData.tgSessions || [])
+        setContent(subjectData.tgSessions || []);
       } else {
-        setContent(subjectData.content || [])
+        setContent(subjectData.content || []);
       }
     } catch (error) {
-      console.error('Error fetching subject info:', error)
-      toast.error('Failed to fetch subject information')
+      console.error('Error fetching subject info:', error);
+      toast.error('Failed to fetch subject information');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  const handleSubjectChange = (event) => {
-    const id = event.target.value
-    setSubjectId(id)
-    setContent([])
-    setIsEditing(false)
-    fetchSubjectInfo(id)
-  }
+  const handleSubjectChange = (id) => {
+    setSubjectId(id);
+    setContent([]);
+    setIsEditing(false);
+    fetchSubjectInfo(id);
+  };
 
   const handleSubmit = async (updatedContent) => {
     if (!subjectId || !subject) {
-      toast.error('Please select a subject')
-      return
+      toast.error('Please select a subject');
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      let payload = {}
+      let payload = {};
 
       if (subject.subType === 'tg') {
         payload = {
@@ -87,31 +84,31 @@ export default function TeachingPlanPage() {
               session.pointsDiscussed :
               [session.pointsDiscussed]
           }))
-        }
+        };
       } else {
         payload = {
           content: updatedContent
-        }
+        };
       }
 
-      const response = await axios.put(`/api/v1/contents?_id=${subjectId}`, payload)
+      const response = await axios.put(`/api/v2/contents?_id=${subjectId}`, payload);
 
       if (response.status === 200) {
-        toast.success('Content updated successfully')
+        toast.success('Content updated successfully');
         if (subject.subType === 'tg') {
-          setContent(updatedContent)
-          setSubject(prev => ({ ...prev, tgSessions: updatedContent }))
+          setContent(updatedContent);
+          setSubject(prev => ({ ...prev, tgSessions: updatedContent }));
         } else {
-          setContent(updatedContent)
-          setSubject(prev => ({ ...prev, content: updatedContent }))
+          setContent(updatedContent);
+          setSubject(prev => ({ ...prev, content: updatedContent }));
         }
-        setIsEditing(false)
+        setIsEditing(false);
       }
     } catch (error) {
-      console.error('Error updating content:', error)
-      toast.error('Failed to update content')
+      console.error('Error updating content:', error);
+      toast.error('Failed to update content');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
@@ -191,26 +188,10 @@ export default function TeachingPlanPage() {
       <h1 className="text-2xl font-bold mb-4">Manage Teaching Plan</h1>
 
       <div className="mb-4">
-        {subjectIds.length > 1 ? (
-          <Select
-            label="Select Subject"
-            placeholder="Choose a subject"
-            selectedKeys={subjectId ? [subjectId] : []}
-            onChange={handleSubjectChange}
-          >
-            {subjectIds.map((id) => (
-              <SelectItem key={id} value={id}>
-                {id}
-              </SelectItem>
-            ))}
-          </Select>
-        ) : (
-          subjectId && (
-            <p className="text-gray-600">
-              Subject: {subjectId}
-            </p>
-          )
-        )}
+        <SubjectDropdown
+          subjectId={subjectId}
+          onChange={handleSubjectChange}
+        />
       </div>
 
       {isLoading && (
@@ -219,7 +200,6 @@ export default function TeachingPlanPage() {
           <p className="mt-2 text-gray-500">Loading, please wait...</p>
         </div>
       )}
-
 
       {subject && <SubjectInfo subject={subject} />}
 
