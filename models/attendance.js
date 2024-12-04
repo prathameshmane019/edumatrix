@@ -29,6 +29,11 @@ const AttendanceSchema = new mongoose.Schema({
     batch:{
         type:String,
     },
+    institute: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Institute', 
+        required: true 
+      },
     session: {
         type: Number,
         required: true

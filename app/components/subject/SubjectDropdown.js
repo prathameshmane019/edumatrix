@@ -11,7 +11,9 @@ export function SubjectDropdown({
   selectedClass, 
   onSelect, 
   selectedSubject, 
-  className = '' 
+  className = '' ,
+  onSubjectTypeChange
+
 }) {
   const [subjects, setSubjects] = useState([])
   const [isLoading, setIsLoading] = useState(false)
@@ -46,11 +48,22 @@ export function SubjectDropdown({
     fetchSubjects()
   }, [facultyId, instituteId])
 
-  const handleSelectChange = (e) => {
-    onSelect(e.target.value)
+  const handleSelectChange = (selectedKey) => {
+    // Find the full subject details for the selected subject
+    const selectedSubjectDetails = subjects.find(subject => subject.value === selectedKey)
+    console.log(selectedSubjectDetails);
+    
+    // Call the original onSelect prop
+    onSelect(selectedKey)
+    
+    // If onSubjectDetailsChange is provided, pass the full subject details
+    if (onSubjectTypeChange && selectedSubjectDetails) {
+      console.log(selectedSubjectDetails.type);
+      onSubjectTypeChange(selectedSubjectDetails.type)
+    }
   }
 
-console.log(subjects);
+
 
   return (
     <Select
@@ -59,8 +72,8 @@ console.log(subjects);
       size="sm"
       selectedKeys={selectedSubject ? [selectedSubject] : []}
       onSelectionChange={(keys) => {
-        const selectedKey = Array.from(keys)[0] 
-        onSelect(selectedKey)
+        const selectedKey = Array.from(keys)[0]
+        handleSelectChange(selectedKey)
       }}
       className={`max-w-xs my-4 ${className}`}
       isDisabled={isLoading || subjects.length === 0}

@@ -1,5 +1,4 @@
-import AttendanceSystem from '@/app/components/takeattendance'
-import TakeAttendance from '@/app/components/takeattendance'
+import AttendanceSystem from '@/app/components/Attendance/NewAttendance'
 import React from 'react'
 
 const page = () => {
