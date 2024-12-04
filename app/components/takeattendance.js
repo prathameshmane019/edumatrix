@@ -1,6 +1,10 @@
 "use client"
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
   Button,
   Checkbox,
   CheckboxGroup,
@@ -270,8 +274,6 @@ export default function AttendanceSystem() {
     try {
       const response = await axios.get(`/api/utils/batches?_id=${subjectId}&batchId=${batchId || ''}`);
       const { subject, batches, students } = response.data;
-      console.log(response.data);
-      
       setSubjectDetails(subject);
       setBatches(batches || []);
       setStudents(students || []);
