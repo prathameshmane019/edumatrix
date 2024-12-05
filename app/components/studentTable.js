@@ -30,8 +30,8 @@ import { DeleteIcon } from "@/public/DeleteIcon";
 import { SearchIcon } from "@/public/SearchIcon";
 import StudentModal from "./studentModal";
 import * as XLSX from "xlsx";
-import Image from "next/image"; // Import Image from next/image
-import { ClassDropdown } from "./Class/ClassDropdown";
+import Image from "next/image";
+
 const columns = [
   { uid: "_id", name: "ID", sortable: true },
   { uid: "rollNumber", name: "Roll Number", sortable: true },
@@ -45,8 +45,9 @@ const columns = [
   { uid: "actions", name: "Actions" },
 ];
 import { getCurrentAcademicYear, getAcademicYears } from '@/app/utils/acadmicYears';
-import { Calendar } from "lucide-react";
+import { Calendar } from 'lucide-react';
 import { DepartmentDropdown } from "./department/DepartmentDropDowns";
+import { ClassDropdown } from "./Class/ClassDropdown";
 
 const INITIAL_VISIBLE_COLUMNS = ["_id", "rollNumber", "name", "year", "department", "actions"];
 
@@ -60,17 +61,18 @@ export default function StudentTable() {
   });
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState("add"); // 'view', 'edit', or 'add'
+  const [modalMode, setModalMode] = useState("add");
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [students, setStudents] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [profile, setProfile] = useState(null);
-  const [allStudents, setAllStudents] = useState({});
+  const [allStudents, setAllStudents] = useState([]);
   const [totalStudents, setTotalStudents] = useState(0);
-  const [academicYear, setAcademicYear] = useState(() => profile?.currentYear || getCurrentAcademicYear());
-
+  const [classes, setClasses] = useState([]);
+  const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
+  const [institute,setInstitute]= useState(null)
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
@@ -79,13 +81,11 @@ export default function StudentTable() {
     }
   }, []);
 
+
   useEffect(() => {
     if (profile?.role !== "superadmin") {
       setSelectedClass('')
       setSelectedDepartment(profile?.department);
-    }
-    if (profile?.currentYear) {
-      setAcademicYear(profile?.currentYear); // Set default year from profile
     }
   }, [profile]);
 
@@ -94,36 +94,39 @@ export default function StudentTable() {
       setStudents([])
       fetchStudents();
     }
-  }, [selectedDepartment, page, rowsPerPage, filterValue, selectedClass]);
+  }, [selectedDepartment, selectedClass, academicYear]);
 
   useEffect(() => {
     if ((profile?.role === "admin" || profile?.role === "superadmin") && selectedDepartment) {
       setSelectedClass('')
-
     }
-  }, [profile, selectedDepartment]);
+    if(profile?.role) {
+      console.log(profile);
+      const instituteId =profile?.role==="superadmin"? profile?._id : profile?.institute
+      setInstitute(instituteId)
+      console.log(instituteId);
+    }
+
+  }, [profile, selectedDepartment, academicYear]);
 
   useEffect(() => {
     setSelectedClass('')
     setStudents([])
-  }, [selectedDepartment, selectedClass]);
+  }, [selectedDepartment]);
+
 
   const fetchStudents = async () => {
-
     try {
       setIsLoading(true);
-      const response = await axios.get(`/api/student`, {
+      const response = await axios.get(`/api/v2/student`, {
         params: {
           department: selectedDepartment,
-          filterValue,
-          page,
-          limit: rowsPerPage,
-          class: selectedClass
+          class: selectedClass,
+          academicYear: academicYear
         }
       });
-      setAllStudents(prev => ({ ...prev, [page]: response.data.students }));
-      setStudents(response.data.students);
-      setTotalStudents(response.data.totalStudents);
+      setAllStudents(response.data.students);
+      setTotalStudents(response.data.students.length);
     } catch (error) {
       console.error('Error fetching students:', error);
       toast.error('Error fetching students');
@@ -140,7 +143,6 @@ export default function StudentTable() {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: "array" });
 
-        // Check if there are multiple sheets
         if (workbook.SheetNames.length > 1) {
           toast.error("Please ensure the file contains only one sheet.");
           return;
@@ -150,7 +152,6 @@ export default function StudentTable() {
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-        // Validate column headers
         const requiredHeaders = ["name", "rollNumber", "email", "phoneNo", "department", "year"];
         const headers = Object.keys(jsonData[0]);
         const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
@@ -192,7 +193,6 @@ export default function StudentTable() {
       setIsLoading(true);
       const response = await axios.get(`/api/student/download?department=${selectedDepartment}`);
 
-      // Group students by admission year
       const studentsByYear = response.data.reduce((acc, student) => {
         const year = student.year || 'Unknown';
         if (!acc[year]) acc[year] = [];
@@ -221,9 +221,10 @@ export default function StudentTable() {
       setIsLoading(false);
     }
   };
+
   const deleteStudent = async (_id) => {
     try {
-      await axios.delete(`/api/student?_id=${_id}`);
+      await axios.delete(`/api/v2/student?_id=${_id}`);
       fetchStudents();
       toast.success('Student deleted successfully');
     } catch (error) {
@@ -232,49 +233,56 @@ export default function StudentTable() {
     }
   };
 
-  const handleDepartmentSelect = (e) => {
-    console.log(e.target.value);
-    setSelectedDepartment(e.target.value)
-  }
-  const handleClassSelect = (value) => {
-    setSelectedClass(value)
-  }
   const headerColumns = useMemo(() => {
     if (visibleColumns === "all") return columns;
     return columns.filter((column) => visibleColumns.has(column.uid));
   }, [visibleColumns]);
 
-
-  useEffect(() => {
-    if (filterValue) {
-      setAllStudents({});
-      setPage(1);
-      fetchStudents();
-    }
-  }, [filterValue]);
-  const filteredItems = useMemo(() => {
-    return students.filter((student) =>
-      student.name.toLowerCase().includes(filterValue.toLowerCase()) ||
-      student.rollNumber.toLowerCase().includes(filterValue.toLowerCase())
-    );
-  }, [students, filterValue]);
-
-  const pages = Math.ceil(totalStudents / rowsPerPage);
-
-  const items = useMemo(() => {
-    return filteredItems;
-  }, [filteredItems]);
-
   const sortedItems = useMemo(() => {
-    return [...items].sort((a, b) => {
+    return [...allStudents].sort((a, b) => {
       const first = a[sortDescriptor.column];
       const second = b[sortDescriptor.column];
-      if (sortDescriptor.column === "rollNumber") {
-        return parseInt(first) - parseInt(second);
+
+      if (sortDescriptor.column === "_id" || sortDescriptor.column === "rollNumber") {
+        // Extract numbers and non-numeric parts
+        const [, numA, alphaA] = first.match(/(\d+)(.*)/) || [null, '', ''];
+        const [, numB, alphaB] = second.match(/(\d+)(.*)/) || [null, '', ''];
+
+        // Compare numeric parts first
+        const numComparison = parseInt(numA) - parseInt(numB);
+
+        if (numComparison !== 0) {
+          return sortDescriptor.direction === "ascending" ? numComparison : -numComparison;
+        }
+
+        // If numeric parts are equal, compare alphabetic parts
+        return sortDescriptor.direction === "ascending"
+          ? alphaA.localeCompare(alphaB)
+          : alphaB.localeCompare(alphaA);
       }
-      return first < second ? -1 : first > second ? 1 : 0;
+
+      // For other columns, use simple string comparison
+      const cmp = first < second ? -1 : first > second ? 1 : 0;
+      return sortDescriptor.direction === "ascending" ? cmp : -cmp;
     });
-  }, [items, sortDescriptor]);
+  }, [allStudents, sortDescriptor.column, sortDescriptor.direction]);
+
+  const filteredItems = useMemo(() => {
+    return sortedItems.filter((item) =>
+      item.name.toLowerCase().includes(filterValue.toLowerCase()) ||
+      item.rollNumber.toLowerCase().includes(filterValue.toLowerCase())
+    );
+  }, [sortedItems, filterValue]);
+
+  const pages = Math.ceil(filteredItems.length / rowsPerPage);
+
+  const items = useMemo(() => {
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+
+    return filteredItems.slice(start, end);
+  }, [page, filteredItems, rowsPerPage]);
+
   const renderCell = useCallback((student, columnKey) => {
     const cellValue = student[columnKey];
     switch (columnKey) {
@@ -308,15 +316,24 @@ export default function StudentTable() {
     }
   }, []);
 
+  const handleClassSelect = (value) => {
+    setSelectedClass(value)
+  }
+
+  const handleDepartmentSelect = (departmentId) => {
+    console.log(departmentId.target.value);
+    setSelectedDepartment(departmentId.target.value)
+  }
+
+
   const onRowsPerPageChange = useCallback((e) => {
     setRowsPerPage(Number(e.target.value));
     setPage(1);
-    setAllStudents({});
   }, []);
+
   const onSearchChange = useCallback((value) => {
     setFilterValue(value);
     setPage(1);
-    setAllStudents({});
   }, []);
 
   const handleModalClose = () => {
@@ -334,10 +351,9 @@ export default function StudentTable() {
     fileInput.click();
   }, []);
 
-
   const bottomContent = (
     <div className="flex justify-between items-center">
-      <span className="text-default-400 text-small">Total {students.length} students</span>
+      <span className="text-default-400 text-small">Total {filteredItems.length} students</span>
       <label className="flex items-center text-default-400 text-small">
         Rows per page:
         <select
@@ -385,9 +401,10 @@ export default function StudentTable() {
             </SelectItem>
           ))}
         </Select>
-        {profile?.role !== "admin" && (
+
+        {profile?.role === "superadmin" && (
           <DepartmentDropdown
-            instituteId={profile?.role === "superadmin" ? profile?._id : profile?.institute}
+            instituteId={institute}
             onSelect={handleDepartmentSelect}
             className="w-full"
             selectedDepartment={selectedDepartment}
@@ -395,11 +412,11 @@ export default function StudentTable() {
         )}
         <ClassDropdown
           id="class-select"
-          instituteId={profile?.role === "superadmin" ? profile?._id : profile?.institute}
+          instituteId={institute}
           onSelect={handleClassSelect}
           selectedClass={selectedClass}
           acadmicYear={academicYear}
-          selectedDepartment={selectedDepartment}   
+          selectedDepartment={selectedDepartment}
         />
       </div>
       <div className="flex justify-between gap-3 items-end">
@@ -490,8 +507,8 @@ export default function StudentTable() {
         bottomContentPlacement="outside"
         classNames={classNames}
         sortDescriptor={sortDescriptor}
-        topContentPlacement="outside"
         onSortChange={setSortDescriptor}
+        topContentPlacement="outside"
       >
         <TableHeader columns={headerColumns}>
           {(column) => (
@@ -518,13 +535,13 @@ export default function StudentTable() {
               <p>No students found</p>
             </div>
           }
-          items={sortedItems}
+          items={items}
         >
-          {(student) => (
-            <TableRow key={student._id}>
+          {(item) => (
+            <TableRow key={item._id}>
               {headerColumns.map((column) => (
                 <TableCell key={column.uid}>
-                  {renderCell(student, column.uid)}
+                  {renderCell(item, column.uid)}
                 </TableCell>
               ))}
             </TableRow>
@@ -537,7 +554,7 @@ export default function StudentTable() {
           page={page}
           onChange={(newPage) => setPage(newPage)}
         />
-        <span>Total Students: {totalStudents}</span>
+        <span>Total Students: {filteredItems.length}</span>
       </div>
       <StudentModal
         isOpen={modalOpen}
@@ -545,7 +562,7 @@ export default function StudentTable() {
         mode={modalMode}
         student={selectedStudent}
         onSubmit={handleModalSubmit}
-        institute={profile?.role === 'superadmin' ? profile?._id : profile?.institute}
+        instituteId={profile?.role === 'superadmin' ? profile?._id : profile?.institute._id}
 
       />
     </div>

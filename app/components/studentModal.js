@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { departmentOptions } from "../utils/department";
 
-const StudentModal = ({ isOpen, onClose, mode, student, onSubmit ,institute}) => {
+const StudentModal = ({ isOpen, onClose, mode, student, onSubmit ,instituteId}) => {
   const [profile, setProfile] = useState(null);
   const [formData, setFormData] = useState({
     _id: "",
@@ -16,7 +16,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit ,institute}) =>
     phoneNo: "",
     password: "",
     year: "",
-    institute:institute
+    institute:instituteId
   });
 
   useEffect(() => {
@@ -31,10 +31,12 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit ,institute}) =>
       setFormData((prev) => ({
         ...prev,
         department: profile?.department
+        
       }));
     }
   }, [profile]);
 
+console.log(instituteId);
 
   useEffect(() => {
     if (mode === "edit" && student) {
@@ -47,7 +49,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit ,institute}) =>
         phoneNo: student.phoneNo,
         password: student.password,
         year: student.year,
-        institute:institute
+        institute: student.institute || instituteId
       });
     } else {
       handleClear();
@@ -85,10 +87,17 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit ,institute}) =>
       email: "",
       password: "",
       year: "",
-      institute:institute
+      institute:instituteId
 
     });
   };
+
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      institute: instituteId || prev.institute
+    }));
+  }, [instituteId]);
 
   const handleSubmit = async () => {
     try {

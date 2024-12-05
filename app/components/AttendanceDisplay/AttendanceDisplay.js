@@ -33,7 +33,6 @@ export default function AttendanceDisplay() {
       const instituteId =userProfile?.role==="superadmin"? userProfile?._id : userProfile?.institute
       setInstitute(instituteId)
       console.log(instituteId);
-
     }
       
   },[userProfile])

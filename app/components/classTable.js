@@ -72,16 +72,14 @@ export default function ClassTable() {
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [academicYear, setAcademicYear] = useState(() => profile?.currentYear || getCurrentAcademicYear());
-  const [classToToggle, setClassToToggle] = useState(null);
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  
+
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
       const parsedProfile = JSON.parse(storedProfile);
       setProfile(parsedProfile);
       if (parsedProfile.role !== "superadmin") {
-        setSelectedDepartment(parsedProfile.department);
+        setSelectedDepartment(parsedProfile.id);
       }
       if (parsedProfile.currentYear) {
         setAcademicYear(parsedProfile.currentYear); // Set default year from profile
@@ -106,11 +104,9 @@ export default function ClassTable() {
     setIsLoadingClasses(true);
     setIsLoadingTeachers(true);
     try {
-      const [classesResponse, teachersResponse] = await Promise.all([
-        axios.get(`/api/classes?department=${selectedDepartment}&acadmicYear=${academicYear}`, { timeout: 10000 }),
-        axios.get('/api/fetchfaculty', { timeout: 10000 })
-      ]);
-
+      console.log(selectedDepartment);
+      
+      const classesResponse = await axios.get(`/api/classes?department=${selectedDepartment}&acadmicYear=${academicYear}`, { timeout: 10000 })
       if (classesResponse.status === 200 && Array.isArray(classesResponse.data)) {
         setClasses(classesResponse.data);
       } else {
@@ -118,12 +114,6 @@ export default function ClassTable() {
         toast.error('Invalid class data received');
       }
 
-      if (Array.isArray(teachersResponse.data)) {
-        setTeachers(teachersResponse.data);
-      } else {
-        setTeachers([]);
-        toast.error('Invalid teacher data received');
-      }
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Error fetching data. Please try again.');
@@ -132,40 +122,7 @@ export default function ClassTable() {
       setIsLoadingTeachers(false);
     }
   }, [selectedDepartment]);
-
-  const handleSelectChange = useCallback((value) => {
-    setSelectedDepartment(value);
-  }, []);
-
-  const openConfirmModal = useCallback((classId, currentStatus) => {
-    setClassToToggle({ id: classId, currentStatus });
-    onOpen();
-  }, [onOpen]);
- const toggleClassStatus = useCallback(async () => {
-    if (!classToToggle) return;
-
-    try {
-      setIsLoading(true);
-      const response = await axios.post('/api/endofacademic', { classId: classToToggle.id }, { timeout: 10000 });
-      if (response.status === 200) {
-        setClasses(prevClasses =>
-          prevClasses.map(cls =>
-            cls._id === classToToggle.id ? { ...cls, isActive: !classToToggle.currentStatus } : cls
-          )
-        );
-        toast.success(`Class ${!classToToggle.currentStatus ? 'activated' : 'deactivated'} successfully`);
-      } else {
-        throw new Error('Failed to update class status');
-      }
-    } catch (error) {
-      console.error("Error toggling class status:", error);
-      toast.error('Error updating class status. Please try again.');
-    } finally {
-      setIsLoading(false);
-      onClose();
-    }
-  }, [classToToggle, onClose]);
-
+ 
   const deleteClass = useCallback(async (_id) => {
     try {
       setIsDeleting(true);
@@ -179,6 +136,7 @@ export default function ClassTable() {
       setIsDeleting(false);
     }
   }, []);
+
   const downloadExcel = useCallback(() => {
     const worksheet = XLSX.utils.json_to_sheet(classes);
     const workbook = XLSX.utils.book_new();
@@ -261,7 +219,7 @@ export default function ClassTable() {
       default:
         return <span>{cellValue}</span>;
     }
-  }, [deleteClass, openConfirmModal]);
+  }, [deleteClass]);
 
   const renderHeader = useCallback((column) => {
     const columnName = capitalize(column.name);
@@ -402,24 +360,7 @@ export default function ClassTable() {
         userRole={profile?.role}
         department={selectedDepartment}
         instituteId={profile?.role === 'superadmin' ? profile?._id : profile?.institute}
-      
       />
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalContent>
-          <ModalHeader>Confirm Status Change</ModalHeader>
-          <ModalBody>
-            Are you sure you want to {classToToggle?.currentStatus ? 'deactivate' : 'activate'} this class?
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="light" onPress={onClose} isDisabled={isLoading}>
-              Cancel
-            </Button>
-            <Button color="primary" onPress={toggleClassStatus} isDisabled={isLoading}>
-              {isLoading ? <Spinner size="sm" /> : "Confirm"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
     </>
   );
 }

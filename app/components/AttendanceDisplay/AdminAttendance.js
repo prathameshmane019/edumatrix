@@ -121,6 +121,8 @@ useEffect(()=>{
   const handleClassSelect = (value) => {
     setSelectedClass(value)
   }
+
+  
   const handleDepartmentSelect = (departmentId) => {
     console.log(departmentId.target.value);
     setSelectedDepartment(departmentId.target.value)

@@ -539,8 +539,7 @@ import {
 import { FacultyDropdown } from './faculty/FacultyDropdown';
 import { Calendar } from 'lucide-react';
 import { ClassDropdown } from './Class/ClassDropdown';
-import { DepartmentDropdown } from './department/DepartmentDropDowns';
-import { getAcademicYears } from './profile';
+import { getCurrentAcademicYear,getAcademicYears } from '../utils/acadmicYears';
 
 export default function SubjectModal({ isOpen, onClose, department, mode, subjectData, onSubmit, classes, instituteId, teachers }) {
   const [formData, setFormData] = useState({
