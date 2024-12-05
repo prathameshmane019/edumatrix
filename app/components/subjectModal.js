@@ -574,13 +574,14 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
   }, [subjectData]);
 
   useEffect(() => {
-    if (formData.class && (formData.subType === 'practical' || formData.subType === 'tg')) {
+    if (formData.class && (formData.subType === 'practical' || formData.subType === 'tg') && Array.isArray(classes)) {
       const selectedClass = classes.find(cls => cls._id === formData.class);
       setBatches(selectedClass ? selectedClass.batches : []);
     } else {
       setBatches([]);
     }
   }, [formData.class, formData.subType, classes]);
+  
 
   const resetForm = () => {
     setFormData({
