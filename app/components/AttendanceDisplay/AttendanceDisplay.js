@@ -5,12 +5,12 @@ import { Spinner } from "@nextui-org/react"
 import StudentAttendance from './StudentAttendance'
 import FacultyAttendance from './FacultyAttendance'
 import AdminAttendance from './AdminAttendance'
-import { getCurrentAcademicYear } from '../profile'
+import { getCurrentAcademicYear } from '@/app/utils/acadmicYears'
 
 export default function AttendanceDisplay() {
   const [userProfile, setUserProfile] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [year,setYear]=useState(getCurrentAcademicYear)
+  const [year,setYear]=useState(getCurrentAcademicYear())
   const [sem,setSem]=useState("sem1")
   const [institute,setInstitute]= useState(null)
   useEffect(() => {

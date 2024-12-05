@@ -4,6 +4,7 @@ import Attendance from "@/models/attendance";
 import Subject from "@/models/subject";
 import Classes from "@/models/className";
 import Student from "@/models/student";
+
 export async function GET(req) {
     try {
         await connectMongoDB();
@@ -17,23 +18,31 @@ export async function GET(req) {
             return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
         }
 
-        console.log(department,classId,semester);
-        
         // Fetch class data with students
         const classData = await Classes.findOne({ 
             _id: classId,
-            isActive: true,
+            // Assuming there's an active status field or we'll remove this filter
             ...(department && { department })
-        }).populate('students');
+        }).populate({
+            path: 'students',
+            model: 'Student'
+        });
 
         if (!classData) {
             return NextResponse.json({ error: "Class not found" }, { status: 404 });
         }
 
-        // If subjectId is provided, fetch single subject, otherwise fetch all subjects
+        // Prepare subject query based on semester and optional subjectId
         const subjectQuery = subjectId 
-            ? { _id: subjectId, isActive: true }
-            : { _id: { $in: classData.subjects[semester] }, isActive: true };
+            ? { 
+                _id: subjectId, 
+                class: classId,
+                sem: semester
+              }
+            : { 
+                class: classId,
+                sem: semester
+              };
 
         const subjects = await Subject.find(subjectQuery);
 
@@ -41,7 +50,7 @@ export async function GET(req) {
             return NextResponse.json({ error: "No subjects found for the given criteria" }, { status: 404 });
         }
 
-        const subjectIds = subjects.map(s => s._id);
+        const subjectIds = subjects.map(s => s._id.toString());
 
         // Fetch attendance data
         const attendanceData = await Attendance.aggregate([
@@ -72,8 +81,8 @@ export async function GET(req) {
             // Individual subject view
             processedData = classData.students.map(student => {
                 const attendance = attendanceData.find(a => 
-                    a._id.student.toString() === student._id.toString() && 
-                    a._id.subject.toString() === subjectId
+                    a._id.student === student._id && 
+                    a._id.subject === subjectId
                 ) || { totalLectures: 0, presentCount: 0 };
 
                 return {
@@ -106,8 +115,8 @@ export async function GET(req) {
 
                 subjects.forEach(subject => {
                     const attendance = attendanceData.find(a => 
-                        a._id.student.toString() === student._id.toString() && 
-                        a._id.subject.toString() === subject._id.toString()
+                        a._id.student === student._id && 
+                        a._id.subject === subject._id.toString()
                     ) || { totalLectures: 0, presentCount: 0 };
 
                     const subjectAttendance = {
@@ -142,7 +151,7 @@ export async function GET(req) {
                 class: classId,
                 semester,
                 department: classData.department,
-                name: classData.name || classId
+                name: classData.id || classId
             },
             subjects: subjects.map(s => ({
                 _id: s._id,

@@ -48,39 +48,39 @@ useEffect(()=>{
 
 },[year])
   
-  const fetchClasses = useCallback(async () => {
-    if (selectedDepartment && selectedSemester && academicYear) {
-      try {
-        setLoading(true);
-        const response = await axios.get(`/api/v1/utils/classes`, {
-          params: { department: selectedDepartment, academicYear, semester: selectedSemester }
-        });
+  // const fetchClasses = useCallback(async () => {
+  //   if (selectedDepartment && selectedSemester && academicYear) {
+  //     try {
+  //       setLoading(true);
+  //       const response = await axios.get(`/api/v1/utils/classes`, {
+  //         params: { department: selectedDepartment, academicYear, semester: selectedSemester }
+  //       });
         
-        if (response.data && Array.isArray(response.data.data)) {
-          const validClasses = response.data.data.filter(cls => cls && cls._id);
+  //       if (response.data && Array.isArray(response.data.data)) {
+  //         const validClasses = response.data.data.filter(cls => cls && cls._id);
         
-          if (validClasses.length === 0) {
-            setError("No classes found for the selected criteria");
-            setClasses([]);
-            setSelectedClass('');
-            return;
-          }
+  //         if (validClasses.length === 0) {
+  //           setError("No classes found for the selected criteria");
+  //           setClasses([]);
+  //           setSelectedClass('');
+  //           return;
+  //         }
     
-          setClasses(validClasses);
-          if (!selectedClass) {
-            setSelectedClass(validClasses[0]._id);
-          }
-        } else {
-          setError("Invalid data received from server");
-        }
-      } catch (err) {
-        console.error("Failed to fetch classes:", err);
-        setError("Failed to fetch classes. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    }
-  }, [selectedDepartment, selectedSemester, academicYear, selectedClass]);
+  //         setClasses(validClasses);
+  //         if (!selectedClass) {
+  //           setSelectedClass(validClasses[0]._id);
+  //         }
+  //       } else {
+  //         setError("Invalid data received from server");
+  //       }
+  //     } catch (err) {
+  //       console.error("Failed to fetch classes:", err);
+  //       setError("Failed to fetch classes. Please try again.");
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   }
+  // }, [selectedDepartment, selectedSemester, academicYear, selectedClass]);
 
   const transformAttendanceData = useCallback((data) => {
     if (!data) {
@@ -133,10 +133,10 @@ useEffect(()=>{
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    setSelectedSubject('');
-    fetchClasses();
-  }, [fetchClasses, selectedSemester, academicYear]);
+  // useEffect(() => {
+  //   setSelectedSubject('');
+  //   fetchClasses();
+  // }, [fetchClasses, selectedSemester, academicYear]);
 
    const fetchAttendance = useCallback(async () => {
     if (!selectedClass) {
@@ -158,13 +158,14 @@ useEffect(()=>{
         classId: selectedClass,
         semester: selectedSemester,
         department: selectedDepartment,
+        institute,
         viewType: viewType === "individual" ? "summary" : viewType,
         ...(viewType === 'individual' && { subjectId: selectedSubject })
       };
 
       const endpoint = viewType === 'individual' 
         ? `/api/v1/attendance/faculty-attendance`
-        : '/api/v1/attendance/admin-attendance';
+        : '/api/v1/reports/admin';
 
       const response = await axios.get(endpoint, { params });
       

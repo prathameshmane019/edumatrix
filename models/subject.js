@@ -32,6 +32,11 @@ const ContentSchema = new mongoose.Schema({
     references: {
         type: String
     },
+    status: {
+        type: String,
+        enum: ['covered', 'not_covered'],
+        default: 'not_covered'
+    },
     courseOutcomes: {
         type: String
     },

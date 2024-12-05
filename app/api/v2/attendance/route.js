@@ -8,6 +8,8 @@ export async function POST(req) {
   try {
     await connectMongoDB();
     const data = await req.json();
+    console.log(data);
+    
     const { 
       subject, 
       session, 

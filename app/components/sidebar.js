@@ -106,7 +106,7 @@ const Sidebar = () => {
             isLoading ? (
               <Skeleton className="w-28 h-6 mt-2 mx-auto" />
             ) : (
-              <p className="sidebar__logo-name text-center mt-2 font-semibold">ERPSystem</p>
+              <p className="sidebar__logo-name text-center mt-2 font-semibold">ERP System</p>
             )
           )}
         </div>

@@ -260,17 +260,19 @@ export default function ProfilePage() {
     return (
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-2">
-          <p className="text-sm text-gray-500">Faculty/Staff ID</p>
-          <p className="text-sm font-medium">{userProfile?.id}</p>
+          <p className="text-sm text-gray-500">{userProfile?.role==="superadmin" ? "Instituted Code" :"Faculty/Staff ID"}</p>
+          <p className="text-sm font-medium">{userProfile?.role==="superadmin"? userProfile?.instituteCode: userProfile?.id}</p>
         </div>
         <div className="space-y-2">
           <p className="text-sm text-gray-500">Name</p>
           <p className="text-sm font-medium">{userProfile?.name}</p>
         </div>
+        {userProfile?.role!=="superadmin" &&(
         <div className="space-y-2">
           <p className="text-sm text-gray-500">Department</p>
-          <p className="text-sm font-medium">{userProfile?.department}</p>
+          <p className="text-sm font-medium">{userProfile?.role==="admin"? userProfile?.name: userProfile?.department}</p>
         </div>
+        )}
         <div className="space-y-2">
           <p className="text-sm text-gray-500">Email</p>
           <p className="text-sm font-medium">{userProfile?.email}</p>
