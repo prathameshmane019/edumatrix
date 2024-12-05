@@ -40,9 +40,10 @@ export default function TeachingPlanPage() {
 
     setIsLoading(true);
     try {
-      const response = await axios.get(`/api/subject?_id=${id}`);
-      const subjectData = response.data.subject;
+      const response = await axios.get(`/api/v2/subjectData?_id=${id}`);
+      const subjectData = response.data.subjects[0];
       setSubject(subjectData);
+      console.log(response.data.subjects[0]);
 
       if (subjectData.subType === 'tg') {
         setContent(subjectData.tgSessions || []);
@@ -216,7 +217,7 @@ export default function TeachingPlanPage() {
         //   </Button>
         // </div>
         <CourseContentManager
-          subjectType={subject.subType}
+          subjectType={subject?.subType}
           content={content}
           onContentUpdate={handleContentUpdate}
           availableBatches={subject.batch}
