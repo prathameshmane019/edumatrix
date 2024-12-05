@@ -89,7 +89,7 @@ const Sidebar = () => {
       <button className="btn shadow-xl absolute top-4 -right-3 z-50 bg-white rounded-full p-1" onClick={toggleSidebarCollapse}>
         {isCollapsed ? <MdKeyboardArrowRight className="text-2xl" /> : <MdKeyboardArrowLeft className="text-2xl" />}
       </button>
-      <aside className={`sidebar rounded-r-lg shadow-2xl bg-primary-500 text-gray-100 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
+      <aside className={`sidebar rounded-r-lg shadow-2xl bg-primary-500 text-gray-100 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`} data-collapse={isCollapsed}>
         <div className="sidebar__top text-primary p-4">
           {isLoading ? (
             <Skeleton className="rounded-full w-16 h-16 mx-auto" />
@@ -125,7 +125,7 @@ const Sidebar = () => {
                    className={`sidebar__link ${pathname === href ? "sidebar__link--active" : ""}`}
                    href={href}
                 >
-                  <Tooltip content={isCollapsed ? name : ""} placement="right">
+                  <Tooltip content={ name } placement="right">
                     <span className="sidebar__icon">
                       <Icon className="text-2xl" />
                     </span>
@@ -136,17 +136,13 @@ const Sidebar = () => {
             ))
           )}
         </ul>
-        <div className="absolute bottom-4 left-0 right-0 px-4">
-          <Tooltip content="Log Out" placement="right">
-            {isLoading ? (
-              <Skeleton className="w-8 h-8 rounded-full mx-auto" />
-            ) : (
-              <button onClick={handleSignOut} className="w-full flex justify-center items-center p-2 hover:bg-primary-400 rounded">
-                <RxExit className="text-2xl text-white" />
-                {!isCollapsed && <span className="ml-3 text-white">Log Out</span>}
-              </button>
-            )}
+        <div className="absolute bottom-4 left-0 right-0 px-4 flex">
+        <Tooltip content="Log Out">
+            <button onClick={handleSignOut} color="se" width="30">
+              <RxExit className="w-5 h-5 ml-3 my-2 text-violet-900" />
+            </button>
           </Tooltip>
+          {!isCollapsed && <span className=" text-violet-900 ml-3 my-2">Log Out</span>}
         </div>
       </aside>
     </div>

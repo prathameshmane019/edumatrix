@@ -61,12 +61,19 @@ export async function PUT(req) {
   }
 }
 
-export async function GET() {
+export async function GET(req) {
   try {
     await connectMongoDB();
-    const departments = await Department.find();
-    console.log("Fetched Data Successfully", departments);
-    return NextResponse.json(departments);
+    const { searchParams } = new URL(req.url);
+    const _id = searchParams.get("_id");
+    let department
+    if(_id){
+      department = await Department.findById(_id);
+      return NextResponse.json(department);
+    }
+    department = await Department.find();
+    console.log("Fetched Data Successfully", department);
+    return NextResponse.json(department);
   } catch (error) {
     console.error("Error fetching departments:", error);
     return NextResponse.json({ error: "Failed to Fetch Departments" });
