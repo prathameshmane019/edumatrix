@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { Input, Table, TableBody, TableCell, TableHeader, TableColumn, TableRow, Button, Checkbox } from '@nextui-org/react'
-import { formatDateForPicker, formatDateForStorage } from '../utils/dateFormater'
+import { formatDateForDisplay, formatDateForPicker, formatDateForStorage } from '../utils/dateFormater'
+
 
 export default function TheoryContent({ content, isEditing, isLoading, onSubmit, onCancel }) {
   const [localContent, setLocalContent] = useState([])
 
-  // Populate localContent when content prop is updated
   useEffect(() => {
     if (content) {
       setLocalContent(content)

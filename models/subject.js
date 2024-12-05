@@ -35,6 +35,12 @@ const ContentSchema = new mongoose.Schema({
     courseOutcomes: {
         type: String
     },
+    completedDate:{
+        type: String
+    },
+    proposedDate:{
+        type: String
+    },
     programOutcomes: {
         type: String
     },

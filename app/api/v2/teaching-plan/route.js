@@ -4,6 +4,7 @@ import { connectMongoDB } from "@/lib/connectDb";
 import Subject from "@/models/subject";
 import { formatDateForStorage, parseFlexibleDate } from "@/app/utils/dateFormater";
 
+
 export async function PUT(req) {
     try {
         await connectMongoDB();
@@ -17,9 +18,9 @@ export async function PUT(req) {
         const data = await req.json();
 
         console.log(data);
-        
+
         let updateData = {};
-        
+
         if (data.content) {
             updateData.content = data.content.map((item) => {
                 // Handle different subject types
@@ -44,32 +45,33 @@ export async function PUT(req) {
                 }
             });
         }
-        
+
         if (data.tgSessions) {
             updateData.tgSessions = data.tgSessions.map((session) => ({
                 ...session,
                 date: session.date ? formatDateForStorage(parseFlexibleDate(session.date)) : null,
-                pointsDiscussed: Array.isArray(session.pointsDiscussed) 
-                    ? session.pointsDiscussed 
+                pointsDiscussed: Array.isArray(session.pointsDiscussed)
+                    ? session.pointsDiscussed
                     : [session.pointsDiscussed]
             }));
         }
 
         const existingSubject = await Subject.findByIdAndUpdate(_id, updateData, { new: true });
+        console.log(existingSubject);
 
         if (!existingSubject) {
             return NextResponse.json({ error: "Subject not found" }, { status: 404 });
         }
 
-        return NextResponse.json({ 
-            message: "Subject updated successfully", 
-            subject: existingSubject 
+        return NextResponse.json({
+            message: "Subject updated successfully",
+            subject: existingSubject
         }, { status: 200 });
     } catch (error) {
         console.error("Error updating subject:", error);
-        return NextResponse.json({ 
-            error: "Failed to update subject", 
-            details: error.message 
+        return NextResponse.json({
+            error: "Failed to update subject",
+            details: error.message
         }, { status: 500 });
     }
 }
