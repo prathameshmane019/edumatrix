@@ -107,10 +107,13 @@ export async function GET(req) {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
         const id = searchParams.get("id");
+        const _id = searchParams.get("_id");
         const department = searchParams.get("department");
 
         let filter = {};
         if (department) filter.department = department;
+        if (_id) filter._id = _id;
+        if (id) filter.id = id;
 
         if (id) {
             const faculty = await Faculty.findOne({ id })

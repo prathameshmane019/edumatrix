@@ -43,8 +43,6 @@ export default function TeachingPlanPage() {
       const response = await axios.get(`/api/v2/subjectData?_id=${id}`);
       const subjectData = response.data.subjects[0];
       setSubject(subjectData);
-      console.log(response.data.subjects[0]);
-
       if (subjectData.subType === 'tg') {
         setContent(subjectData.tgSessions || []);
       } else {

@@ -1,13 +1,12 @@
 import Profile from '@/app/components/profile'
 import React from 'react'
 
-
-const page = () => {
+const ProfilePage = () => {
   return (
-    <div className='mx-10 my-10'>
+    <div className=''>
       <Profile/>
     </div>
   )
 }
 
-export default page
+export default ProfilePage
