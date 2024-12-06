@@ -29,7 +29,8 @@ import * as XLSX from 'xlsx';
 import { getCurrentAcademicYear, getAcademicYears } from '@/app/utils/acadmicYears';
 import { DepartmentDropdown } from '../department/DepartmentDropDowns';
 import { ClassDropdown } from '../Class/ClassDropdown';
-export default function AdminAttendance({ adminId = '',institute='', department = '', role = '' ,year,sem}) {
+import { SubjectDropdown } from '../subject/SubjectDropdown';
+export default function AdminAttendance({ adminId = '', institute = '', department = '', role = '', year, sem }) {
   const [attendanceData, setAttendanceData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -42,45 +43,11 @@ export default function AdminAttendance({ adminId = '',institute='', department 
   const [academicYear, setAcademicYear] = useState(() => year || getCurrentAcademicYear());
   const [selectedSubjectType, setSelectedSubjectType] = useState('');
 
-useEffect(()=>{
-  if(year) setAcademicYear(year)
-    if(sem) setSelectedSemester(sem)
+  useEffect(() => {
+    if (year) setAcademicYear(year)
+    if (sem) setSelectedSemester(sem)
 
-},[year])
-  
-  // const fetchClasses = useCallback(async () => {
-  //   if (selectedDepartment && selectedSemester && academicYear) {
-  //     try {
-  //       setLoading(true);
-  //       const response = await axios.get(`/api/v1/utils/classes`, {
-  //         params: { department: selectedDepartment, academicYear, semester: selectedSemester }
-  //       });
-        
-  //       if (response.data && Array.isArray(response.data.data)) {
-  //         const validClasses = response.data.data.filter(cls => cls && cls._id);
-        
-  //         if (validClasses.length === 0) {
-  //           setError("No classes found for the selected criteria");
-  //           setClasses([]);
-  //           setSelectedClass('');
-  //           return;
-  //         }
-    
-  //         setClasses(validClasses);
-  //         if (!selectedClass) {
-  //           setSelectedClass(validClasses[0]._id);
-  //         }
-  //       } else {
-  //         setError("Invalid data received from server");
-  //       }
-  //     } catch (err) {
-  //       console.error("Failed to fetch classes:", err);
-  //       setError("Failed to fetch classes. Please try again.");
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }
-  // }, [selectedDepartment, selectedSemester, academicYear, selectedClass]);
+  }, [year])
 
   const transformAttendanceData = useCallback((data) => {
     if (!data) {
@@ -122,7 +89,7 @@ useEffect(()=>{
     setSelectedClass(value)
   }
 
-  
+
   const handleDepartmentSelect = (departmentId) => {
     console.log(departmentId.target.value);
     setSelectedDepartment(departmentId.target.value)
@@ -140,7 +107,7 @@ useEffect(()=>{
   //   fetchClasses();
   // }, [fetchClasses, selectedSemester, academicYear]);
 
-   const fetchAttendance = useCallback(async () => {
+  const fetchAttendance = useCallback(async () => {
     if (!selectedClass) {
       setError("Please select a class");
       return;
@@ -165,12 +132,12 @@ useEffect(()=>{
         ...(viewType === 'individual' && { subjectId: selectedSubject })
       };
 
-      const endpoint = viewType === 'individual' 
-        ? `/api/v1/attendance/faculty-attendance`
-        : '/api/v1/reports/admin';
+      const endpoint = viewType === 'individual'
+        ? `/api/v2/reports/faculty`
+        : '/api/v2/reports/admin';
 
       const response = await axios.get(endpoint, { params });
-      
+
       if (!response.data) {
         throw new Error("No data received from server");
       }
@@ -193,7 +160,7 @@ useEffect(()=>{
     if (percentage >= 60) return "text-yellow-500";
     return "text-red-500";
   };
- 
+
   const renderSummaryTable = (batchData) => {
     if (!batchData || !Array.isArray(batchData) || batchData.length === 0) {
       return <div>No attendance data available</div>;
@@ -237,7 +204,7 @@ useEffect(()=>{
 
   const renderAttendanceTable = () => {
     if (!attendanceData?.attendance?.length) return null;
-    
+
     const theorySubjects = attendanceData.subjects?.filter(s => s.subType === 'theory') || [];
     const practicalSubjects = attendanceData.subjects?.filter(s => s.subType === 'practical') || [];
 
@@ -326,13 +293,17 @@ useEffect(()=>{
     );
   };
 
+  const handleSubjectSelection = (e) => {
+    console.log(e);
+    setSelectedSubject(e)
+  }
   const generateExcelReport = useCallback(() => {
     if (!attendanceData?.attendance) return;
-     if (viewType === 'individual') {
+    if (viewType === 'individual') {
       const wb = XLSX.utils.book_new();
       const subjectType = attendanceData.subjectInfo?.subType;
       const subjectName = attendanceData.subjectInfo?.name || 'Subject';
-  
+
       if (subjectType === 'practical' || subjectType === 'tg') {
         // Handle practical and TG subjects with batch-wise data
         Object.entries(attendanceData.attendance).forEach(([batchName, batchData]) => {
@@ -346,7 +317,7 @@ useEffect(()=>{
             ['Below Threshold', batchData.filter(student => student.percentage < 75).length],
             [''],  // Empty row for spacing
           ];
-  
+
           // Create attendance data
           const attendanceData = [
             ['Roll Number', 'Student Name', 'Total Lectures', 'Present', 'Attendance %'],
@@ -358,11 +329,11 @@ useEffect(()=>{
               `${student.percentage.toFixed(2)}%`
             ])
           ];
-  
+
           // Combine summary and attendance data
           const wsData = [...summaryData, ...attendanceData];
           const ws = XLSX.utils.aoa_to_sheet(wsData);
-  
+
           // Set column widths
           ws['!cols'] = [
             { wch: 15 }, // First column
@@ -371,7 +342,7 @@ useEffect(()=>{
             { wch: 15 }, // Fourth column
             { wch: 15 }  // Fifth column
           ];
-  
+
           // Add styles for summary section
           const summaryRange = XLSX.utils.decode_range('A1:B6');
           for (let R = summaryRange.s.r; R <= summaryRange.e.r; R++) {
@@ -384,7 +355,7 @@ useEffect(()=>{
               };
             }
           }
-  
+
           // Add styles for header row
           const headerRow = 8; // Row index of the attendance data header
           const headerRange = XLSX.utils.decode_range(`A${headerRow}:E${headerRow}`);
@@ -401,7 +372,7 @@ useEffect(()=>{
               }
             };
           }
-  
+
           XLSX.utils.book_append_sheet(wb, ws, `Batch ${batchName}`);
         });
       } else {
@@ -415,7 +386,7 @@ useEffect(()=>{
           ['Below Threshold', attendance.filter(student => student.percentage < 75).length],
           [''],  // Empty row for spacing
         ];
-  
+
         // Create attendance data
         const attendanceData = [
           ['Roll Number', 'Student Name', 'Total Lectures', 'Present', 'Attendance %'],
@@ -427,11 +398,11 @@ useEffect(()=>{
             `${student.percentage.toFixed(2)}%`
           ])
         ];
-  
+
         // Combine summary and attendance data
         const wsData = [...summaryData, ...attendanceData];
         const ws = XLSX.utils.aoa_to_sheet(wsData);
-  
+
         // Set column widths
         ws['!cols'] = [
           { wch: 15 }, // Roll Number
@@ -440,7 +411,7 @@ useEffect(()=>{
           { wch: 15 }, // Present
           { wch: 15 }  // Attendance %
         ];
-  
+
         // Add styles for summary section
         const summaryRange = XLSX.utils.decode_range('A1:B5');
         for (let R = summaryRange.s.r; R <= summaryRange.e.r; R++) {
@@ -453,7 +424,7 @@ useEffect(()=>{
             };
           }
         }
-  
+
         // Add styles for header row
         const headerRow = 7; // Row index of the attendance data header
         const headerRange = XLSX.utils.decode_range(`A${headerRow}:E${headerRow}`);
@@ -470,10 +441,10 @@ useEffect(()=>{
             }
           };
         }
-  
+
         XLSX.utils.book_append_sheet(wb, ws, "Attendance Report");
       }
-  
+
       XLSX.writeFile(wb, `${subjectName}_Attendance_${new Date().toISOString().split('T')[0]}.xlsx`);
       return;
     }
@@ -483,16 +454,16 @@ useEffect(()=>{
 
     const headers = [
       ['Student Information', '', 'Theory Subjects', '', '', '', ...Array(Math.max(0, (theorySubjects.length - 1) * 4)).fill(''),
-       'Practical Subjects', '', '', '', ...Array(Math.max(0, (practicalSubjects.length - 1) * 4)).fill(''),
-       'Final Attendance', '', ''],
-      ['Roll Number', 'Student Name', 
-       ...theorySubjects.map(subject => [subject.name, '', '', '']).flat(),
-       ...practicalSubjects.map(subject => [subject.name, '', '', '']).flat(),
-       'Overall', '', ''],
-      ['', '', 
-       ...theorySubjects.map(() => ['Total', 'Present', 'Hours', '%']).flat(),
-       ...practicalSubjects.map(() => ['Total', 'Present', 'Hours', '%']).flat(),
-       'Total', 'Present', '%']
+        'Practical Subjects', '', '', '', ...Array(Math.max(0, (practicalSubjects.length - 1) * 4)).fill(''),
+        'Final Attendance', '', ''],
+      ['Roll Number', 'Student Name',
+        ...theorySubjects.map(subject => [subject.name, '', '', '']).flat(),
+        ...practicalSubjects.map(subject => [subject.name, '', '', '']).flat(),
+        'Overall', '', ''],
+      ['', '',
+        ...theorySubjects.map(() => ['Total', 'Present', 'Hours', '%']).flat(),
+        ...practicalSubjects.map(() => ['Total', 'Present', 'Hours', '%']).flat(),
+        'Total', 'Present', '%']
     ];
 
     const dataRows = attendanceData.attendance.map(student => {
@@ -574,7 +545,7 @@ useEffect(()=>{
     XLSX.writeFile(wb, `Attendance_Report_${attendanceData.classInfo?.name || selectedClass}_${selectedSemester}_${new Date().toISOString().split('T')[0]}.xlsx`);
   }, [attendanceData, selectedClass, selectedSemester]);
 
- 
+
   return (
     <Card className="w-full">
       <CardHeader className="flex flex-col gap-4">
@@ -587,15 +558,15 @@ useEffect(()=>{
             </div>
           )}
         </div>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {role === "superadmin" && (
-            <DepartmentDropdown 
-            instituteId={institute}
-            onSelect={handleDepartmentSelect}
-            className="w-full"
-            selectedDepartment={department}
-          />
+            <DepartmentDropdown
+              instituteId={institute}
+              onSelect={handleDepartmentSelect}
+              className="w-full"
+              selectedDepartment={department}
+            />
           )}
           <Dropdown>
             <DropdownTrigger>
@@ -625,8 +596,8 @@ useEffect(()=>{
                 {selectedSemester === 'sem1' ? 'Semester 1' : 'Semester 2'}
               </Button>
             </DropdownTrigger>
-            <DropdownMenu 
-              aria-label="Semester selection" 
+            <DropdownMenu
+              aria-label="Semester selection"
               onAction={(key) => setSelectedSemester(key)}
               selectedKeys={new Set([selectedSemester])}
             >
@@ -634,24 +605,25 @@ useEffect(()=>{
               <DropdownItem key="sem2">Semester 2</DropdownItem>
             </DropdownMenu>
           </Dropdown>
-           <ClassDropdown
-          id="class-select"
-          instituteId={institute}
-          onSelect={handleClassSelect}
-          selectedClass={selectedClass}
-          acadmicYear={year}
-          selectedDepartment={selectedDepartment}   
-        />
+          <ClassDropdown
+            id="class-select"
+            instituteId={institute}
+            onSelect={handleClassSelect}
+            selectedClass={selectedClass}
+            acadmicYear={year}
+            size="md"
+            selectedDepartment={selectedDepartment}
+          />
           <Dropdown>
             <DropdownTrigger>
-              <Button 
+              <Button
                 variant="bordered"
                 className="w-full"
               >
                 {viewType === 'cumulative' ? 'Cumulative View' : 'Individual Subject'}
               </Button>
             </DropdownTrigger>
-            <DropdownMenu 
+            <DropdownMenu
               selectedKeys={new Set([viewType])}
               onAction={(key) => setViewType(key)}
             >
@@ -661,52 +633,14 @@ useEffect(()=>{
           </Dropdown>
           {viewType === 'individual' && (
             <>
-            <Dropdown>
-            <DropdownTrigger>
-                  <Button 
-                    variant="bordered"
-                    className="w-full"
-                  >
-                    {selectedSubjectType ? selectedSubjectType : "Select Subject Type"}
-                  </Button>
-                </DropdownTrigger>
-            <DropdownMenu 
-             selectedKeys={new Set([selectedSubjectType])}
-             onAction={(key) => {
-               setSelectedSubjectType(key);
-                 setSelectedSubject('');
-             }}
-            >
-              <DropdownItem key="theory">Theory</DropdownItem>
-              <DropdownItem key="practical">Practical</DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
-          <Dropdown>
-                <DropdownTrigger>
-                  <Button 
-                    variant="bordered"
-                    className="w-full"
-                    isDisabled={!selectedSubjectType || !classes.find(c => c._id === selectedClass)?.subjects}
-                  >
-                    {selectedSubject ? 
-                      classes.find(c => c._id === selectedClass)?.subjects.find(s => s._id === selectedSubject)?.name || selectedSubject 
-                      : "Select Subject"}
-                  </Button>
-                </DropdownTrigger>
-                <DropdownMenu 
-                  selectedKeys={new Set([selectedSubject])}
-                  onAction={(key) => setSelectedSubject(key)}
-                >
-                  {classes.find(c => c._id === selectedClass)?.subjects
-                    .filter(subject => subject.subType === selectedSubjectType)
-                    .map((subject) => (
-                      <DropdownItem key={subject._id}>
-                        {subject.name}
-                      </DropdownItem>
-                    ))}
-                </DropdownMenu>
-              </Dropdown>
-            
+              <SubjectDropdown
+                instituteId={institute}
+                selectedClass={selectedClass}
+                onSelect={handleSubjectSelection}
+                fetchBy="classId"
+                selectedSubject={selectedSubject}
+                className=''
+              />
             </>
           )}
           <Button
@@ -755,7 +689,7 @@ useEffect(()=>{
                 </CardBody>
               </Card>
             )}
-            
+
             {viewType === 'cumulative' ? (
               renderAttendanceTable()
             ) : (

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { Select, SelectItem } from '@nextui-org/react'
 
-export function ClassDropdown({ instituteId, onSelect, selectedClass, selectedDepartment, acadmicYear, className = '' }) {
+export function ClassDropdown({ instituteId, onSelect, selectedClass, selectedDepartment, acadmicYear, className = '' ,label="",size='sm'}) {
     const [classes, setClasses] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
@@ -38,17 +38,19 @@ export function ClassDropdown({ instituteId, onSelect, selectedClass, selectedDe
         onSelect(e.target.value)
     }
 
-    if (error) return <div>Error: {error}</div>
+    if (error) return <div>No classes found</div>
 
     return (
         <Select
             placeholder={isLoading ? "Loading... class data " : "Select a class"}
             variant="bordered"
-            size="sm"
+      label={label}
+
+            size={size}
             value={selectedClass}
             selectedKeys={selectedClass ? [selectedClass] : []}
             onChange={handleSelectChange}
-            className={`max-w-xs my-4 ${className}`}
+            className={`max-w-xs   ${className}`}
         >
             {classes.map((cls) => (
                 <SelectItem key={cls.value} value={cls.value}>

@@ -85,7 +85,8 @@ export default function StudentTable() {
   useEffect(() => {
     if (profile?.role !== "superadmin") {
       setSelectedClass('')
-      setSelectedDepartment(profile?.department);
+    
+      setSelectedDepartment(profile?.id);
     }
   }, [profile]);
 
@@ -393,7 +394,7 @@ export default function StudentTable() {
           selectedKeys={academicYear ? [academicYear] : []}
           onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
           startContent={<Calendar className="w-4 h-4 text-default-400" />}
-          className="max-w-60 my-4"
+          className="max-w-72 my-4"
         >
           {getAcademicYears(10).map((year) => (
             <SelectItem key={year.value} value={year.value}>
@@ -417,6 +418,7 @@ export default function StudentTable() {
           selectedClass={selectedClass}
           acadmicYear={academicYear}
           selectedDepartment={selectedDepartment}
+          className="my-4"
         />
       </div>
       <div className="flex justify-between gap-3 items-end">

@@ -53,9 +53,9 @@ export default function AttendanceDisplay() {
     case 'student':
       return <StudentAttendance institute={institute} studentId={userProfile._id} sem={sem} year={year}  />
     case 'faculty':
-      return <FacultyAttendance institute={institute} facultyId={userProfile._id} sem={sem} year={year} />
+      return <FacultyAttendance institute={institute?._id} facultyId={userProfile._id} sem={sem} year={year} />
     case 'admin':
-      return <AdminAttendance institute={institute} adminId={userProfile._id} year={year} sem={sem} department={userProfile.department} />
+      return <AdminAttendance institute={institute} adminId={userProfile._id} year={year} sem={sem} department={userProfile.id} />
     case 'superadmin':
       return <AdminAttendance institute={institute} role={userProfile.role} year={year} sem={sem}/>
     default:
