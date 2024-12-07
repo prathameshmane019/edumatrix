@@ -105,6 +105,7 @@ export async function GET(req) {
                 Student.countDocuments(filter)
             ]);
         } else {
+            
             // Fetch all students using existing logic when no class is chosen
             [students, totalStudents] = await Promise.all([
                 Student.find(filter).skip(skip).limit(limit),

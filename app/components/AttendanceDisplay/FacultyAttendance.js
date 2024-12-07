@@ -30,14 +30,16 @@ import { Calendar, Download, RefreshCcw, Trash2 } from "lucide-react";
 import { DateRangePicker } from '@nextui-org/react';
 import { getCurrentAcademicYear, getAcademicYears } from "@/app/utils/acadmicYears";
 import { parseDate, getLocalTimeZone, CalendarDate } from "@internationalized/date";
+import { ClassDropdown } from '../Class/ClassDropdown';
+import { SubjectDropdown } from '../subject/SubjectDropdown';
 
-export default function FacultyAttendance({ facultyId = '' }) {
+export default function FacultyAttendance({ facultyId = '', institute = '', selectedDepartment = '' }) {
   const [attendanceData, setAttendanceData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSemester, setSelectedSemester] = useState('sem1');
-  const [selectedSubject, setSelectedSubject] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState(null);
   const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
   const [viewType, setViewType] = useState('summary');
   const [userProfile, setUserProfile] = useState(null);
@@ -56,8 +58,7 @@ export default function FacultyAttendance({ facultyId = '' }) {
       if (storedProfile) {
         const profile = JSON.parse(storedProfile);
         setUserProfile(profile);
-        
-        // Set defaults from profile
+
         setSelectedSemester(profile.defaultSemester || 'sem1');
         setAcademicYear(profile.defaultAcademicYear || getCurrentAcademicYear());
       }
@@ -65,6 +66,7 @@ export default function FacultyAttendance({ facultyId = '' }) {
 
     loadUserProfile();
   }, []);
+
   useEffect(() => {
     setDateRange({
       start: parseDate(new Date().toISOString().split('T')[0]),
@@ -73,6 +75,7 @@ export default function FacultyAttendance({ facultyId = '' }) {
     setAttendanceData(null);
     setIsFilterDirty(true);
   }, [viewType]);
+
   const handleDeleteAttendance = async () => {
     try {
       const deleteData = {
@@ -83,44 +86,24 @@ export default function FacultyAttendance({ facultyId = '' }) {
         semester: selectedSemester,
         ...(selectedColumnToDelete.batchId && { batchId: selectedColumnToDelete.batchId })
       };
-  
+
       console.log('Delete Payload:', deleteData); // Log exact payload
-  
+
       const response = await axios.delete('/api/attendance', {
         data: deleteData
       });
-  
-      // Rest of the code...
+
     } catch (error) {
       console.error('Full Error Response:', error.response?.data);
-      // More error handling...
     }
   };
-  
-  const fetchFacultySubjects = useCallback(async () => {
-    try {
-      const response = await axios.get(
-        `/api/v1/utils/faculty_subjects?facultyId=${facultyId}&semester=${selectedSemester}&academicYear=${academicYear}`
-      );
-      setClassesWithSubjects(response.data);
 
-      if (response.data.length > 0) {
-        setSelectedClass(response.data[0].classId);
-        if (response.data[0].subjects.length > 0) {
-          setSelectedSubject(response.data[0].subjects[0]._id);
-        }
-      }
-    } catch (err) {
-      console.error("Failed to fetch subjects:", err);
-      setError("Failed to fetch subjects. Please try again.");
-    }
-  }, [facultyId, selectedSemester, academicYear]);
+  const handleSubjectSelection = (e) => {
+    console.log(e);
+    setSelectedSubject(e)
+  }
 
-  useEffect(() => {
-    if (selectedSemester && academicYear) {
-      fetchFacultySubjects();
-    }
-  }, [selectedSemester, academicYear, fetchFacultySubjects]);
+
 
   const getSubjectsForClass = useCallback(() => {
     const classData = classesWithSubjects.find(c => c.classId === selectedClass);
@@ -165,7 +148,7 @@ export default function FacultyAttendance({ facultyId = '' }) {
     setAttendanceData(null);
 
     try {
-      let url = `/api/v1/attendance/faculty-attendance?subjectId=${selectedSubject}&viewType=${viewType}`;
+      let url = `/api/v2/reports/faculty?subjectId=${selectedSubject}&viewType=${viewType}`;
 
       if (viewType === 'dateWise') {
         const startDate = dateRange.start.toString();
@@ -186,12 +169,12 @@ export default function FacultyAttendance({ facultyId = '' }) {
 
   const generateExcelReport = useCallback(() => {
     if (!attendanceData?.attendance) return;
-  
+
     const wb = XLSX.utils.book_new();
     const subjectName = attendanceData.subjectInfo?.name || 'Subject';
     const subjectType = attendanceData.subjectInfo?.subType;
     const currentDate = new Date().toISOString().split('T')[0];
-  
+
     const addStylesToSheet = (ws, headerRowIndex) => {
       ws['!cols'] = [
         { wch: 15 }, // Roll Number
@@ -200,7 +183,7 @@ export default function FacultyAttendance({ facultyId = '' }) {
         { wch: 15 }, // Present
         { wch: 15 }  // Attendance %
       ];
-  
+
       const range = XLSX.utils.decode_range(ws['!ref']);
       for (let C = range.s.c; C <= range.e.c; C++) {
         const headerRef = XLSX.utils.encode_cell({ r: headerRowIndex, c: C });
@@ -217,7 +200,7 @@ export default function FacultyAttendance({ facultyId = '' }) {
         };
       }
     };
-  
+
     if (viewType === 'summary') {
       if (subjectType === 'theory') {
         const wsData = [
@@ -230,10 +213,10 @@ export default function FacultyAttendance({ facultyId = '' }) {
           [],
           ['Roll Number', 'Student Name', 'Total Lectures', 'Present', 'Attendance %']
         ];
-  
+
         const sortedAttendance = [...attendanceData.attendance]
           .sort((a, b) => compareRollNumbers(a.student.rollNumber, b.student.rollNumber));
-  
+
         sortedAttendance.forEach(record => {
           wsData.push([
             record.student.rollNumber,
@@ -243,7 +226,7 @@ export default function FacultyAttendance({ facultyId = '' }) {
             `${record.percentage.toFixed(2)}%`
           ]);
         });
-  
+
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         addStylesToSheet(ws, 7);
         XLSX.utils.book_append_sheet(wb, ws, 'Attendance Report');
@@ -260,10 +243,10 @@ export default function FacultyAttendance({ facultyId = '' }) {
             [],
             ['Roll Number', 'Student Name', 'Total Lectures', 'Present', 'Attendance %']
           ];
-  
+
           const sortedBatchData = [...batchData]
             .sort((a, b) => compareRollNumbers(a.student.rollNumber, b.student.rollNumber));
-  
+
           sortedBatchData.forEach(record => {
             wsData.push([
               record.student.rollNumber,
@@ -273,7 +256,7 @@ export default function FacultyAttendance({ facultyId = '' }) {
               `${record.percentage.toFixed(2)}%`
             ]);
           });
-  
+
           const ws = XLSX.utils.aoa_to_sheet(wsData);
           addStylesToSheet(ws, 8);
           XLSX.utils.book_append_sheet(wb, ws, `Batch ${batchName}`);
@@ -282,12 +265,12 @@ export default function FacultyAttendance({ facultyId = '' }) {
     } else if (viewType === 'dateWise') {
       const generateDateWiseSheet = (batchData, sheetName) => {
         if (!batchData || batchData.length === 0) return;
-  
+
         const dates = batchData[0].sessions.map(session => ({
           date: new Date(session.date).toLocaleDateString(),
           session: session.session
         }));
-  
+
         const wsData = [
           ['Subject Details'],
           ['Subject Name', subjectName],
@@ -296,9 +279,9 @@ export default function FacultyAttendance({ facultyId = '' }) {
           [],
           ['Roll Number', 'Student Name', ...dates.map(d => `${d.date} (S${d.session})`), 'Present', 'Total', 'Attendance %']
         ];
-  
+
         const sortedStudents = batchData.sort((a, b) => compareRollNumbers(a.student.rollNumber, b.student.rollNumber));
-  
+
         sortedStudents.forEach(student => {
           const row = [
             student.student.rollNumber,
@@ -310,12 +293,12 @@ export default function FacultyAttendance({ facultyId = '' }) {
           ];
           wsData.push(row);
         });
-  
+
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         addStylesToSheet(ws, 5);
         XLSX.utils.book_append_sheet(wb, ws, sheetName);
       };
-  
+
       if (subjectType === 'theory') {
         generateDateWiseSheet(attendanceData.attendance, 'Date-wise Attendance');
       } else {
@@ -324,7 +307,7 @@ export default function FacultyAttendance({ facultyId = '' }) {
         });
       }
     }
-  
+
     const filename = `${subjectName}_${subjectType}_${viewType}_Attendance_${currentDate}.xlsx`;
     XLSX.writeFile(wb, filename);
   }, [attendanceData, viewType, dateRange]);
@@ -368,10 +351,18 @@ export default function FacultyAttendance({ facultyId = '' }) {
       </Table>
     );
   };
+
+
+  const handleClassSelect = (value) => {
+    setSelectedClass(value)
+  }
+
+
   const renderDateWiseTable = (batchData) => {
     if (!batchData || !Array.isArray(batchData) || batchData.length === 0) {
       return <div>No attendance data available</div>;
     }
+
 
     // Sort dates from older to newer
     const dates = (batchData[0]?.sessions?.map(session => ({
@@ -383,10 +374,10 @@ export default function FacultyAttendance({ facultyId = '' }) {
 
     const formatDate = (dateString) => {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-GB', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric' 
+      return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
       });
     };
 
@@ -398,7 +389,7 @@ export default function FacultyAttendance({ facultyId = '' }) {
     const confirmDeleteColumn = () => {
       // Implement column deletion logic here
       console.log('Deleting column:', selectedColumnToDelete);
-      
+
       // You would typically call an API to delete the entire session record
       setShowDeleteColumnModal(false);
       setSelectedColumnToDelete(null);
@@ -420,10 +411,10 @@ export default function FacultyAttendance({ facultyId = '' }) {
                         Session {date.session}
                       </div>
                     </div>
-                    <Button 
-                      isIconOnly 
-                      size="sm" 
-                      color="danger" 
+                    <Button
+                      isIconOnly
+                      size="sm"
+                      color="danger"
                       variant="light"
                       onClick={() => handleDeleteColumn(date)}
                     >
@@ -470,37 +461,37 @@ export default function FacultyAttendance({ facultyId = '' }) {
           </Table>
         </div>
         {/* Delete Confirmation Modal */}
-        <Modal 
-  isOpen={showDeleteColumnModal} 
-  onOpenChange={(open) => setShowDeleteColumnModal(open)}
->
-  <ModalContent>
-    {(onClose) => (
-      <>
-        <ModalHeader>Confirm Deletion</ModalHeader>
-        <ModalBody>
-          <p>Are you sure you want to delete this attendance record?</p>
-        </ModalBody>
-        <ModalFooter>
-          <Button color="default" onPress={onClose}>
-            Cancel
-          </Button>
-          <Button color="danger" onPress={() => {
-            handleDeleteAttendance();
-            onClose();
-          }}>
-            Delete
-          </Button>
-        </ModalFooter>
-      </>
-    )}
-  </ModalContent>
-</Modal>
+        <Modal
+          isOpen={showDeleteColumnModal}
+          onOpenChange={(open) => setShowDeleteColumnModal(open)}
+        >
+          <ModalContent>
+            {(onClose) => (
+              <>
+                <ModalHeader>Confirm Deletion</ModalHeader>
+                <ModalBody>
+                  <p>Are you sure you want to delete this attendance record?</p>
+                </ModalBody>
+                <ModalFooter>
+                  <Button color="default" onPress={onClose}>
+                    Cancel
+                  </Button>
+                  <Button color="danger" onPress={() => {
+                    handleDeleteAttendance();
+                    onClose();
+                  }}>
+                    Delete
+                  </Button>
+                </ModalFooter>
+              </>
+            )}
+          </ModalContent>
+        </Modal>
       </>
     );
   };
-  
-  
+
+
 
   const renderDropdown = (label, value, options, onSelect) => (
     <Dropdown>
@@ -555,24 +546,16 @@ export default function FacultyAttendance({ facultyId = '' }) {
             [{ key: "sem1", label: "Semester 1" }, { key: "sem2", label: "Semester 2" }],
             setSelectedSemester
           )}
-          {renderDropdown(
-            "Class",
-            selectedClass,
-            classesWithSubjects.map(cls => ({ key: cls.classId, label: `${cls.classId} (${cls.department})` })),
-            (key) => {
-              setSelectedClass(key);
-              const classData = classesWithSubjects.find(c => c.classId === key);
-              if (classData?.subjects.length > 0) {
-                setSelectedSubject(classData.subjects[0]._id);
-              }
-            }
-          )}
-          {renderDropdown(
-            "Subject",
-            selectedSubject,
-            getSubjectsForClass().map(subject => ({ key: subject._id, label: subject.name })),
-            setSelectedSubject
-          )}
+          <SubjectDropdown
+            instituteId={institute}
+            facultyId={facultyId}
+            onSelect={handleSubjectSelection}
+            fetchBy="facultyId"
+            academicYear={academicYear}
+            semester={selectedSemester}
+            selectedSubject={selectedSubject}
+          />
+
           <Dropdown>
             <DropdownTrigger>
               <Button variant="bordered">

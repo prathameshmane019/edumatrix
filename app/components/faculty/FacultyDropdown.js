@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { Select, SelectItem } from '@nextui-org/react'
 
-export function FacultyDropdown({ instituteId, departmentId, onSelect, selectedFaculty, className = '' }) {
+export function FacultyDropdown({ instituteId, departmentId, onSelect, selectedFaculty, className = '',label }) {
     const [faculty, setFaculty] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
@@ -39,19 +39,18 @@ export function FacultyDropdown({ instituteId, departmentId, onSelect, selectedF
         onSelect(e.target.value)
     }
 
-    if (isLoading) return <div>Loading faculty...</div>
-    if (error) return <div>Error: {error}</div>
-
     return (
         <Select
             aria-label="Select a faculty member"
-            placeholder="Select a faculty member"
+            placeholder={isLoading? "Loading...":"Select a faculty member"}
             variant="bordered"
             size="sm"
+            label={label}
+
             value={selectedFaculty}
             selectedKeys={selectedFaculty ? [selectedFaculty] : []}
             onChange={handleSelectChange}
-            className={`max-w-xs my-4 ${className}`}
+            className={`max-w-xs w-full ${className}`}
         >
             {faculty.length === 0 ? (
                 <SelectItem value="">No faculty available</SelectItem>

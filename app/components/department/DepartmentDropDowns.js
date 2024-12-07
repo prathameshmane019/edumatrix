@@ -38,12 +38,9 @@ export function DepartmentDropdown({ instituteId, onSelect, selectedDepartment, 
         onSelect(value)
     }
 
-    if (isLoading) return <div>Loading departments...</div>
-    if (error) return <div>Error: {error}</div>
-
     return (
         <Select
-            placeholder="Select a department"
+            placeholder={isLoading? "Loading departments...":"Select a department" }
             variant="bordered"
             size="sm"
             value={selectedDepartment}

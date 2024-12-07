@@ -1,4 +1,3 @@
-
 import { NextResponse } from  "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Attendance from "@/models/attendance";
@@ -15,14 +14,13 @@ export async function GET(req) {
         const endDate = searchParams.get("endDate");
         const viewType = searchParams.get("viewType");
 
+        console.log("Faculty Attendance Api Hitted");
+        
         if (!subjectId) {
             return NextResponse.json({ error: "Subject ID is required" }, { status: 400 });
         }
 
-        const subject = await Subject.findOne({ 
-            _id: subjectId,
-            isActive: true
-        });
+        const subject = await Subject.findById(subjectId);
 
         if (!subject) {
             return NextResponse.json({ error: "Subject not found" }, { status: 404 });
@@ -35,12 +33,11 @@ export async function GET(req) {
                 $lte: new Date(endDate)
             };
         }
-
         const pipeline = viewType === 'dateWise' ? 
             [
                 {
                     $match: {
-                        subject: subject._id,
+                        subject: subjectId,
                         ...dateMatch
                     }
                 },
@@ -123,7 +120,7 @@ export async function GET(req) {
             [
                 {
                     $match: {
-                        subject: subject._id,
+                        subject: subjectId,
                         ...dateMatch
                     }
                 },
@@ -187,10 +184,10 @@ export async function GET(req) {
 
         let response = {
             subjectInfo: {
-                _id: subject._id,
+                _id: subject.id,
                 name: subject.name,
                 subType: subject.subType,
-                semester: subject.semester
+                semester: subject.sem
             },
             viewType,
             dateRange: startDate && endDate ? { startDate, endDate } : null

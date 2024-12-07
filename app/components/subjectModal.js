@@ -539,8 +539,7 @@ import {
 import { FacultyDropdown } from './faculty/FacultyDropdown';
 import { Calendar } from 'lucide-react';
 import { ClassDropdown } from './Class/ClassDropdown';
-import { DepartmentDropdown } from './department/DepartmentDropDowns';
-import { getAcademicYears } from './profile';
+import { getCurrentAcademicYear,getAcademicYears } from '../utils/acadmicYears';
 
 export default function SubjectModal({ isOpen, onClose, department, mode, subjectData, onSubmit, classes, instituteId, teachers }) {
   const [formData, setFormData] = useState({
@@ -641,12 +640,13 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
               onChange={(e) => handleInputChange('id', e.target.value)}
               required
               disabled={mode !== 'add'}
-              placeholder="Course ID-Year"
+              placeholder="Course ID"
               className="col-span-1 w-full"
             />
             <Input
               type="text"
               variant="bordered"
+              placeholder="Subject Name"
               size="sm"
               label="Name"
               value={formData.name}
@@ -661,7 +661,8 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
               startContent={<Calendar className="w-4 h-4 text-default-400" />}
               variant="bordered"
               size="sm"
-              className="max-w-52"
+              label="Acadmic Year"
+              className="w-full"
             >
               {getAcademicYears(10).map((year) => (
                 <SelectItem key={year.value} value={year.value}>
@@ -676,6 +677,8 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
               selectedClass={formData.class}
               acadmicYear={formData.academicYear}
               selectedDepartment={department}
+              label="Class"
+
             />
             <FacultyDropdown
               id="faculty-select"
@@ -683,6 +686,7 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
               onSelect={(value) => handleInputChange('teacher', value)}
               selectedFaculty={formData.teacher}
               className="w-full"
+              label="Faculty"
             />
             <Select
               label="Subject Type"

@@ -14,6 +14,8 @@ export async function GET(req) {
         const semester = searchParams.get("semester");
         const subjectId = searchParams.get("subjectId");
 
+        console.log(department,classId,semester,subjectId);
+        
         if (!classId || !semester) {
             return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
         }
@@ -167,8 +169,8 @@ export async function GET(req) {
         if (!subjectId) {
             response.summary = {
                 totalStudents: processedData.length,
-                averageAttendance: processedData.reduce((sum, student) => 
-                    sum + student.overallPercentage, 0) / processedData.length,
+                averageAttendance: (processedData.reduce((sum, student) => 
+                    sum + student.overallPercentage, 0) / processedData.length).toFixed(2),
                 belowThreshold: processedData.filter(student => 
                     student.overallPercentage < 75).length
             };
