@@ -327,7 +327,7 @@ export default function DepartmentTable() {
         </TableHeader>
         <TableBody
           items={sortedItems}
-          loadingContent={<Spinner label="Loading..." />}
+          loadingContent={<Spinner label="Please wait...fetching department data" />}
           isLoading={isLoading}
         >
           {(item) => (

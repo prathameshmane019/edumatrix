@@ -193,88 +193,98 @@
 // };
 
 // export default FacultyModal;
-
 import React, { useState, useEffect } from "react";
-import { Modal, Button, Input, ModalBody, ModalContent, ModalHeader, ModalFooter } from "@nextui-org/react";
-import { Select, SelectItem } from "@nextui-org/react";
+import {
+  Modal,
+  Button,
+  Input,
+  ModalBody,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  Select,
+  SelectItem,
+} from "@nextui-org/react";
 import { toast } from "sonner";
 import axios from "axios";
-import { departmentOptions } from "../utils/department";
 
 const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
   const [formData, setFormData] = useState({
-
     id: "",
-
     name: "",
     department: "",
     email: "",
     password: "",
     currentYear: "",
     sem: "",
-    institute: null
+    institute: null,
   });
   const [profile, setProfile] = useState(null);
+  const [departmentOptions, setDepartmentOptions] = useState([]);
 
+  // Fetch user profile from session storage
   useEffect(() => {
-    const storedProfile = sessionStorage.getItem('userProfile');
+    const storedProfile = sessionStorage.getItem("userProfile");
     if (storedProfile) {
       setProfile(JSON.parse(storedProfile));
     }
   }, []);
 
+  // Fetch department options
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await axios.get("/api/v2/department");
+        setDepartmentOptions(response.data.departments || []);
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+        toast.error("Error fetching department options");
+      }
+    };
+    fetchDepartments();
+  }, []);
+
+  // Set form data based on mode and profile
   useEffect(() => {
     if (mode === "edit" && faculty) {
       setFormData({
         ...faculty,
         department: profile?.role === "superadmin" ? faculty.department : profile?.department,
-        institute: faculty.institute?._id || null
+        institute: faculty.institute?._id || null,
       });
     } else {
       setFormData({
-
-
         id: "",
-
         name: "",
         department: profile?.role === "superadmin" ? "" : profile?.department,
         email: "",
         password: "",
         currentYear: "",
         sem: "",
-        institute: profile?.instituteId || null
+        institute: profile?.instituteId || null,
       });
     }
   }, [mode, faculty, profile]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
   const handleSelectChange = (key, value) => {
     setFormData({ ...formData, [key]: value });
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    const updatedFormData = { ...formData, [name]: value };
-    
-    // Enforce department for non-superadmin
-    if (profile?.role !== "superadmin" && name === "department") {
-      updatedFormData.department = profile?.department;
-    }
-    
-    setFormData(updatedFormData);
-  };
-
   const handleClear = () => {
     setFormData({
-
       id: "",
-
       name: "",
       department: profile?.role === "superadmin" ? "" : profile?.department,
       email: "",
       password: "",
       currentYear: "",
       sem: "",
-      institute: profile?.instituteId || null
+      institute: profile?.instituteId || null,
     });
   };
 
@@ -282,26 +292,23 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
     try {
       const dataToSubmit = {
         ...formData,
-        // Ensure department is set for non-superadmin
         department: profile?.role === "superadmin" ? formData.department : profile?.department,
-        // Include institute from profile if not set
-        institute: formData.institute || profile?.role === "superadmin" ? profile._id : profile?.institute
+        institute: formData.institute || (profile?.role === "superadmin" ? profile._id : profile?.institute),
       };
 
-      let response;
       if (mode === "add") {
-        response = await axios.post("/api/v2/faculty", dataToSubmit);
-        toast.success('Faculty added successfully');
+        await axios.post("/api/v2/faculty", dataToSubmit);
+        toast.success("Faculty added successfully");
         onSubmit();
       } else if (mode === "edit") {
-        response = await axios.put("/api/v2/faculty", dataToSubmit);
-        toast.success('Faculty updated successfully');
+        await axios.put("/api/v2/faculty", dataToSubmit);
+        toast.success("Faculty updated successfully");
       }
       onClose();
       handleClear();
     } catch (error) {
       console.error("Error:", error);
-      toast.error('Error occurred while saving faculty data');
+      toast.error("Error occurred while saving faculty data");
     }
   };
 
@@ -341,13 +348,16 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
               placeholder="Select department"
               name="department"
               selectedKeys={new Set([formData.department])}
-              onSelectionChange={(value) => handleSelectChange("department", value.currentKey)}
+              onSelectionChange={(value) => {
+                const department = Array.isArray(value) ? value[0] : value; // Ensure single selection
+                handleSelectChange("department", department);
+              }}
               variant="bordered"
               size="sm"
             >
               {departmentOptions.map((department) => (
-                <SelectItem key={department.key} textValue={department.label}>
-                  {department.label}
+                <SelectItem key={department.id} value={department.id}>
+                  {department.name}
                 </SelectItem>
               ))}
             </Select>
@@ -355,21 +365,12 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
             <Input
               label="Department"
               name="department"
-              value={profile?.department}
+              value={formData.department}
               disabled
               variant="bordered"
               size="sm"
             />
           )}
-          <Input
-            label="Email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            variant="bordered"
-            size="sm"
-          />
           <Input
             label="Password"
             name="password"
