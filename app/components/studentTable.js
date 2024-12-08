@@ -525,7 +525,7 @@ export default function StudentTable() {
         </TableHeader>
         <TableBody
           isLoading={isLoading}
-          loadingContent={<Spinner label="Please wait... fetching Students Data" />}
+          loadingContent={<Spinner label="Please wait... fetching Data" />}
           emptyContent={
             <div className="flex flex-col items-center justify-center">
               <Image
@@ -564,7 +564,8 @@ export default function StudentTable() {
         mode={modalMode}
         student={selectedStudent}
         onSubmit={handleModalSubmit}
-        instituteId={profile?.role === 'superadmin' ? profile?._id : profile?.institute._id}
+        instituteId={profile?.role === 'superadmin' ? profile?._id : profile?.institute?._id || ''}
+
 
       />
     </div>
