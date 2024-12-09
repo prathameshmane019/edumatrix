@@ -27,6 +27,7 @@ export default function LoginComponent() {
   useEffect(() => {
     if (userProfile?.role) {
       const role = userProfile.role;
+      console.log(role);
       const redirectPath = role === 'superadmin' || role === 'admin' ? `/admin` : `/${role}`;
       router.replace(redirectPath);
     }
@@ -39,6 +40,8 @@ export default function LoginComponent() {
          if (session?.user?.role === "admin") role="department"
          else if(session.user.role=== "superadmin") role ="institute" 
          else role = session.user.role;
+         console.log(session?.user?.role);
+         
         const { _id } = session.user;
         const storedProfile = sessionStorage.getItem('userProfile');
         
@@ -55,6 +58,8 @@ export default function LoginComponent() {
             profileData.role = session?.user?.role; // Add role to profile data
             sessionStorage.setItem('userProfile', JSON.stringify(profileData));
             setUserProfile(profileData);
+            console.log(profileData);
+            
           } catch (error) {
             console.error("Error fetching user profile:", error);
           }

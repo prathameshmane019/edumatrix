@@ -31,7 +31,13 @@ export async function POST(request) {
 
     const token = jwt.sign({ user: { id: user._id, role: role, isAdmin: user.isAdmin } }, SECRET_KEY, { expiresIn: '7h' });
     console.log(user);
-    return NextResponse.json({ token, user });
+    return NextResponse.json({ 
+      token, 
+      user: {
+        ...user.toObject(),
+        role: role
+      } 
+    });
   } catch (err) {
     console.error(err.message);
     return NextResponse.json({ msg: 'Server error' }, { status: 500 });
