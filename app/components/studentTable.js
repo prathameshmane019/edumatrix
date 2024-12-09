@@ -564,7 +564,8 @@ export default function StudentTable() {
         mode={modalMode}
         student={selectedStudent}
         onSubmit={handleModalSubmit}
-        instituteId={profile?.role === 'superadmin' ? profile?._id : profile?.institute._id}
+        instituteId={profile?.role === 'superadmin' ? profile?._id : profile?.institute?._id || ''}
+
 
       />
     </div>
