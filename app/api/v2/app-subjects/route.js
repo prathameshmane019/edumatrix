@@ -1,15 +1,17 @@
 import { connectMongoDB } from "@/lib/connectDb";
+import Faculty from "@/models/faculty";
 import Subject from "@/models/subject";
 import { NextResponse } from "next/server";
-
+import Institute from "@/models/Institute";
 export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const facultyId = searchParams.get("facultyId");
     const academicYear = searchParams.get("academicYear");
     const sem = searchParams.get("sem");
+    const institute = searchParams.get("institute");
   
-    if (!facultyId) {
-      return NextResponse.json({ error: "Faculty ID is required" }, { status: 400 });
+    if (!facultyId && !institute) {
+      return NextResponse.json({ error: "Faculty ID and InstituteId is required" }, { status: 400 });
     }
   
     try {
@@ -17,26 +19,18 @@ export async function GET(request) {
   
       // Construct query for subjects
       const query = {
-        teacher: new ObjectId(facultyId),
+        teacher:facultyId,
         ...(academicYear && { academicYear }),
+        ...(institute && { institute }),
         ...(sem && { sem })
       };
   
       // Fetch subjects with detailed population
       const subjects = await Subject.find(query)
-        .populate('class', 'name')
-        .populate('institute', 'name')
-        .lean();
+        .select('name id batch')
   
-      // Additional context for frontend
-      const facultyDetails = await Faculty.findById(facultyId)
-        .select('name department')
-        .lean();
-  
-      return NextResponse.json({
-        subjects,
-        faculty: facultyDetails
-      }, { status: 200 });
+      return NextResponse.json(
+        subjects, { status: 200 });
     } catch (error) {
       console.error("Error fetching faculty subjects:", error);
       return NextResponse.json({ 
