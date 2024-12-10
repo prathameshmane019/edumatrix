@@ -26,9 +26,9 @@ export async function GET(request) {
       };
   
       // Fetch subjects with detailed population
-      const subjects = await Subject.find(query)
-        .select('name id batch')
-  
+      const subjects = await (await Subject.find(query))
+      .select('_id id name batch subType');
+
       return NextResponse.json(
         subjects, { status: 200 });
     } catch (error) {
