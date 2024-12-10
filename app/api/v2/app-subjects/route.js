@@ -26,8 +26,9 @@ export async function GET(request) {
       };
   
       // Fetch subjects with detailed population
-      const subjects = await (await Subject.find(query))
-      .select('_id id name batch subType');
+      const subjects = await Subject.find(query)
+      .populate('class','id')
+      .select('_id id name batch subType ');
 
       return NextResponse.json(
         subjects, { status: 200 });
