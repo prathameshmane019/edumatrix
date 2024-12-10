@@ -1,8 +1,8 @@
-// app/api/login/route.js
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import Student from '@/models/student';
 import Faculty from '@/models/faculty';
+import Subject from '@/models/subject';
 import { connectMongoDB } from '@/lib/connectDb';
 const SECRET_KEY = process.env.NEXTAUTH_SECRET
 
@@ -11,7 +11,7 @@ export async function POST(request) {
   console.log({ _id, password, role });
 
   try {
-    connectMongoDB()
+    await connectMongoDB()
     let user;
     if (role === 'faculty') {
       user = await Faculty.findOne({id:_id});
@@ -29,13 +29,24 @@ export async function POST(request) {
       return NextResponse.json({ msg: 'Invalid credentials' }, { status: 401 });
     }
 
+    let subjects = [];
+    // If faculty, fetch their subjects
+    if (role === 'faculty') {
+      subjects = await Subject.find({
+        teacher: user._id,
+        sem: user.sem,
+        academicYear: user.currentYear
+      }).populate('class', 'name');
+    }
+
     const token = jwt.sign({ user: { id: user._id, role: role} }, SECRET_KEY, { expiresIn: '7h' });
-    console.log(user);
+    
     return NextResponse.json({ 
       token, 
       user: {
         ...user.toObject(),
-        role: role
+        role: role,
+        subjects: subjects
       } 
     });
   } catch (err) {
