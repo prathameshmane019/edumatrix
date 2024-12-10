@@ -91,9 +91,8 @@ export async function PUT(req) {
         }
 
         console.log("Faculty Updated Successfully", existingFaculty);
-        return NextResponse.json({ 
+        return NextResponse.json(existingFaculty,{ 
             message: "Faculty Updated Successfully", 
-            faculty: existingFaculty 
         }, { status: 200 });
 
     } catch (error) {
