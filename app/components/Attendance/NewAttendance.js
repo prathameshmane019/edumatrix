@@ -21,8 +21,6 @@ import { Calendar, Users, BookOpen, CheckSquare, PlusCircle, Trash2 } from 'luci
 import { SubjectDropdown } from "../subject/SubjectDropdown";
 import { BatchDropdown } from "../subject/BatchDropdown";
 
-// ... (keep the MemoizedPointInput component as is)
-
 const MemoizedPointInput = React.memo(({ value, onChange, onRemove, canRemove, index }) => (
     <div className="flex gap-2 items-center">
       <Input

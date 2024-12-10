@@ -14,7 +14,7 @@ export async function POST(request) {
     connectMongoDB()
     let user;
     if (role === 'faculty') {
-      user = await Faculty.findById(_id);
+      user = await Faculty.findOne({id:_id});
     } else if (role === 'student') {
       user = await Student.findById(_id);
     } else {
