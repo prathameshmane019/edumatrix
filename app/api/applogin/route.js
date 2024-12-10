@@ -36,7 +36,8 @@ export async function POST(request) {
         teacher: user._id,
         sem: user.sem,
         academicYear: user.currentYear
-      }).populate('class', 'name');
+      }) .populate('class','id')
+      .select('_id id name batch subType ');
     }
 
     const token = jwt.sign({ user: { id: user._id, role: role} }, SECRET_KEY, { expiresIn: '7h' });
