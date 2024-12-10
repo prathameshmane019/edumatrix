@@ -4,7 +4,8 @@ import Subject from "@/models/subject";
 import Classes from "@/models/className";
 import Student from "@/models/student";
 import mongoose from "mongoose";
-
+import Faculty from "@/models/faculty";
+import Institute from "@/models/Institute";
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const subjectId = searchParams.get("_id");
