@@ -14,9 +14,11 @@ export async function POST(request) {
     await connectMongoDB()
     let user;
     if (role === 'faculty') {
-      user = await Faculty.findOne({id:_id});
+      user = await Faculty.findOne({id:_id})
+      .populate('intitute',"name address");
     } else if (role === 'student') {
-      user = await Student.findById(_id);
+      user = await Student.findById(_id)
+      .populate('intitute',"name address");
     } else {
       return NextResponse.json({ msg: 'Invalid role' }, { status: 400 });
     }
@@ -36,7 +38,7 @@ export async function POST(request) {
         teacher: user._id,
         sem: user.sem,
         academicYear: user.currentYear
-      }) .populate('class','id').populate('intitute',"name address")
+      }).populate('class','id')
       .select('_id id name batch subType ');
     }
 
