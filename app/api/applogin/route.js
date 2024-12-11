@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import Student from '@/models/student';
 import Faculty from '@/models/faculty';
 import Subject from '@/models/subject';
+import Institute from '@/models/Institute';
 import { connectMongoDB } from '@/lib/connectDb';
 const SECRET_KEY = process.env.NEXTAUTH_SECRET
 
@@ -15,10 +16,10 @@ export async function POST(request) {
     let user;
     if (role === 'faculty') {
       user = await Faculty.findOne({id:_id})
-      .populate('intitute',"name address");
+      .populate('institute',"name address");
     } else if (role === 'student') {
       user = await Student.findById(_id)
-      .populate('intitute',"name address");
+      .populate('institute',"name address");
     } else {
       return NextResponse.json({ msg: 'Invalid role' }, { status: 400 });
     }
