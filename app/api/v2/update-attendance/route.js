@@ -4,7 +4,8 @@ import Subject from "@/models/subject";
 import Student from "@/models/student";
 import Attendance from "@/models/attendance";
 import Classes from "@/models/className";
-
+import Faculty from "@/models/faculty";
+import Institute from "@/models/Institute";
 export async function GET(req) {
   try {
     await connectMongoDB();
