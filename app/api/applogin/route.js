@@ -36,7 +36,7 @@ export async function POST(request) {
         teacher: user._id,
         sem: user.sem,
         academicYear: user.currentYear
-      }) .populate('class','id')
+      }) .populate('class','id').populate('intitute',"name address")
       .select('_id id name batch subType ');
     }
 
