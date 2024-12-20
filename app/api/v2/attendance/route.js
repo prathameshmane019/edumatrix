@@ -9,16 +9,16 @@ export async function POST(req) {
     await connectMongoDB();
     const data = await req.json();
     console.log(data);
-    
-    const { 
-      subject, 
-      session, 
-      date, 
-      batchId, 
-      attendanceRecords, 
-      pointsDiscussed, 
+
+    const {
+      subject,
+      session,
+      date,
+      batchId,
+      attendanceRecords,
+      pointsDiscussed,
       contents,
-      institute 
+      institute
     } = data;
 
     // Validate required fields
@@ -36,7 +36,7 @@ export async function POST(req) {
     const attendanceDate = new Date(Date.UTC(year, month - 1, day));
 
     const sessions = Array.isArray(session) ? session : [session];
-    
+
     // Get the subject document
     const subjectDoc = await Subject.findById(subject);
     if (!subjectDoc) {
@@ -58,9 +58,9 @@ export async function POST(req) {
       };
 
       // Create or update attendance record
-      const filter = { 
-        date: attendanceDate, 
-        subject, 
+      const filter = {
+        date: attendanceDate,
+        subject,
         session: sess,
         institute,
         ...(batchId && { batch: batchId })
@@ -69,39 +69,42 @@ export async function POST(req) {
       const options = { upsert: true, new: true, runValidators: true };
 
       const attendanceRecord = await Attendance.findOneAndUpdate(filter, attendanceData, options);
+      console.log(subjectDoc);
 
-      // Handle TG sessions
-      if (subjectDoc.subType === 'tg' && pointsDiscussed) {
-        const formattedDate = attendanceDate.toISOString().split('T')[0];
-        const formattedPoints = Array.isArray(pointsDiscussed) ? pointsDiscussed : [pointsDiscussed];
 
-        const existingSessionIndex = (subjectDoc.tgSessions || []).findIndex(session => 
-          session.date === formattedDate
-        );
+      async function handleTGSessionUpdate(subject, attendanceDate, pointsDiscussed) {
+        // Quick validation
+        if (!subject || !attendanceDate || !pointsDiscussed?.length) return null;
 
-        let updateQuery;
-        if (existingSessionIndex !== -1) {
-          // Update existing session
-          updateQuery = {
-            $set: {
-              [`tgSessions.${existingSessionIndex}.pointsDiscussed`]: formattedPoints
-            }
-          };
-        } else {
-          // Add new session
-          updateQuery = {
-            $push: {
-              tgSessions: {
-                $each: [{
-                  date: formattedDate,
-                  pointsDiscussed: formattedPoints
-                }],
-                $position: 0
+        try {
+          const formattedDate = attendanceDate.toISOString().split('T')[0];
+
+          return await Subject.findOneAndUpdate(
+            { _id: subject, subType: 'tg' },
+            {
+              $push: {
+                tgSessions: {
+                  $each: [{
+                    date: formattedDate,
+                    pointsDiscussed: [...new Set(pointsDiscussed)]  // Remove duplicates
+                  }],
+                  $position: 0,  // Add to the beginning
+                }
               }
+            },
+            {
+              new: true,
+              runValidators: true
             }
-          };
+          );
+        } catch (error) {
+          console.error('TG Session Update Error:', error);
+          throw new Error(`Failed to update TG session: ${error.message}`);
         }
-        await Subject.findByIdAndUpdate(subject, updateQuery, { new: true, runValidators: true });
+      }
+      // In POST handler
+      if (subjectDoc.subType === 'tg' && pointsDiscussed?.length) {
+        await handleTGSessionUpdate(subject, attendanceDate, pointsDiscussed);
       }
 
       // Update content status for non-TG subjects
@@ -160,17 +163,17 @@ export async function POST(req) {
     });
 
     const attendanceRecordsResult = await Promise.all(attendanceRecordsPromises);
-    
-    return NextResponse.json({ 
-      message: "Attendance Recorded Successfully", 
-      attendance: attendanceRecordsResult 
+
+    return NextResponse.json({
+      message: "Attendance Recorded Successfully",
+      attendance: attendanceRecordsResult
     }, { status: 200 });
 
   } catch (error) {
     console.error("Error recording attendance:", error);
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: "Failed to Record Attendance",
-      details: error.message 
+      details: error.message
     }, { status: 500 });
   }
 }
@@ -179,15 +182,15 @@ export async function PUT(req) {
   try {
     await connectMongoDB();
     const data = await req.json();
-    const { 
-      date, 
-      subject, 
-      session, 
-      batchId, 
-      attendanceRecords, 
-      contents, 
+    const {
+      date,
+      subject,
+      session,
+      batchId,
+      attendanceRecords,
+      contents,
       pointsDiscussed,
-      institute 
+      institute
     } = data;
 
     // Validate required fields
@@ -344,7 +347,7 @@ export async function PUT(req) {
 
       return attendanceRecord;
     });
-    
+
     const attendanceRecordsResult = await Promise.all(sessionPromises);
     return NextResponse.json({
       message: "Attendance Updated/Created Successfully",
@@ -388,7 +391,7 @@ export async function DELETE(req) {
       session,
       institute
     };
-    
+
     if (batchId) {
       filter.batch = batchId;
     }
@@ -396,7 +399,7 @@ export async function DELETE(req) {
     const attendanceRecord = await Attendance.findOne(filter);
 
     if (!attendanceRecord) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         message: "No matching attendance record found",
         filter: filter
       }, { status: 404 });

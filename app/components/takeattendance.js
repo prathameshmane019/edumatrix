@@ -428,7 +428,6 @@ export default function AttendanceSystem() {
             <SubjectDropdown
               facultyId={profile?._id}
               instituteId={profile?.institute._id}
-          
               onSelect={handleSubjectSelection}
               selectedSubject={selectedSubject}
             />
@@ -441,9 +440,7 @@ export default function AttendanceSystem() {
               selectedBatch={selectedBatch}
               />
             )}
-
             <div className="flex items-center gap-2">
-
               <Input
                 type="date"
                 label="Session Date"
@@ -456,7 +453,6 @@ export default function AttendanceSystem() {
                 className="max-w-xs"
               />
             </div>
-
             <CheckboxGroup
               orientation="horizontal"
               label="Select Sessions"
@@ -469,14 +465,12 @@ export default function AttendanceSystem() {
                 </Checkbox>
               ))}
             </CheckboxGroup>
-
             <Button color="primary" variant="shadow" onClick={handleTakeAttendance} startContent={<CheckSquare size={20} />}>
               Take Attendance
             </Button>
           </div>
         </CardBody>
       </Card>
-
       {selectedSubject !== "Subject" && subjectDetails && isTableVisible && (
         <div className="grid md:grid-cols-2 gap-4">
           <div>

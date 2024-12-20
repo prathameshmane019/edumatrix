@@ -2,6 +2,150 @@ import mongoose from 'mongoose';
 import { ObjectId } from 'mongodb';
 import Classes from './className';
 
+// const BatchStatusSchema = new mongoose.Schema({
+//     batchId: {
+//         type: String,
+//         required: true
+//     },
+//     status: {
+//         type: String,
+//         enum: ['covered', 'not_covered'],
+//         default: 'not_covered'
+//     },
+//     proposedDate: {
+//         type: String
+//     },
+//     completedDate: {
+//         type: String
+//     }
+// }, { _id: false });
+
+// const ContentSchema = new mongoose.Schema({
+//     title: {
+//         type: String,
+//         required: true
+//     },
+//     description: {
+//         type: String,
+//         required: true
+//     },
+//     references: {
+//         type: String
+//     },
+//     status: {
+//         type: String,
+//         enum: ['covered', 'not_covered'],
+//         default: 'not_covered'
+//     },
+//     courseOutcomes: {
+//         type: String
+//     },
+//     completedDate:{
+//         type: String
+//     },
+//     proposedDate:{
+//         type: String
+//     },
+//     programOutcomes: {
+//         type: String
+//     },
+//     batchStatus: {
+//         type: [BatchStatusSchema],
+//         default: undefined,
+//         validate: {
+//             validator: function(v) {
+//                 const subject = this.parent();
+//                 return !subject || subject.subType !== 'practical' || (Array.isArray(v) && v.length > 0);
+//             },
+//             message: 'Batch status is required for practical subjects'
+//         }
+//     }
+// }, {
+//     _id: true,
+// });
+
+// const TGSessionSchema = new mongoose.Schema({
+//     date: {
+//         type: String,
+//         required: true
+//     },
+//     pointsDiscussed: {
+//         type: [String],
+//         default: undefined
+//     },
+// }, {
+//     _id: true
+// });
+// const SubjectSchema = new mongoose.Schema({
+//     id: {
+//         type: String,
+//         required: true
+//     },
+//     name: {
+//         type: String,
+//         required: true
+//     },
+//     subType: {
+//         type: String,
+//         enum: ['theory', 'practical', 'tg'],
+//         required: true
+//     },
+//     class: {
+//         type: mongoose.Schema.Types.ObjectId,
+//         ref: 'Classes'
+//     },
+//     teacher: {
+//         type: mongoose.Schema.Types.ObjectId,
+//         ref: 'Faculty'
+//     },
+//     batch: {
+//         type: [String]
+//     },
+//     department: {
+//         type: String
+//     }, 
+//     institute: { 
+//         type: mongoose.Schema.Types.ObjectId, 
+//         ref: 'Institute', 
+//         required: true 
+//       },
+//     content: {
+//         type: [ContentSchema],
+//         default: undefined,
+//         validate: {
+//             validator: function(v) {
+//                 return this.subType !== 'tg' || (v === undefined || v.length === 0);
+//             },
+//             message: 'Content should be empty for TG subjects'
+//         }
+//     },
+//     tgSessions: {
+//         type: [TGSessionSchema],
+//         default: undefined,
+//         validate: {
+//             validator: function(v) {
+//                 return this.subType === 'tg' || (v === undefined || v.length === 0);
+//             },
+//             message: 'TG sessions should only be present for TG subjects'
+//         }
+//     },
+//     sem: {
+//         type: String,
+//         enum: ['sem1', 'sem2'],
+//         required: true
+//     },
+//     academicYear: {
+//         type: String,
+//         required: true
+//     }
+// }, {
+//     timestamps: true,
+// });
+
+// const Subject = mongoose.models.Subject || mongoose.model('Subject', SubjectSchema);
+// export default Subject;
+
+
 const BatchStatusSchema = new mongoose.Schema({
     batchId: {
         type: String,
@@ -76,70 +220,95 @@ const TGSessionSchema = new mongoose.Schema({
 }, {
     _id: true
 });
+
+// Create a new schema for batch-faculty mapping
+const BatchFacultySchema = new mongoose.Schema({
+  batchId: {
+    type: String,
+    required: true
+  },
+  faculty: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Faculty',
+    required: true
+  }
+}, { _id: false });
+
 const SubjectSchema = new mongoose.Schema({
-    id: {
-        type: String,
-        required: true
-    },
-    name: {
-        type: String,
-        required: true
-    },
-    subType: {
-        type: String,
-        enum: ['theory', 'practical', 'tg'],
-        required: true
-    },
-    class: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Classes'
-    },
-    teacher: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Faculty'
-    },
-    batch: {
-        type: [String]
-    },
-    department: {
-        type: String
-    }, 
-    institute: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Institute', 
-        required: true 
+  id: {
+    type: String,
+    required: true
+  },
+  name: {
+    type: String,
+    required: true
+  },
+  subType: {
+    type: String,
+    enum: ['theory', 'practical', 'tg'],
+    required: true
+  },
+  class: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Classes'
+  },
+  // For theory subjects
+  teacher: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Faculty'
+  },
+  // For practical/TG subjects - maps batches to faculty
+  batchFaculties: {
+    type: [BatchFacultySchema],
+    validate: {
+      validator: function(v) {
+        return this.subType === 'theory' || (Array.isArray(v) && v.length > 0);
       },
-    content: {
-        type: [ContentSchema],
-        default: undefined,
-        validate: {
-            validator: function(v) {
-                return this.subType !== 'tg' || (v === undefined || v.length === 0);
-            },
-            message: 'Content should be empty for TG subjects'
-        }
-    },
-    tgSessions: {
-        type: [TGSessionSchema],
-        default: undefined,
-        validate: {
-            validator: function(v) {
-                return this.subType === 'tg' || (v === undefined || v.length === 0);
-            },
-            message: 'TG sessions should only be present for TG subjects'
-        }
-    },
-    sem: {
-        type: String,
-        enum: ['sem1', 'sem2'],
-        required: true
-    },
-    academicYear: {
-        type: String,
-        required: true
+      message: 'Batch-faculty mapping is required for practical/TG subjects'
     }
+  },
+  batch: {
+    type: [String]
+  },
+  department: {
+    type: String
+  },
+  institute: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Institute',
+    required: true
+  },
+  content: {
+    type: [ContentSchema],
+    default: undefined,
+    validate: {
+      validator: function(v) {
+        return this.subType !== 'tg' || (v === undefined || v.length === 0);
+      },
+      message: 'Content should be empty for TG subjects'
+    }
+  },
+  tgSessions: {
+    type: [TGSessionSchema],
+    default: undefined,
+    validate: {
+      validator: function(v) {
+        return this.subType === 'tg' || (v === undefined || v.length === 0);
+      },
+      message: 'TG sessions should only be present for TG subjects'
+    }
+  },
+  sem: {
+    type: String,
+    enum: ['sem1', 'sem2'],
+    required: true
+  },
+  academicYear: {
+    type: String,
+    required: true
+  }
 }, {
-    timestamps: true,
+  timestamps: true,
 });
 
 const Subject = mongoose.models.Subject || mongoose.model('Subject', SubjectSchema);

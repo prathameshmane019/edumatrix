@@ -294,7 +294,7 @@
 //   }
 //   useEffect(() => {
 //     console.log(subjectData);
-    
+
 //     if (subjectData) {
 //       setSubjectId(subjectData.id);
 //       setName(subjectData.name);
@@ -325,7 +325,7 @@
 
 //   const handleFacultySelect = (value) => {
 //     console.log(value);
-    
+
 //     setTeacherId(value)
 // }
 
@@ -368,7 +368,7 @@
 
 //     try {
 //       console.log(formData);
-      
+
 //       if (mode === 'add') {
 //         await axios.post('/api/v2/subject', formData);
 //       } else {
@@ -524,6 +524,8 @@
 //     </Modal>
 //   );
 // }
+
+'use client'
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
@@ -539,7 +541,7 @@ import {
 import { FacultyDropdown } from './faculty/FacultyDropdown';
 import { Calendar } from 'lucide-react';
 import { ClassDropdown } from './Class/ClassDropdown';
-import { getCurrentAcademicYear,getAcademicYears } from '../utils/acadmicYears';
+import { getCurrentAcademicYear, getAcademicYears } from '../utils/acadmicYears';
 
 export default function SubjectModal({ isOpen, onClose, department, mode, subjectData, onSubmit, classes, instituteId, teachers }) {
   const [formData, setFormData] = useState({
@@ -549,6 +551,7 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
     teacher: '',
     subType: '',
     batch: [],
+    batchFaculties: [],
     sem: '',
     academicYear: '',
   });
@@ -564,23 +567,27 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
         teacher: subjectData.teacher?._id || '',
         subType: subjectData.subType || '',
         batch: subjectData.batch || [],
+        batchFaculties: subjectData.batchFaculties || [],
         sem: subjectData.sem || '',
         academicYear: subjectData.academicYear || '',
       });
+      if (subjectData.batch) {
+        setBatches(subjectData.batch);
+      }
     } else {
       resetForm();
     }
   }, [subjectData]);
 
-  useEffect(() => {
-    if (formData.class && (formData.subType === 'practical' || formData.subType === 'tg') && Array.isArray(classes)) {
-      const selectedClass = classes.find(cls => cls._id === formData.class);
-      setBatches(selectedClass ? selectedClass.batches : []);
-    } else {
-      setBatches([]);
-    }
-  }, [formData.class, formData.subType, classes]);
-  
+  const handleBatches = (newBatches) => {
+    console.log("batches", newBatches);
+    setBatches(newBatches);
+    setFormData(prev => ({
+      ...prev,
+      batch: newBatches.map(batch => batch.id),
+      batchFaculties: newBatches.map(batch => ({ batchId: batch.id, faculty: '' }))
+    }));
+  }
 
   const resetForm = () => {
     setFormData({
@@ -590,9 +597,11 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
       teacher: '',
       subType: '',
       batch: [],
+      batchFaculties: [],
       sem: '',
       academicYear: '',
     });
+    setBatches([]);
   };
 
   const handleInputChange = (field, value) => {
@@ -608,6 +617,14 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
         institute: instituteId,
       };
 
+      if (formData.subType === 'theory') {
+        delete payload.batchFaculties;
+        delete payload.batch;
+      } else {
+        delete payload.teacher;
+        payload.batchFaculties = payload.batchFaculties.filter(bf => bf.faculty);
+      }
+
       if (mode === 'add') {
         await axios.post('/api/v2/subject', payload);
       } else {
@@ -618,6 +635,15 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
     } catch (error) {
       console.error('Error submitting subject:', error);
     }
+  };
+
+  const handleBatchFacultyAssignment = (batchId, facultyId) => {
+    setFormData(prev => ({
+      ...prev,
+      batchFaculties: prev.batchFaculties.map(bf =>
+        bf.batchId === batchId ? { ...bf, faculty: facultyId } : bf
+      )
+    }));
   };
 
   return (
@@ -661,7 +687,7 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
               startContent={<Calendar className="w-4 h-4 text-default-400" />}
               variant="bordered"
               size="sm"
-              label="Acadmic Year"
+              label="Academic Year"
               className="w-full"
             >
               {getAcademicYears(10).map((year) => (
@@ -678,15 +704,7 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
               acadmicYear={formData.academicYear}
               selectedDepartment={department}
               label="Class"
-
-            />
-            <FacultyDropdown
-              id="faculty-select"
-              instituteId={instituteId}
-              onSelect={(value) => handleInputChange('teacher', value)}
-              selectedFaculty={formData.teacher}
-              className="w-full"
-              label="Faculty"
+              handleBatches={handleBatches}
             />
             <Select
               label="Subject Type"
@@ -702,25 +720,6 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
               <SelectItem key="practical" value="practical">Practical</SelectItem>
               <SelectItem key="tg" value="tg">Teacher Guardian</SelectItem>
             </Select>
-            {(formData.subType === 'practical' || formData.subType === 'tg') && (
-              <Select
-                label="Batches"
-                placeholder="Select Batches"
-                className="col-span-1 w-full"
-                selectedKeys={formData.batch}
-                onSelectionChange={(keys) => handleInputChange('batch', Array.from(keys))}
-                required
-                variant="bordered"
-                size="sm"
-                selectionMode="multiple"
-              >
-                {batches.map((batch) => (
-                  <SelectItem key={batch._id} value={batch._id}>
-                    {batch._id}
-                  </SelectItem>
-                ))}
-              </Select>
-            )}
             <Select
               label="Semester"
               placeholder="Select Semester"
@@ -734,7 +733,34 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
               <SelectItem key="sem1" value="sem1">Semester 1</SelectItem>
               <SelectItem key="sem2" value="sem2">Semester 2</SelectItem>
             </Select>
-
+            {formData.subType === "theory" && (
+              <FacultyDropdown
+                instituteId={instituteId}
+                // departmentId={department}
+                onSelect={(value) => handleInputChange('teacher', value)}
+                selectedFaculty={formData.teacher}
+                className="w-full"
+                label="Faculty"
+              />
+            )}
+            {(formData.subType === 'practical' || formData.subType === 'tg') && (
+              <div className="col-span-2">
+                <h3 className="text-lg font-semibold mb-2">Batch-Faculty Assignments</h3>
+                {batches.map((batch) => (
+                  <div key={batch.id} className="flex gap-4 items-center mb-2">
+                    <span className="w-24">{batch.id} ({batch.type})</span>
+                    <FacultyDropdown
+                      instituteId={instituteId}
+                      // departmentId={department}
+                      onSelect={(value) => handleBatchFacultyAssignment(batch.id, value)}
+                      selectedFaculty={formData.batchFaculties.find(bf => bf.batchId === batch.id)?.faculty}
+                      className="w-full"
+                      label={`Faculty for ${batch.id}`}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="col-span-2 flex justify-end gap-4">
               <Button
                 variant="ghost"
@@ -760,4 +786,3 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
     </Modal>
   );
 }
-

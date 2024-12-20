@@ -3,13 +3,11 @@
 import React, { useEffect, useState } from 'react'
 import { Select, SelectItem } from '@nextui-org/react'
 
-export function ClassDropdown({ instituteId, onSelect, selectedClass, selectedDepartment, acadmicYear, className = '' ,label="",size='sm'}) {
+export function ClassDropdown({ instituteId, onSelect, selectedClass, selectedDepartment, acadmicYear, className = '', label = "", size = 'sm', handleBatches }) {
     const [classes, setClasses] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
 
-    console.log(instituteId,acadmicYear,selectedClass,selectedDepartment);
-    
     useEffect(() => {
         async function fetchClasses() {
             if (!instituteId || !selectedDepartment || !acadmicYear) {
@@ -36,6 +34,14 @@ export function ClassDropdown({ instituteId, onSelect, selectedClass, selectedDe
 
     const handleSelectChange = (e) => {
         onSelect(e.target.value)
+        console.log(classes);
+        const batches = classes.map((c) =>
+            c.value === e.target.value ? c.batches : null
+        )
+        console.log("batches", batches[0]);
+
+        if(handleBatches) handleBatches(batches[0])
+
     }
 
     if (error) return <div>No classes found</div>
@@ -44,7 +50,7 @@ export function ClassDropdown({ instituteId, onSelect, selectedClass, selectedDe
         <Select
             placeholder={isLoading ? "Loading... class data " : "Select a class"}
             variant="bordered"
-      label={label}
+            label={label}
 
             size={size}
             value={selectedClass}

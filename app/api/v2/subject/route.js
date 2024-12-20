@@ -88,143 +88,143 @@ export async function GET(request) {
   }
 }
 
-export async function POST(request) {
-  try {
-    await connectMongoDB();
-    const data = await request.json();
-    const {
-      id,
-      name,
-      subType,
-      classId,
-      teacher,
-      batch,
-      department,
-      institute,
-      content,
-      tgSessions,
-      sem,
-      academicYear
-    } = data;
+// export async function POST(request) {
+//   try {
+//     await connectMongoDB();
+//     const data = await request.json();
+//     const {
+//       id,
+//       name,
+//       subType,
+//       classId,
+//       teacher,
+//       batch,
+//       department,
+//       institute,
+//       content,
+//       tgSessions,
+//       sem,
+//       academicYear
+//     } = data;
 
-    const newSubject = new Subject({
-      id,
-      name,
-      subType,
-      class: classId,
-      teacher,
-      batch: subType === "practical" ? batch : undefined,
-      department,
-      institute,
-      content: subType !== "tg" ? content : undefined,
-      tgSessions: subType === "tg" ? tgSessions : undefined,
-      sem,
-      academicYear
-    });
+//     const newSubject = new Subject({
+//       id,
+//       name,
+//       subType,
+//       class: classId,
+//       teacher,
+//       batch: subType === "practical" ? batch : undefined,
+//       department,
+//       institute,
+//       content: subType !== "tg" ? content : undefined,
+//       tgSessions: subType === "tg" ? tgSessions : undefined,
+//       sem,
+//       academicYear
+//     });
 
-    await newSubject.save();
+//     await newSubject.save();
     
-    await Classes.findByIdAndUpdate(classId, {
-      $addToSet: { [`subjects.${sem}`]: newSubject._id }
-    });
+//     await Classes.findByIdAndUpdate(classId, {
+//       $addToSet: { [`subjects.${sem}`]: newSubject._id }
+//     });
 
-    if (teacher) {
-      await Faculty.findByIdAndUpdate(teacher, { $addToSet: { subjects: newSubject._id } });
-    }
+//     if (teacher) {
+//       await Faculty.findByIdAndUpdate(teacher, { $addToSet: { subjects: newSubject._id } });
+//     }
 
-    return NextResponse.json(newSubject, { status: 201 });
-  } catch (error) {
-    console.error("Error creating subject:", error);
-    return NextResponse.json({ error: "Error creating subject", details: error.message }, { status: 500 });
-  }
-}
+//     return NextResponse.json(newSubject, { status: 201 });
+//   } catch (error) {
+//     console.error("Error creating subject:", error);
+//     return NextResponse.json({ error: "Error creating subject", details: error.message }, { status: 500 });
+//   }
+// }
 
-export async function PUT(request) {
-  try {
+// export async function PUT(request) {
+//   try {
     
-  const { searchParams } = new URL(request.url);
-  const _id = searchParams.get("_id");
-    await connectMongoDB();
-    const data = await request.json();
-    const { 
-      id,
-      name,
-      subType,
-      class:classId,
-      teacher,
-      batch,
-      department,
-      institute,
-      content,
-      tgSessions,
-      sem,
-      academicYear
-    } = data;
-console.log(classId);
+//   const { searchParams } = new URL(request.url);
+//   const _id = searchParams.get("_id");
+//     await connectMongoDB();
+//     const data = await request.json();
+//     const { 
+//       id,
+//       name,
+//       subType,
+//       class:classId,
+//       teacher,
+//       batch,
+//       department,
+//       institute,
+//       content,
+//       tgSessions,
+//       sem,
+//       academicYear
+//     } = data;
+// console.log(classId);
 
-    console.log(data);
+//     console.log(data);
     
-    if (!_id) {
-      return NextResponse.json({ error: "Subject ID is required" }, { status: 400 });
-    }
+//     if (!_id) {
+//       return NextResponse.json({ error: "Subject ID is required" }, { status: 400 });
+//     }
 
-    const oldSubject = await Subject.findById(_id);
-    if (!oldSubject) {
-      return NextResponse.json({ error: "Subject not found" }, { status: 404 });
-    }
+//     const oldSubject = await Subject.findById(_id);
+//     if (!oldSubject) {
+//       return NextResponse.json({ error: "Subject not found" }, { status: 404 });
+//     }
 
-    const updatedSubject = await Subject.findByIdAndUpdate(
-      _id,
-      {
-        id,
-        name,
-        subType,
-        class: classId,
-        teacher,
-        batch: subType === "practical" ? batch : undefined,
-        department,
-        institute,
-        content: subType !== "tg" ? content : undefined,
-        tgSessions: subType === "tg" ? tgSessions : undefined,
-        sem,
-        academicYear
-      },
-      { new: true }
-    );
+//     const updatedSubject = await Subject.findByIdAndUpdate(
+//       _id,
+//       {
+//         id,
+//         name,
+//         subType,
+//         class: classId,
+//         teacher,
+//         batch: subType === "practical" ? batch : undefined,
+//         department,
+//         institute,
+//         content: subType !== "tg" ? content : undefined,
+//         tgSessions: subType === "tg" ? tgSessions : undefined,
+//         sem,
+//         academicYear
+//       },
+//       { new: true }
+//     );
 
-    console.log(updatedSubject);
+//     console.log(updatedSubject);
     
-    // Check if class or semester has changed
-    if (oldSubject.class?.toString() !== classId || oldSubject.sem !== sem) {
-      // Remove subject from old class
-      if (oldSubject.class) {
-        await Classes.findByIdAndUpdate(oldSubject.class, { 
-          $pull: { [`subjects.${oldSubject.sem}`]: _id }
-        });
-      }
+//     // Check if class or semester has changed
+//     if (oldSubject.class?.toString() !== classId || oldSubject.sem !== sem) {
+//       // Remove subject from old class
+//       if (oldSubject.class) {
+//         await Classes.findByIdAndUpdate(oldSubject.class, { 
+//           $pull: { [`subjects.${oldSubject.sem}`]: _id }
+//         });
+//       }
 
-      // Add subject to new class
-      await Classes.findByIdAndUpdate(classId, { 
-        $addToSet: { [`subjects.${sem}`]: _id }
-      });
-    }
+//       // Add subject to new class
+//       await Classes.findByIdAndUpdate(classId, { 
+//         $addToSet: { [`subjects.${sem}`]: _id }
+//       });
+//     }
 
-    // Update teacher references
-    if (oldSubject.teacher?.toString() !== teacher) {
-      if (oldSubject.teacher) {
-        await Faculty.findByIdAndUpdate(oldSubject.teacher, { $pull: { subjects: _id } });
-      }
-      if (teacher) {
-        await Faculty.findByIdAndUpdate(teacher, { $addToSet: { subjects: _id } });
-      }
-    }
+//     // Update teacher references
+//     if (oldSubject.teacher?.toString() !== teacher) {
+//       if (oldSubject.teacher) {
+//         await Faculty.findByIdAndUpdate(oldSubject.teacher, { $pull: { subjects: _id } });
+//       }
+//       if (teacher) {
+//         await Faculty.findByIdAndUpdate(teacher, { $addToSet: { subjects: _id } });
+//       }
+//     }
 
-    return NextResponse.json(updatedSubject, { status: 200 });
-  } catch (error) {
-    console.error("Error updating subject:", error);
-    return NextResponse.json({ error: "Error updating subject", details: error.message }, { status: 500 });
-  }
-}
+//     return NextResponse.json(updatedSubject, { status: 200 });
+//   } catch (error) {
+//     console.error("Error updating subject:", error);
+//     return NextResponse.json({ error: "Error updating subject", details: error.message }, { status: 500 });
+//   }
+// }
 
 export async function DELETE(request) {
   const { searchParams } = new URL(request.url);
@@ -250,6 +250,174 @@ export async function DELETE(request) {
   } catch (error) {
     console.error("Error deleting subject:", error);
     return NextResponse.json({ error: "Error deleting subject", details: error.message }, { status: 500 });
+  }
+} 
+
+export async function POST(request) {
+  try {
+    await connectMongoDB();
+    const data = await request.json();
+    const {
+      id,
+      name,
+      subType,
+      class: classId,
+      teacher,
+      batch,
+      batchFaculties,
+      department,
+      institute,
+      content,
+      tgSessions,
+      sem,
+      academicYear
+    } = data;
+
+    const newSubject = new Subject({
+      id,
+      name,
+      subType,
+      class: classId,
+      teacher: subType === 'theory' ? teacher : undefined,
+      batchFaculties: (subType === 'practical' || subType === 'tg') ? batchFaculties : undefined,
+      batch: (subType === 'practical' || subType === 'tg') ? batch : undefined,
+      department,
+      institute,
+      content: subType !== 'tg' ? content : undefined,
+      tgSessions: subType === 'tg' ? tgSessions : undefined,
+      sem,
+      academicYear
+    });
+
+    await newSubject.save();
+    
+    await Classes.findByIdAndUpdate(classId, {
+      $addToSet: { [`subjects.${sem}`]: newSubject._id }
+    });
+
+    // Update faculty references for all assigned teachers
+    if (subType === 'theory' && teacher) {
+      await Faculty.findByIdAndUpdate(teacher, { 
+        $addToSet: { subjects: newSubject._id } 
+      });
+    } else if (batchFaculties && batchFaculties.length > 0) {
+      const facultyIds = batchFaculties.map(bf => bf.faculty);
+      await Faculty.updateMany(
+        { _id: { $in: facultyIds } },
+        { $addToSet: { subjects: newSubject._id } }
+      );
+    }
+
+    return NextResponse.json(newSubject, { status: 201 });
+  } catch (error) {
+    console.error("Error creating subject:", error);
+    return NextResponse.json({ error: "Error creating subject", details: error.message }, { status: 500 });
+  }
+}
+
+export async function PUT(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const _id = searchParams.get("_id");
+    await connectMongoDB();
+    const data = await request.json();
+    const {
+      id,
+      name,
+      subType,
+      class: classId,
+      teacher,
+      batch,
+      batchFaculties,
+      department,
+      institute,
+      content,
+      tgSessions,
+      sem,
+      academicYear
+    } = data;
+
+    const oldSubject = await Subject.findById(_id);
+    if (!oldSubject) {
+      return NextResponse.json({ error: "Subject not found" }, { status: 404 });
+    }
+
+    const updatedSubject = await Subject.findByIdAndUpdate(
+      _id,
+      {
+        id,
+        name,
+        subType,
+        class: classId,
+        teacher: subType === 'theory' ? teacher : undefined,
+        batchFaculties: (subType === 'practical' || subType === 'tg') ? batchFaculties : undefined,
+        batch: (subType === 'practical' || subType === 'tg') ? batch : undefined,
+        department,
+        institute,
+        content: subType !== 'tg' ? content : undefined,
+        tgSessions: subType === 'tg' ? tgSessions : undefined,
+        sem,
+        academicYear
+      },
+      { new: true }
+    );
+
+    // Update class references
+    if (oldSubject.class?.toString() !== classId || oldSubject.sem !== sem) {
+      if (oldSubject.class) {
+        await Classes.findByIdAndUpdate(oldSubject.class, {
+          $pull: { [`subjects.${oldSubject.sem}`]: _id }
+        });
+      }
+      await Classes.findByIdAndUpdate(classId, {
+        $addToSet: { [`subjects.${sem}`]: _id }
+      });
+    }
+
+    // Update faculty references
+    if (subType === 'theory') {
+      // For theory subjects
+      if (oldSubject.teacher?.toString() !== teacher) {
+        if (oldSubject.teacher) {
+          await Faculty.findByIdAndUpdate(oldSubject.teacher, { 
+            $pull: { subjects: _id } 
+          });
+        }
+        if (teacher) {
+          await Faculty.findByIdAndUpdate(teacher, { 
+            $addToSet: { subjects: _id } 
+          });
+        }
+      }
+    } else {
+      // For practical/TG subjects
+      const oldFacultyIds = oldSubject.batchFaculties?.map(bf => bf.faculty.toString()) || [];
+      const newFacultyIds = batchFaculties?.map(bf => bf.faculty.toString()) || [];
+
+      // Remove subject reference from faculties no longer teaching the subject
+      const removedFaculties = oldFacultyIds.filter(id => !newFacultyIds.includes(id));
+      if (removedFaculties.length > 0) {
+        await Faculty.updateMany(
+          { _id: { $in: removedFaculties } },
+          { $pull: { subjects: _id } }
+        );
+      }
+
+      // Add subject reference to new faculties
+      const addedFaculties = newFacultyIds.filter(id => !oldFacultyIds.includes(id));
+      if (addedFaculties.lengtholdFaculties.includes(id));
+      if (addedFaculties.length > 0) {
+        await Faculty.updateMany(
+          { _id: { $in: addedFaculties } },
+          { $addToSet: { subjects: _id } }
+        );
+      }
+    }
+
+    return NextResponse.json(updatedSubject, { status: 200 });
+  } catch (error) {
+    console.error("Error updating subject:", error);
+    return NextResponse.json({ error: "Error updating subject", details: error.message }, { status: 500 });
   }
 }
 

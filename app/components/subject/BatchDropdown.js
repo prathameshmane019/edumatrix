@@ -9,43 +9,61 @@ export function BatchDropdown({
   selectedSubject, 
   onSelect, 
   selectedBatch, 
+  selectedClass,
   className = '' 
 }) {
   const [batches, setBatches] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
-
+console.log( facultyId, 
+  instituteId, 
+  selectedSubject, 
+  onSelect, 
+  selectedBatch, 
+  selectedClass);
   useEffect(() => {
     async function fetchBatches() {
-        console.log(facultyId,instituteId,selectedSubject,selectedBatch);
-        
       // Only fetch batches if required parameters are present
-      if (!facultyId || !instituteId || !selectedSubject) {
+      if (!instituteId || (!selectedSubject && !selectedClass)) {
         setBatches([])
         return
       }
+
       setIsLoading(true)
       setError(null)
 
       try {
-        const response = await axios.get(`/api/v2/utils/batches?faculty=${facultyId}&institute=${instituteId}&subject=${selectedSubject}`)
-   
+        const queryParams = new URLSearchParams({
+          institute: instituteId
+        })
+
+        if (selectedSubject) {
+          queryParams.append('subject', selectedSubject)
+        }
+
+        if (selectedClass) {
+          queryParams.append('selectedClass', selectedClass)
+        }
+
+        const response = await axios.get(`/api/v2/utils/batches?${queryParams}`)
         const data = await response.data
         setBatches(data)
       } catch (error) {
         console.error('Error fetching batches:', error)
         setError('Failed to load batches')
+        setBatches([])
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchBatches()
-  }, [facultyId, instituteId, selectedSubject])
+  }, [instituteId, selectedSubject, selectedClass])
 
   const handleSelectChange = (e) => {
     onSelect(e.target.value)
   }
+
   return (
     <Select
       placeholder={isLoading ? "Loading batches..." : "Select a batch"}
@@ -55,7 +73,8 @@ export function BatchDropdown({
       selectedKeys={selectedBatch ? [selectedBatch] : []}
       onChange={handleSelectChange}
       className={`max-w-xs my-4 ${className}`}
-      isDisabled={isLoading || !selectedSubject}
+      selectionMode="multiple"
+      isDisabled={isLoading || (!selectedSubject && !selectedClass)}
     >
       {batches.map((batch) => (
         <SelectItem key={batch.value} value={batch.value}>

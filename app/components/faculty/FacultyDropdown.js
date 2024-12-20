@@ -14,6 +14,8 @@ export function FacultyDropdown({ instituteId, departmentId, onSelect, selectedF
             setIsLoading(true)
             setError(null)
 
+            console.log(instituteId,departmentId);
+            
             try {
                 const params = new URLSearchParams({
                     institute: instituteId,
@@ -24,6 +26,8 @@ export function FacultyDropdown({ instituteId, departmentId, onSelect, selectedF
                 if (!response.ok) throw new Error('Failed to fetch faculty')
                 const data = await response.json()
                 setFaculty(data)
+                console.log(data);
+                
             } catch (error) {
                 console.error('Error:', error)
                 setError('Failed to load faculty')

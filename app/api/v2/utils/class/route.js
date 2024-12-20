@@ -23,7 +23,7 @@ export async function GET(req) {
     // Fetch classes for the given institute
     const classes = await Classes.find(
       filter,
-      '_id id year' // Select id, year, and department fields
+      '_id id year batches' // Select id, year, and department fields
     );
 
     if (!classes || classes.length === 0) {
@@ -35,7 +35,8 @@ export async function GET(req) {
     // Transform the data for dropdown menu
     const dropdownData = classes.map(cls => ({
       value: cls._id,
-      label: `${cls.year} - ${cls.id}`
+      label: `${cls.year} - ${cls.id}`,
+      batches:cls.batches
     }));
 
     return NextResponse.json(dropdownData);
