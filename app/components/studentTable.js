@@ -119,7 +119,7 @@ export default function StudentTable() {
   const fetchStudents = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`/api/v2/student`, {
+      const response = await axios.get(`/api/v2/students`, {
         params: {
           department: selectedDepartment,
           class: selectedClass,

@@ -207,6 +207,9 @@ import {
 } from "@nextui-org/react";
 import { toast } from "sonner";
 import axios from "axios";
+import { DepartmentDropdown } from "./department/DepartmentDropDowns";
+import { Calendar } from "lucide-react";
+import { getAcademicYears } from "../utils/acadmicYears";
 
 const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
   const [formData, setFormData] = useState({
@@ -288,6 +291,14 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
     });
   };
 
+  const handleDepartmentSelect = (departmentId) => {
+    console.log(departmentId.target.value);
+    setFormData((prev) => ({
+      ...prev,
+      department: departmentId.target.value
+    }));
+  }
+
   const handleSubmit = async () => {
     try {
       const dataToSubmit = {
@@ -342,33 +353,22 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
             variant="bordered"
             size="sm"
           />
-          {profile?.role === "superadmin" ? (
-            <Select
-              label="Department"
-              placeholder="Select department"
-              name="department"
-              selectedKeys={new Set([formData.department])}
-              onSelectionChange={(value) => {
-                const department = Array.isArray(value) ? value[0] : value; // Ensure single selection
-                handleSelectChange("department", department);
-              }}
-              variant="bordered"
-              size="sm"
-            >
-              {departmentOptions.map((department) => (
-                <SelectItem key={department.id} value={department.id}>
-                  {department.name}
-                </SelectItem>
-              ))}
-            </Select>
-          ) : (
-            <Input
-              label="Department"
-              name="department"
-              value={formData.department}
-              disabled
-              variant="bordered"
-              size="sm"
+          <Input
+            label="Email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            variant="bordered"
+            size="sm"
+          />
+          {profile?.role !== "admin" && (
+            <DepartmentDropdown
+              instituteId={profile?.role === "superadmin" ? profile?._id : profile?.institute}
+              onSelect={handleDepartmentSelect}
+              className="w-full"
+              size="md"
+              selectedDepartment={formData.department}
             />
           )}
           <Input
@@ -381,22 +381,35 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
             size="sm"
             type="password"
           />
-          <Input
-            label="Current Year"
-            name="currentYear"
-            value={formData.currentYear}
-            onChange={handleChange}
+          <Select
+            placeholder="Select Year"
+            label="Select Year"
             variant="bordered"
             size="sm"
-          />
-          <Input
+            selectedKeys={formData.year ? [formData.year] : []}
+            onSelectionChange={(keys) => setFormData((prev) => ({ ...prev, year: Array.from(keys)[0] }))}
+            startContent={<Calendar className="w-4 h-4 text-default-400" />}
+            className="w-full"
+          >
+            {getAcademicYears(10).map((year) => (
+              <SelectItem key={year.value} value={year.value}>
+                {year.label}
+              </SelectItem>
+            ))}
+          </Select>
+          <Select
             label="Semester"
-            name="sem"
-            value={formData.sem}
-            onChange={handleChange}
+            placeholder="Select Semester"
+            className="col-span-1 w-full"
+            selectedKeys={[formData.sem]}
+            onSelectionChange={(keys) => handleSelectChange('sem', keys.currentKey)}
+            required
             variant="bordered"
             size="sm"
-          />
+          >
+            <SelectItem key="sem1" value="sem1">Semester 1</SelectItem>
+            <SelectItem key="sem2" value="sem2">Semester 2</SelectItem>
+          </Select>
         </ModalBody>
         <ModalFooter>
           <Button auto flat color="error" onClick={onClose}>

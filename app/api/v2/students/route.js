@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Student from "@/models/student";
 import Classes from "@/models/className";
+import mongoose from "mongoose";
 
 export async function POST(req) {
     try {
@@ -97,7 +98,15 @@ export async function GET(req) {
         }
 
         if (department) filter.department = department;
-        if (className) filter.class = className;
+        if (className) {
+            // Ensure className is a valid ObjectId
+            if (!mongoose.Types.ObjectId.isValid(className)) {
+                return NextResponse.json({ error: "Invalid class ID format" }, { status: 400 });
+            }
+            filter.class = new mongoose.Types.ObjectId(className);
+        }
+        console.log(filter);
+        
         if (filterValue) {
             filter.$or = [
                 { name: { $regex: filterValue, $options: "i" } },

@@ -4,11 +4,13 @@ import React, { useEffect, useState } from 'react'
 
 import { Select, SelectItem } from '@nextui-org/react'
 
-export function DepartmentDropdown({ instituteId, onSelect, selectedDepartment, className = '' }) {
+export function DepartmentDropdown({ instituteId, onSelect, selectedDepartment, className = '',size='sm' }) {
     const [departments, setDepartments] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
 
+    console.log(instituteId,selectedDepartment);
+    
     useEffect(() => {
         async function fetchDepartments() {
             if (!instituteId) return
@@ -20,8 +22,7 @@ export function DepartmentDropdown({ instituteId, onSelect, selectedDepartment, 
                 const response = await fetch(`/api/v2/utils/department?institute=${instituteId}`)
                 if (!response.ok) throw new Error('Failed to fetch departments')
                 const data = await response.json()
-                setDepartments(data)
-                console.log(data);
+                setDepartments(data) 
 
             } catch (error) {
                 console.error('Error:', error)
@@ -42,7 +43,7 @@ export function DepartmentDropdown({ instituteId, onSelect, selectedDepartment, 
         <Select
             placeholder={isLoading? "Loading departments...":"Select a department" }
             variant="bordered"
-            size="sm"
+            size={size}
             value={selectedDepartment}
             onChange={handleSelectChange}
             className="max-w-xs my-4"

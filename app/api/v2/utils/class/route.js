@@ -7,19 +7,22 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const institute = searchParams.get("institute");
     const year = searchParams.get("acadmicYear");
-    const department = searchParams.get("selectedDepartment");
+    const department = searchParams.get("department");
     await connectMongoDB();
     
     console.log(year,department,institute);
     let filter={}
+
     if (institute) filter.institute=institute
+
     if (year) filter.year=year
+
     if (department) filter.department=department
     // Validate instituteId
-    if (!institute) {
-      return NextResponse.json({ error: "Institute ID is required" }, { status: 400 });
+    if (!institute && !department) {
+      return NextResponse.json({ error: "Institute ID and Department is required" }, { status: 400 });
     }
-
+ 
     // Fetch classes for the given institute
     const classes = await Classes.find(
       filter,

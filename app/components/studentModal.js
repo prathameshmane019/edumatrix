@@ -1,22 +1,25 @@
- 
+
 import React, { useState, useEffect } from "react";
 import { Modal, Button, Input, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem } from "@nextui-org/react";
 import { toast } from "sonner";
 import axios from "axios";
 import { departmentOptions } from "../utils/department";
+import { DepartmentDropdown } from "./department/DepartmentDropDowns";
+import { Calendar } from "lucide-react";
+import { getAcademicYears } from "../utils/acadmicYears";
 
-const StudentModal = ({ isOpen, onClose, mode, student, onSubmit ,instituteId}) => {
+const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId }) => {
   const [profile, setProfile] = useState(null);
   const [formData, setFormData] = useState({
     _id: "",
     rollNumber: "",
-    name: "", 
+    name: "",
     department: "",
     email: "",
     phoneNo: "",
     password: "",
     year: "",
-    institute:instituteId
+    institute: instituteId
   });
 
   useEffect(() => {
@@ -31,19 +34,17 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit ,instituteId}) 
       setFormData((prev) => ({
         ...prev,
         department: profile?.department
-        
+
       }));
     }
   }, [profile]);
-
-console.log(instituteId);
 
   useEffect(() => {
     if (mode === "edit" && student) {
       setFormData({
         _id: student._id,
         rollNumber: student.rollNumber,
-        name: student.name, 
+        name: student.name,
         department: student.department,
         email: student.email,
         phoneNo: student.phoneNo,
@@ -70,24 +71,26 @@ console.log(instituteId);
     }));
   };
 
-  const handleSelectChange = (key, value) => {
+  const handleDepartmentSelect = (departmentId) => {
+    console.log(departmentId.target.value);
     setFormData((prev) => ({
       ...prev,
-      [key]: value
+      department: departmentId.target.value
     }));
-  };
+  }
+
 
   const handleClear = () => {
     setFormData({
       _id: "",
       rollNumber: "",
-      name: "", 
+      name: "",
       department: profile?.role === "superadmin" ? "" : profile?.department,
       phoneNo: "",
       email: "",
       password: "",
       year: "",
-      institute:instituteId
+      institute: instituteId
 
     });
   };
@@ -104,7 +107,7 @@ console.log(instituteId);
       console.log(formData);
       let response;
       if (mode === "add") {
-        response = await axios.post("/api/v2/student", formData);
+        response = await axios.post("/api/v2/students", formData);
         toast.success("Student added successfully");
       } else if (mode === "edit") {
         response = await axios.put(`/api/v2/student?_id=${formData._id}`, formData);
@@ -120,7 +123,7 @@ console.log(instituteId);
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} size="2xl" onClose={onClose}>
       <ModalContent>
         <ModalHeader>{mode === "add" ? "Add Student" : "Edit Student"}</ModalHeader>
         <ModalBody>
@@ -153,16 +156,22 @@ console.log(instituteId);
               variant="bordered"
               size="sm"
             />
-            <Input
-              label="Admission Year"
-              name="year"
-              value={formData.year}
-              onChange={handleChange}
-              required
+            <Select
+              placeholder="Select Year"
+              label="Select Year"
               variant="bordered"
               size="sm"
-            />
-             
+              selectedKeys={formData.year ? [formData.year] : []}
+              onSelectionChange={(keys) => setFormData((prev) => ({ ...prev, year: Array.from(keys)[0] }))}
+              startContent={<Calendar className="w-4 h-4 text-default-400" />}
+              className="w-full"
+            >
+              {getAcademicYears(10).map((year) => (
+                <SelectItem key={year.value} value={year.value}>
+                  {year.label}
+                </SelectItem>
+              ))}
+            </Select>
             <Input
               label="Phone No."
               name="phoneNo"
@@ -179,7 +188,7 @@ console.log(instituteId);
               onChange={handleChange}
               required
               variant="bordered"
-               size="sm"
+              size="sm"
             />
             <Input
               label="Password"
@@ -190,30 +199,13 @@ console.log(instituteId);
               variant="bordered"
               size="sm"
             />
-            {profile?.role === "superadmin" ? (
-              <Select
-                label="Department"
-                placeholder="Select department"
-                name="department"
-                selectedKeys={new Set([formData.department])}
-                onSelectionChange={(value) => handleSelectChange("department", value.currentKey)}
-                variant="bordered"
-                size="sm"
-              >
-                {departmentOptions.map((department) => (
-                  <SelectItem key={department.key} textValue={department.label}>
-                    {department.label}
-                  </SelectItem>
-                ))}
-              </Select>
-            ) : (
-              <Input
-                label="Department"
-                name="department"
-                value={formData.department}
-                disabled
-                variant="bordered"
-                size="sm"
+            {profile?.role !== "admin" && (
+              <DepartmentDropdown
+                instituteId={profile?.role === "superadmin" ? profile?._id : profile?.institute}
+                onSelect={handleDepartmentSelect}
+                className="w-full"
+                size="md"
+                selectedDepartment={formData.department}
               />
             )}
           </div>

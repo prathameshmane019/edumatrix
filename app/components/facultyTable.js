@@ -36,7 +36,7 @@ import * as XLSX from "xlsx";
 import { DepartmentDropdown } from "./department/DepartmentDropDowns";
 
 const columns = [
-  { uid: "_id", name: "Faculty ID", sortable: true },
+  { uid: "id", name: "Faculty ID", sortable: true },
   { uid: "name", name: "Name", sortable: true },
   { uid: "department", name: "Department", sortable: true },
   { uid: "email", name: "Email", sortable: true },
@@ -44,7 +44,7 @@ const columns = [
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["_id", "name", "department", "email", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["id", "name", "department", "email", "actions"];
 
 export default function FacultyTable() {
   const [filterValue, setFilterValue] = useState("");
@@ -52,7 +52,7 @@ export default function FacultyTable() {
   const [visibleColumns, setVisibleColumns] = useState(new Set(INITIAL_VISIBLE_COLUMNS));
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [sortDescriptor, setSortDescriptor] = useState({
-    column: "_id",
+    column: "id",
     direction: "ascending",
   });
   const [page, setPage] = useState(1);
