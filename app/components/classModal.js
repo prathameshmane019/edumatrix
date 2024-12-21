@@ -64,8 +64,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit,department, use
       }
     }
   }, [isOpen, mode, classData]);
-
-  console.log(classData);
+ 
   
   const fetchStudents = useCallback(async () => {
     if (!formData.academicYear || !formData.department) return;

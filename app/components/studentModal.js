@@ -7,6 +7,7 @@ import { departmentOptions } from "../utils/department";
 import { DepartmentDropdown } from "./department/DepartmentDropDowns";
 import { Calendar } from "lucide-react";
 import { getAcademicYears } from "../utils/acadmicYears";
+import { ClassDropdown } from "./Class/ClassDropdown";
 
 const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId }) => {
   const [profile, setProfile] = useState(null);
@@ -19,6 +20,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
     phoneNo: "",
     password: "",
     year: "",
+    class: "",
     institute: instituteId
   });
 
@@ -50,6 +52,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
         phoneNo: student.phoneNo,
         password: student.password,
         year: student.year,
+        class: student.class,
         institute: student.institute || instituteId
       });
     } else {
@@ -71,6 +74,13 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
     }));
   };
 
+  const handleClassSelect = (value) => {
+    setFormData((prev) => ({
+      ...prev,
+      class: value
+    }));
+  }
+
   const handleDepartmentSelect = (departmentId) => {
     console.log(departmentId.target.value);
     setFormData((prev) => ({
@@ -88,6 +98,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
       department: profile?.role === "superadmin" ? "" : profile?.department,
       phoneNo: "",
       email: "",
+      class: '',
       password: "",
       year: "",
       institute: instituteId
@@ -208,6 +219,15 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
                 selectedDepartment={formData.department}
               />
             )}
+            <ClassDropdown
+              id="class-select"
+              instituteId={profile?.role === "superadmin" ? profile?._id : profile?.institute}
+              onSelect={handleClassSelect}
+              selectedClass={formData.class}
+              acadmicYear={formData.year}
+              selectedDepartment={formData.department}
+              className="my-4"
+            />
           </div>
         </ModalBody>
         <ModalFooter>
