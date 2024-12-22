@@ -52,6 +52,8 @@ export function SubjectDropdown({
 
         const response = await axios.get(`/api/v2/utils/subjects?${params}`)
         setSubjects(response.data)
+        console.log(response.data);
+        
       } catch (error) {
         console.error('Error fetching subjects:', error)
         setError('Failed to load subjects')

@@ -67,6 +67,7 @@ export async function GET(request) {
           students = subject.class.students || [];
         }
         break;
+        
 
       case 'tg':
         // For TG, use class students or implement specific TG group logic
