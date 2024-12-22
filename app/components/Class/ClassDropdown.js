@@ -7,15 +7,13 @@ export function ClassDropdown({ instituteId, onSelect, selectedClass, selectedDe
     const [classes, setClasses] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
-console.log(instituteId,selectedDepartment,acadmicYear);
-
+     
     useEffect(() => {
-        
         async function fetchClasses() {
             if (!instituteId || !selectedDepartment || !acadmicYear) {
                 setClasses([])
                 return
-            } 
+            }
             setIsLoading(true)
             setError(null)
 
@@ -42,7 +40,7 @@ console.log(instituteId,selectedDepartment,acadmicYear);
         )
         console.log("batches", batches[0]);
 
-        if(handleBatches) handleBatches(batches[0])
+        if (handleBatches) handleBatches(batches[0])
 
     }
 

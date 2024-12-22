@@ -82,7 +82,6 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
   }
 
   const handleDepartmentSelect = (departmentId) => {
-    console.log(departmentId.target.value);
     setFormData((prev) => ({
       ...prev,
       department: departmentId.target.value
