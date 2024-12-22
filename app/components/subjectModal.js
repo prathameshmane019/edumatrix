@@ -584,9 +584,11 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
     setBatches(newBatches);
     setFormData(prev => ({
       ...prev,
-      batch: newBatches.map(batch => batch.id),
-      batchFaculties: newBatches.map(batch => ({ batchId: batch.id, faculty: '' }))
+      batch: (newBatches || []).map(batch => batch.id),
+      batchFaculties: (newBatches || []).map(batch => ({ batchId: batch.id, faculty: '' }))
     }));
+    
+    
   }
 
   const resetForm = () => {

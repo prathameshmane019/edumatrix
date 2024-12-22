@@ -245,6 +245,7 @@ export async function DELETE(request) {
     if (subject.teacher) {
       await Faculty.findByIdAndUpdate(subject.teacher, { $pull: { subjects: subjectId } });
     }
+  
 
     return NextResponse.json({ message: "Subject and associated data deleted successfully" }, { status: 200 });
   } catch (error) {
