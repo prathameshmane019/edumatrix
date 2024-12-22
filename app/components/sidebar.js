@@ -65,6 +65,7 @@ const Sidebar = () => {
           { name: "Manage Students", href: "/admin/students", icon: PiStudentBold },
           { name: "Manage Class", href: "/admin/classes", icon: SiGoogleclassroom },
           { name: "Manage Reports", href: "/admin/showattendance", icon: AiOutlineSchedule },
+          { name: "Manage Feedback", href: "/admin/feedback", icon: AiOutlineSchedule },
         ];
       case "faculty":
         return [
