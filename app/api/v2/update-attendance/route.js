@@ -14,8 +14,9 @@ export async function GET(req) {
     const subjectId = searchParams.get("_id");
     const dateString = searchParams.get("date");
     const session = searchParams.get("session");
+    const batchId = searchParams.get("batchId"); // Get batchId from query params
 
-    console.log("Update Attendance");
+    console.log("Update Attendance", { subjectId, dateString, session, batchId });
     
     if (!subjectId || !dateString || !session) {
       return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
@@ -23,33 +24,32 @@ export async function GET(req) {
 
     const date = new Date(dateString);
     const subject = await Subject.findById(subjectId)
-    .populate({
-      path: 'class',
-      populate: {
-        path: 'students',
-        model: 'Student',
-        select: '_id rollNumber name department'
-      }
-    })
-    .populate('teacher', '_id name')
-    .populate('institute', '_id name')
-    .lean();
+      .populate({
+        path: 'class',
+        populate: {
+          path: 'students',
+          model: 'Student',
+          select: '_id rollNumber name department'
+        }
+      })
+      .populate('teacher', '_id name')
+      .populate('institute', '_id name')
+      .lean();
 
-    console.log(subject);
-    
     if (!subject) {
       return NextResponse.json({ error: "Subject not found" }, { status: 404 });
     }
+
     let students = [];
     switch(subject.subType) {
       case 'theory':
-        // For theory subjects, use students from the class
+        // For theory subjects, use all students from the class
         students = subject.class.students || [];
         break;
 
       case 'practical':
-        // For practical subjects, handle batch-specific or all students
-        if (selectedBatchId) {
+        // For practical subjects, handle batch-specific students
+        if (batchId) {
           const classDoc = await Classes.findById(subject.class._id)
             .populate({
               path: 'batches.students',
@@ -58,24 +58,31 @@ export async function GET(req) {
             })
             .lean();
 
-          if (classDoc) {
-            const selectedBatch = classDoc.batches.find(batch => batch.id === selectedBatchId);
-            students = selectedBatch ? selectedBatch.students : [];
+          if (!classDoc) {
+            return NextResponse.json({ error: "Class not found" }, { status: 404 });
           }
+
+          const selectedBatch = classDoc.batches.find(batch => batch.id === batchId);
+          if (!selectedBatch) {
+            return NextResponse.json({ error: "Batch not found" }, { status: 404 });
+          }
+
+          students = selectedBatch.students || [];
         } else {
-          // If no specific batch, get all students in the class
+          // If no specific batch is provided, use all students (fallback)
           students = subject.class.students || [];
         }
         break;
 
       case 'tg':
-        // For TG, use class students or implement specific TG group logic
+        // For TG subjects, use all class students
         students = subject.class.students || [];
         break;
 
       default:
         students = [];
     }
+
     // Create date range for attendance search
     const startOfDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
     const endOfDay = new Date(startOfDay);
@@ -85,14 +92,16 @@ export async function GET(req) {
     const attendanceRecord = await Attendance.findOne({
       subject: subjectId,
       date: { $gte: startOfDay, $lt: endOfDay },
-      session: parseInt(session)
+      session: parseInt(session),
+      ...(batchId && { batchId }) // Include batchId in query if it exists
     }).lean();
 
     // Map students with their attendance status
     const studentsWithAttendance = students.map(student => ({
-      _id: student._id,
+      _id: student._id.toString(),
       name: student.name,
       rollNumber: student.rollNumber,
+      department: student.department,
       status: attendanceRecord?.records.find(r => r.student.toString() === student._id.toString())?.status || 'absent'
     }));
     
@@ -101,10 +110,11 @@ export async function GET(req) {
       students: studentsWithAttendance,
       attendanceRecord: attendanceRecord || null,
       subject: {
-        _id: subject._id,
+        _id: subject._id.toString(),
         name: subject.name,
         subType: subject.subType,
-        content: subject.content
+        content: subject.content,
+        batchId: batchId || null // Include selected batchId in response
       }
     }, { status: 200 });
 
@@ -112,11 +122,11 @@ export async function GET(req) {
     console.error("Error fetching subject attendance:", error);
     return NextResponse.json({ 
       error: "Failed to fetch data", 
-      details: error.message 
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     }, { status: 500 });
   }
 }
-
 export async function PUT(req) {
   try {
     await connectMongoDB();

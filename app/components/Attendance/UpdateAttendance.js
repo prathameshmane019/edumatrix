@@ -203,6 +203,7 @@ export default function UpdateAttendance() {
     }
   }, [selectedSubject, selectedSession, subjectDetails, validateTGSession, students, selectedKeys, selectedBatch, selectedDate, pointInputs, selectedContentIds, profile, fetchSubjectDetails, resetForm]);
 
+
   const StudentListTable = useMemo(() => {
     const sortedStudents = [...students].sort((a, b) => {
       const aNum = parseInt(a.rollNumber.replace(/\D/g, ''), 10);
@@ -220,34 +221,23 @@ export default function UpdateAttendance() {
             aria-label="Attendance Table"
             selectionMode="multiple"
             selectedKeys={selectedKeys}
-            onSelectionChange={setSelectedKeys}
+            onSelectionChange={(keys) => {
+              if (keys === "all") {
+                setSelectedKeys(new Set(students.map(student => student._id)));
+              } else {
+                setSelectedKeys(keys);
+              }
+            }}
           >
             <TableHeader>
               <TableColumn>Roll Number</TableColumn>
               <TableColumn>Name</TableColumn>
-              <TableColumn>Status</TableColumn>
             </TableHeader>
             <TableBody>
               {sortedStudents.map((student) => (
                 <TableRow key={student._id}>
                   <TableCell>{student.rollNumber}</TableCell>
                   <TableCell>{student.name}</TableCell>
-                  <TableCell>
-                    <Checkbox
-                      isSelected={selectedKeys.has(student._id)}
-                      onChange={() => {
-                        setSelectedKeys(prev => {
-                          const newSet = new Set(prev);
-                          if (newSet.has(student._id)) {
-                            newSet.delete(student._id);
-                          } else {
-                            newSet.add(student._id);
-                          }
-                          return newSet;
-                        });
-                      }}
-                    />
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -256,6 +246,7 @@ export default function UpdateAttendance() {
       </Card>
     );
   }, [students, selectedKeys]);
+
 
   return (
     <div className="flex flex-col gap-4 p-4 max-w-7xl mx-auto">

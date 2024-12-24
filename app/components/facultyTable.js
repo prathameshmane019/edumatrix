@@ -82,7 +82,7 @@ export default function FacultyTable() {
     console.log("Updated profile state:", profile);
     if (profile && profile?.role === "admin") {
       console.log(profile);
-      setSelectedDepartment(profile.department);
+      setSelectedDepartment(profile.id);
       console.log(selectedDepartment);
     }
   }, [profile]);

@@ -49,7 +49,7 @@ const columns = [
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["_id", "teacher", "students", "year", "department", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["id", "teacher", "students", "year", "department", "actions"];
 
 export default function ClassTable() {
   const [filterValue, setFilterValue] = useState("");

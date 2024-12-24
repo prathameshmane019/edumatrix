@@ -32,7 +32,7 @@ const columns = [
   { uid: "id", name: "ID", sortable: true },
   { uid: "name", name: "Subject Name", sortable: true },
   { uid: "class", name: "Class" },
-  { uid: "teacher", name: "Teacher" },
+  { uid: "teacher", name: "Faculty" },
   { uid: "department", name: "Department" },
   { uid: "actions", name: "Actions" },
 ];
@@ -171,9 +171,28 @@ export default function SubjectTable({ user }) {
             </span>
           </div>
         );
-      case "teacher":
-        return <span>{subject.teacher?.name || 'N/A'}</span>;
-      case "class":
+        case "teacher":
+          // Handle different subject types
+          if (subject.subType === 'theory') {
+            return <span>{subject.teacher?.name || 'N/A'}</span>;
+          } else if (subject.subType === 'practical' || subject.subType === 'tg') {
+            // Display batch-wise faculty assignments
+            if (!subject.batchFaculties?.length) {
+              return <span>No faculty assigned</span>;
+            }
+            return (
+              <div className="flex flex-col gap-1">
+                {subject.batchFaculties.map((bf, index) => (
+                  <div key={bf.batchId} className="text-sm">
+                    <span className="font-medium">{bf.batchId}:</span>{' '}
+                    <span>{bf?.faculty?.name || 'Unassigned'}</span>
+                    {index < subject.batchFaculties.length - 1 && <span className="text-gray-300"> | </span>}
+                  </div>
+                ))}
+              </div>
+            );
+          }
+          return <span>N/A</span>; case "class":
         return <span>{subject.class?.id || 'N/A'}</span>;
       default:
         return <span>{cellValue}</span>;

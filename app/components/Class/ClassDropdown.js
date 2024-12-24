@@ -7,7 +7,7 @@ export function ClassDropdown({ instituteId, onSelect, selectedClass, selectedDe
     const [classes, setClasses] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
-     
+      
     useEffect(() => {
         async function fetchClasses() {
             if (!instituteId || !selectedDepartment || !acadmicYear) {
@@ -51,7 +51,6 @@ export function ClassDropdown({ instituteId, onSelect, selectedClass, selectedDe
             placeholder={isLoading ? "Loading... class data " : "Select a class"}
             variant="bordered"
             label={label}
-
             size={size}
             value={selectedClass}
             selectedKeys={selectedClass ? [selectedClass] : []}

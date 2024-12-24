@@ -68,19 +68,18 @@ export async function GET(request) {
       subjects = await Subject.find(query)
         .populate('class', 'name')
         .populate('teacher', 'name')
-        .populate('institute', 'name')
         .lean();
     }
 
-    const teachers = await Faculty.find().select("_id name").lean();
-    const institutes = await Institute.find().select("_id name").lean();
+    // const teachers = await Faculty.find().select("_id name").lean();
+    // const institutes = await Institute.find().select("_id name").lean();
 
     return NextResponse.json({
       subjects,
       batches,
       students,
-      teachers,
-      institutes
+      // teachers,
+      // institutes
     }, { status: 200 });
   } catch (error) {
     console.error("Error fetching subjects:", error);
@@ -315,7 +314,6 @@ export async function POST(request) {
     return NextResponse.json({ error: "Error creating subject", details: error.message }, { status: 500 });
   }
 }
-
 export async function PUT(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -363,7 +361,7 @@ export async function PUT(request) {
       { new: true }
     );
 
-    // Update class references
+    // Update class references if class or semester changed
     if (oldSubject.class?.toString() !== classId || oldSubject.sem !== sem) {
       if (oldSubject.class) {
         await Classes.findByIdAndUpdate(oldSubject.class, {
@@ -406,7 +404,6 @@ export async function PUT(request) {
 
       // Add subject reference to new faculties
       const addedFaculties = newFacultyIds.filter(id => !oldFacultyIds.includes(id));
-      if (addedFaculties.lengtholdFaculties.includes(id));
       if (addedFaculties.length > 0) {
         await Faculty.updateMany(
           { _id: { $in: addedFaculties } },
@@ -418,7 +415,10 @@ export async function PUT(request) {
     return NextResponse.json(updatedSubject, { status: 200 });
   } catch (error) {
     console.error("Error updating subject:", error);
-    return NextResponse.json({ error: "Error updating subject", details: error.message }, { status: 500 });
+    return NextResponse.json({ 
+      error: "Error updating subject", 
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    }, { status: 500 });
   }
 }
-

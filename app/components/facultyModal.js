@@ -223,7 +223,6 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
     institute: null,
   });
   const [profile, setProfile] = useState(null);
-  const [departmentOptions, setDepartmentOptions] = useState([]);
 
   // Fetch user profile from session storage
   useEffect(() => {
@@ -233,33 +232,34 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
     }
   }, []);
 
-  // Fetch department options
-  useEffect(() => {
-    const fetchDepartments = async () => {
-      try {
-        const response = await axios.get("/api/v2/department");
-        setDepartmentOptions(response.data.departments || []);
-      } catch (error) {
-        console.error("Error fetching departments:", error);
-        toast.error("Error fetching department options");
-      }
-    };
-    fetchDepartments();
-  }, []);
 
+  const fetchDepartments = async () => {
+    try {
+      const response = await axios.get("/api/v2/department");
+      setDepartmentOptions(response.data.departments || []);
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+      toast.error("Error fetching department options");
+    }
+  };
+    // Fetch department options
+    useEffect(() => {
+      if(profile?.role==="superadmin") fetchDepartments();
+     }, [profile,fetchDepartments]);
+     
   // Set form data based on mode and profile
   useEffect(() => {
     if (mode === "edit" && faculty) {
       setFormData({
         ...faculty,
-        department: profile?.role === "superadmin" ? faculty.department : profile?.department,
+        department: profile?.role === "superadmin" ? faculty.department : profile?.id,
         institute: faculty.institute?._id || null,
       });
     } else {
       setFormData({
         id: "",
         name: "",
-        department: profile?.role === "superadmin" ? "" : profile?.department,
+        department: profile?.role === "superadmin" ? "" : profile?.id,
         email: "",
         password: "",
         currentYear: "",
@@ -282,7 +282,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
     setFormData({
       id: "",
       name: "",
-      department: profile?.role === "superadmin" ? "" : profile?.department,
+      department: profile?.role === "superadmin" ? "" : profile?.id,
       email: "",
       password: "",
       currentYear: "",
@@ -303,7 +303,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
     try {
       const dataToSubmit = {
         ...formData,
-        department: profile?.role === "superadmin" ? formData.department : profile?.department,
+        department: profile?.role === "superadmin" ? formData.department : profile?.id,
         institute: formData.institute || (profile?.role === "superadmin" ? profile._id : profile?.institute),
       };
 

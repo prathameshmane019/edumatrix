@@ -11,9 +11,7 @@ export async function GET(req) {
         const sem = searchParams.get("sem");
         const batchId = searchParams.get("batchId"); // Optional query parameter for filtering by batch
         const subjectId = searchParams.get("_id"); // Optional query parameter for filtering by subject ID
-
-        console.log(sem, academicYear);
-
+ 
         // Construct filters for Subject query
         let subjectFilter = {};
         if (department) subjectFilter.department = department;
@@ -24,10 +22,25 @@ export async function GET(req) {
         // Connect to the database
         await connectMongoDB();
 
+        const selectFields = {
+            id: 1,
+            name: 1,
+            subType: 1,
+            teacher: 1,
+            batch: 1,
+            department: 1,
+            institute: 1,
+            sem: 1,
+            academicYear: 1,
+            class: 1,
+            batchFaculties: 1
+          };
         // Fetch subjects based on filter
-        const subjects = await Subject.find(subjectFilter).select(
-        ).populate('class', 'id ')
+        const subjects = await Subject.find(subjectFilter).select(selectFields)
+        .populate('class', 'id')
         .populate('teacher', 'name')
+        .populate('batchFaculties.faculty', 'name')
+        .lean();
 
         // Fetch classes associated with the department and active status
         // const classFilter = {};

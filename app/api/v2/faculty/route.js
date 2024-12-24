@@ -21,6 +21,8 @@ export async function POST(req) {
             sem
         } = data;
 
+        console.log(data);
+        
         if(!department){
             return NextResponse.json({error:"department is missing"}, { status: 400 });
         }

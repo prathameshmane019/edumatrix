@@ -524,7 +524,6 @@
 //     </Modal>
 //   );
 // }
-
 'use client'
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -557,9 +556,15 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
   });
 
   const [batches, setBatches] = useState([]);
-
   useEffect(() => {
-    if (subjectData) {
+    if (subjectData && mode === 'edit') {
+      const existingBatches = subjectData.batch?.map(batchId => ({
+        id: batchId,
+        type: 'existing'
+      })) || [];
+
+      setBatches(existingBatches);
+      
       setFormData({
         id: subjectData.id || '',
         name: subjectData.name || '',
@@ -567,29 +572,32 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
         teacher: subjectData.teacher?._id || '',
         subType: subjectData.subType || '',
         batch: subjectData.batch || [],
-        batchFaculties: subjectData.batchFaculties || [],
+        batchFaculties: subjectData.batchFaculties?.map(bf => ({
+          batchId: bf.batchId,
+          faculty: bf.faculty._id || bf.faculty
+        })) || [],
         sem: subjectData.sem || '',
         academicYear: subjectData.academicYear || '',
       });
-      if (subjectData.batch) {
-        setBatches(subjectData.batch);
-      }
     } else {
       resetForm();
     }
-  }, [subjectData]);
+  }, [subjectData, mode]);
 
   const handleBatches = (newBatches) => {
-    console.log("batches", newBatches);
-    setBatches(newBatches);
-    setFormData(prev => ({
-      ...prev,
-      batch: (newBatches || []).map(batch => batch.id),
-      batchFaculties: (newBatches || []).map(batch => ({ batchId: batch.id, faculty: '' }))
-    }));
-    
-    
-  }
+    // Only update batches if we're not in edit mode or if the class has changed
+    if (mode === 'add' || formData.class !== subjectData?.class?._id) {
+      setBatches(newBatches);
+      setFormData(prev => ({
+        ...prev,
+        batch: (newBatches || []).map(batch => batch.id),
+        batchFaculties: (newBatches || []).map(batch => ({
+          batchId: batch.id,
+          faculty: prev.batchFaculties.find(bf => bf.batchId === batch.id)?.faculty._id || ''
+        }))
+      }));
+    }
+  };
 
   const resetForm = () => {
     setFormData({
@@ -607,7 +615,27 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
   };
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    if (field === 'subType') {
+      // Reset batch-related fields when switching subject type
+      setFormData(prev => ({
+        ...prev,
+        [field]: value,
+        batch: value === 'theory' ? [] : prev.batch,
+        batchFaculties: value === 'theory' ? [] : prev.batchFaculties,
+        teacher: value !== 'theory' ? '' : prev.teacher
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    }
+  };
+
+  const handleBatchFacultyAssignment = (batchId, facultyId) => {
+    setFormData(prev => ({
+      ...prev,
+      batchFaculties: prev.batchFaculties.map(bf =>
+        bf.batchId === batchId ? { ...bf, faculty: facultyId } : bf
+      )
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -624,7 +652,10 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
         delete payload.batch;
       } else {
         delete payload.teacher;
-        payload.batchFaculties = payload.batchFaculties.filter(bf => bf.faculty);
+        payload.batchFaculties = payload.batchFaculties.map(bf => ({
+          batchId: bf.batchId,
+          faculty: bf.faculty._id || bf.faculty
+        }));
       }
 
       if (mode === 'add') {
@@ -637,15 +668,6 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
     } catch (error) {
       console.error('Error submitting subject:', error);
     }
-  };
-
-  const handleBatchFacultyAssignment = (batchId, facultyId) => {
-    setFormData(prev => ({
-      ...prev,
-      batchFaculties: prev.batchFaculties.map(bf =>
-        bf.batchId === batchId ? { ...bf, faculty: facultyId } : bf
-      )
-    }));
   };
 
   return (
@@ -738,24 +760,22 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
             {formData.subType === "theory" && (
               <FacultyDropdown
                 instituteId={instituteId}
-                // departmentId={department}
                 onSelect={(value) => handleInputChange('teacher', value)}
                 selectedFaculty={formData.teacher}
                 className="w-full"
                 label="Faculty"
               />
             )}
-            {(formData.subType === 'practical' || formData.subType === 'tg') && (
+            {(formData.subType === 'practical' || formData.subType === 'tg') && batches.length > 0 && (
               <div className="col-span-2">
                 <h3 className="text-lg font-semibold mb-2">Batch-Faculty Assignments</h3>
                 {batches.map((batch) => (
                   <div key={batch.id} className="flex gap-4 items-center mb-2">
-                    <span className="w-24">{batch.id} ({batch.type})</span>
+                    <span className="w-24">{batch.id}</span>
                     <FacultyDropdown
                       instituteId={instituteId}
-                      // departmentId={department}
                       onSelect={(value) => handleBatchFacultyAssignment(batch.id, value)}
-                      selectedFaculty={formData.batchFaculties.find(bf => bf.batchId === batch.id)?.faculty}
+                      selectedFaculty={formData.batchFaculties.find(bf => bf.batchId === batch.id)?.faculty || ''}
                       className="w-full"
                       label={`Faculty for ${batch.id}`}
                     />
@@ -788,3 +808,4 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
     </Modal>
   );
 }
+

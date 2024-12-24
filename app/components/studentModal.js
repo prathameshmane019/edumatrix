@@ -120,7 +120,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
         response = await axios.post("/api/v2/students", formData);
         toast.success("Student added successfully");
       } else if (mode === "edit") {
-        response = await axios.put(`/api/v2/student?_id=${formData._id}`, formData);
+        response = await axios.put(`/api/v2/students?_id=${formData._id}`, formData);
         toast.success("Student updated successfully");
       }
       onSubmit();
@@ -137,7 +137,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
       <ModalContent>
         <ModalHeader>{mode === "add" ? "Add Student" : "Edit Student"}</ModalHeader>
         <ModalBody>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-5">
             <Input
               label="ID"
               name="_id"
@@ -222,10 +222,12 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
               id="class-select"
               instituteId={profile?.role === "superadmin" ? profile?._id : profile?.institute}
               onSelect={handleClassSelect}
-              selectedClass={formData.class}
-              acadmicYear={formData.year}
-              selectedDepartment={formData.department}
-              className="my-4"
+              selectedClass={formData?.class}
+           
+              label="Class"
+              acadmicYear={formData?.year}
+              selectedDepartment={profile?.role === "superadmin" ? formData?.department : profile?.id }
+              // className="my-4"
             />
           </div>
         </ModalBody>

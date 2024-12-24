@@ -671,7 +671,6 @@ export default function StudentTable() {
   useEffect(() => {
     if (profile?.role !== "superadmin") {
       setSelectedClass('')
-    
       setSelectedDepartment(profile?.id);
     }
   }, [profile]);
@@ -1190,7 +1189,7 @@ export default function StudentTable() {
         mode={modalMode}
         student={selectedStudent}
         onSubmit={handleModalSubmit}
-        instituteId={profile?.role === 'superadmin' ? profile?._id : profile?.institute?._id || ''}
+        instituteId={institute}
       />
       {showConfirmModal && (
         <Modal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)}>
