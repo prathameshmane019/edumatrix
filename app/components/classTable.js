@@ -15,14 +15,7 @@ import {
   Button,
   Pagination,
   SelectItem,
-  Select,
-  Switch,
-  useDisclosure,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
+  Select, 
   Spinner
 } from "@nextui-org/react";
 import { capitalize } from "@/app/utils/utils";

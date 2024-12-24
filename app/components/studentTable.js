@@ -647,8 +647,7 @@ export default function StudentTable() {
   const [isLoading, setIsLoading] = useState(false);
   const [profile, setProfile] = useState(null);
   const [allStudents, setAllStudents] = useState([]);
-  const [totalStudents, setTotalStudents] = useState(0);
-  const [classes, setClasses] = useState([]);
+  const [totalStudents, setTotalStudents] = useState(0); 
   const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
   const [institute,setInstitute]= useState(null)
   const [selectedUploadClass, setSelectedUploadClass] = useState(''); 

@@ -11,6 +11,7 @@ export async function GET(req) {
         const sem = searchParams.get("sem");
         const batchId = searchParams.get("batchId"); // Optional query parameter for filtering by batch
         const subjectId = searchParams.get("_id"); // Optional query parameter for filtering by subject ID
+        const classId = searchParams.get("class"); // Optional query parameter for filtering by subject ID
  
         // Construct filters for Subject query
         let subjectFilter = {};
@@ -18,6 +19,7 @@ export async function GET(req) {
         if (sem) subjectFilter.sem = sem;
         if (academicYear) subjectFilter.academicYear = academicYear;
         if (subjectId) subjectFilter._id = subjectId;
+        if (classId) subjectFilter.class = classId;
 
         // Connect to the database
         await connectMongoDB();

@@ -27,6 +27,7 @@ import SubjectModal from './subjectModal';
 import Image from 'next/image';
 import { getCurrentAcademicYear, getAcademicYears } from '@/app/utils/acadmicYears';
 import { Calendar } from 'lucide-react';
+import { ClassDropdown } from './Class/ClassDropdown';
 
 const columns = [
   { uid: "id", name: "ID", sortable: true },
@@ -37,7 +38,7 @@ const columns = [
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["id", "name", "class", "teacher",  "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["id", "name", "class", "teacher", "actions"];
 
 export default function SubjectTable({ user }) {
   const [filterValue, setFilterValue] = useState("");
@@ -56,6 +57,7 @@ export default function SubjectTable({ user }) {
   const [selectedSemester, setSelectedSemester] = useState('sem1');
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [institute, setInstitute] = useState('');
+  const [selectedClass, setSelectedClass] = useState('');
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
@@ -71,7 +73,7 @@ export default function SubjectTable({ user }) {
     if (profile && profile.id) {
       fetchData();
     }
-  }, [profile?.id, academicYear, selectedSemester]);
+  }, [profile?.id, academicYear, selectedSemester,selectedClass]);
 
   useEffect(() => {
     if (profile) {
@@ -85,10 +87,10 @@ export default function SubjectTable({ user }) {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`/api/v2/subjectData?department=${profile.id}&acadmicYear=${academicYear}&sem=${selectedSemester}`);
+      const response = await axios.get(`/api/v2/subjectData?department=${profile.id}&acadmicYear=${academicYear}&sem=${selectedSemester}&class=${selectedClass}`);
       setSubjects(response.data.subjects);
       console.log(response.data);
-      
+
       setClasses(response.data.classes);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -97,6 +99,10 @@ export default function SubjectTable({ user }) {
       setIsLoading(false);
     }
   };
+
+  const handleClassSelect = (value) => {
+    setSelectedClass(value)
+  }
 
   const deleteSubject = async (_id) => {
     try {
@@ -171,28 +177,28 @@ export default function SubjectTable({ user }) {
             </span>
           </div>
         );
-        case "teacher":
-          // Handle different subject types
-          if (subject.subType === 'theory') {
-            return <span>{subject.teacher?.name || 'N/A'}</span>;
-          } else if (subject.subType === 'practical' || subject.subType === 'tg') {
-            // Display batch-wise faculty assignments
-            if (!subject.batchFaculties?.length) {
-              return <span>No faculty assigned</span>;
-            }
-            return (
-              <div className="flex flex-col gap-1">
-                {subject.batchFaculties.map((bf, index) => (
-                  <div key={bf.batchId} className="text-sm">
-                    <span className="font-medium">{bf.batchId}:</span>{' '}
-                    <span>{bf?.faculty?.name || 'Unassigned'}</span>
-                    {index < subject.batchFaculties.length - 1 && <span className="text-gray-300"> | </span>}
-                  </div>
-                ))}
-              </div>
-            );
+      case "teacher":
+        // Handle different subject types
+        if (subject.subType === 'theory') {
+          return <span>{subject.teacher?.name || 'N/A'}</span>;
+        } else if (subject.subType === 'practical' || subject.subType === 'tg') {
+          // Display batch-wise faculty assignments
+          if (!subject.batchFaculties?.length) {
+            return <span>No faculty assigned</span>;
           }
-          return <span>N/A</span>; case "class":
+          return (
+            <div className="flex flex-col gap-1">
+              {subject.batchFaculties.map((bf, index) => (
+                <div key={bf.batchId} className="text-sm">
+                  <span className="font-medium">{bf.batchId}:</span>{' '}
+                  <span>{bf?.faculty?.name || 'Unassigned'}</span>
+                  {index < subject.batchFaculties.length - 1 && <span className="text-gray-300"> | </span>}
+                </div>
+              ))}
+            </div>
+          );
+        }
+        return <span>N/A</span>; case "class":
         return <span>{subject.class?.id || 'N/A'}</span>;
       default:
         return <span>{cellValue}</span>;
@@ -239,7 +245,15 @@ export default function SubjectTable({ user }) {
             </SelectItem>
           ))}
         </Select>
-
+        <ClassDropdown
+          id="class-select"
+          instituteId={institute}
+          onSelect={handleClassSelect}
+          selectedClass={selectedClass}
+          acadmicYear={academicYear}
+          selectedDepartment={selectedDepartment}
+       
+        />
         <Select
           placeholder="Select Semester"
           selectedKeys={[selectedSemester]}
@@ -298,7 +312,7 @@ export default function SubjectTable({ user }) {
       ) : (
         <div className="flex flex-col items-center justify-center mt-4">
           <Image src="/subject.svg" alt="No subjects found" width={450} height={450} />
-          <p className="mt-2 text-gray-500">No subjects found</p>
+          <p className="mt-2 text-gray-500">No subjects found in selected criteria</p>
         </div>
       )}
       <Pagination total={pages} initialPage={1} onChange={(page) => setPage(page)} className="mt-4" />
