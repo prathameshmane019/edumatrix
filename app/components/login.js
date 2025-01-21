@@ -27,8 +27,8 @@ export default function LoginComponent() {
   useEffect(() => {
     if (userProfile?.role) {
       const role = userProfile.role;
-      console.log(role);
-      const redirectPath = role === 'superadmin' || role === 'admin' ? `/admin` : `/${role}`;
+      // const redirectPath = role === 'superadmin' || role === 'admin' ? `/admin` : `/${role}`;
+      const redirectPath = `/modules`;
       router.replace(redirectPath);
     }
   }, [userProfile]);
@@ -40,7 +40,7 @@ export default function LoginComponent() {
          if (session?.user?.role === "admin") role="department"
          else if(session.user.role=== "superadmin") role ="institute" 
          else role = session.user.role;
-         console.log(session?.user?.role);
+        //  console.log(session?.user?.role);
          
         const { _id } = session.user;
         const storedProfile = sessionStorage.getItem('userProfile');

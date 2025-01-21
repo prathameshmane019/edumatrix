@@ -1,10 +1,10 @@
-import SubjectRegister from '@/app/components/subject'
+import FacultyTable from '@/app/components/facultyTable'
 import React from 'react'
 
 const page = () => {
   return (
     <div className='mx-10 my-10'>
-      <SubjectRegister/>
+      <FacultyTable/>
     </div>
   )
 }
