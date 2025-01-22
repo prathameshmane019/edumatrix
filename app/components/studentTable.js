@@ -809,38 +809,75 @@ export default function StudentTable() {
     }
   };
 
+  // const downloadExcel = async () => {
+  //   try {
+  //     setIsLoading(true);
+  //     const response = await axios.get(`/api/student/download?department=${selectedDepartment}?classId=${selectedClass}`);
+  //     const studentsByYear = response.data.reduce((acc, student) => {
+  //       const year = student.year || 'Unknown';
+  //       if (!acc[year]) acc[year] = [];
+  //       acc[year].push(student);
+  //       return acc;
+  //     }, {});
+
+  //     const workbook = XLSX.utils.book_new();
+
+  //     Object.entries(studentsByYear).forEach(([year, students]) => {
+  //       const dataToExport = students.map(({ createdAt, updatedAt, subjects, __v, ...rest }) => ({
+  //         ...rest,
+  //         "Admission Year": year
+  //       }));
+
+  //       const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+  //       XLSX.utils.book_append_sheet(workbook, worksheet, `Year ${year}`);
+  //     });
+
+  //     XLSX.writeFile(workbook, "student_data.xlsx");
+  //     toast.success('Student data downloaded successfully');
+  //   } catch (error) {
+  //     console.error("Error downloading student data:", error);
+  //     toast.error('Error downloading student data: ' + (error.response?.data?.error || error.message));
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
   const downloadExcel = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`/api/student/download?department=${selectedDepartment}?classId=${selectedClass}`);
+      // Updated endpoint to remove classId as it is no longer used
+      const response = await axios.get(`/api/student/download?department=${selectedDepartment}`);
+      
       const studentsByYear = response.data.reduce((acc, student) => {
-        const year = student.year || 'Unknown';
+        const year = student.year || 'Unknown'; // Group students by their year
         if (!acc[year]) acc[year] = [];
         acc[year].push(student);
         return acc;
       }, {});
-
-      const workbook = XLSX.utils.book_new();
-
+  
+      const workbook = XLSX.utils.book_new(); // Create a new Excel workbook
+  
       Object.entries(studentsByYear).forEach(([year, students]) => {
+        // Map the data, excluding unnecessary fields like createdAt, updatedAt, etc.
         const dataToExport = students.map(({ createdAt, updatedAt, subjects, __v, ...rest }) => ({
           ...rest,
-          "Admission Year": year
+          "Admission Year": year // Add year information as a column
         }));
-
-        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-        XLSX.utils.book_append_sheet(workbook, worksheet, `Year ${year}`);
+  
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport); // Create a worksheet from JSON data
+        XLSX.utils.book_append_sheet(workbook, worksheet, `Year ${year}`); // Add the worksheet to the workbook
       });
-
+  
+      // Save the Excel file with the name "student_data.xlsx"
       XLSX.writeFile(workbook, "student_data.xlsx");
-      toast.success('Student data downloaded successfully');
+      toast.success('Student data downloaded successfully'); // Success notification
     } catch (error) {
       console.error("Error downloading student data:", error);
-      toast.error('Error downloading student data: ' + (error.response?.data?.error || error.message));
+      toast.error('Error downloading student data: ' + (error.response?.data?.error || error.message)); // Error notification
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Reset loading state
     }
   };
+  
 
   const deleteStudent = async (_id) => {
     setStudentToDelete(_id);

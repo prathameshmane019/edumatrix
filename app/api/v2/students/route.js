@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Student from "@/models/student";
-import Classes from "@/models/className";
 import mongoose from "mongoose";
 
 export async function POST(req) {
@@ -10,11 +9,11 @@ export async function POST(req) {
         console.log(data);
         await connectMongoDB();
 
-        const { _id, rollNumber, name, year, email, phoneNo, password, department, class: classId, institute } = data;
+        const { _id, rollNumber, name, year, email, phoneNo, password, department, institute } = data;
         if (!year || !institute || !rollNumber || !name) {
             return NextResponse.json({ error: "Missing required fields: year, institute, rollNumber, or name" }, { status: 400 });
         }
-   
+
         const newStudent = new Student({
             _id,
             rollNumber,
@@ -24,7 +23,6 @@ export async function POST(req) {
             phoneNo,
             password: password || "1234",
             department,
-            class: classId,
             institute
         });
 
@@ -37,11 +35,12 @@ export async function POST(req) {
         return NextResponse.json({ error: "Failed to Register Student" }, { status: 500 });
     }
 }
+
 export async function PUT(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, rollNumber, name, year, email, phoneNo, password, department, class: classId, institute } = data;
+        const { _id, rollNumber, name, year, email, phoneNo, password, department, institute } = data;
 
         if (!_id) {
             return NextResponse.json({ error: "Missing required field: _id" }, { status: 400 });
@@ -57,7 +56,6 @@ export async function PUT(req) {
                 phoneNo,
                 password,
                 department,
-                class: classId,
                 institute
             },
             { new: true }
@@ -106,7 +104,7 @@ export async function GET(req) {
             filter.class = new mongoose.Types.ObjectId(className);
         }
         console.log(filter);
-        
+
         if (filterValue) {
             filter.$or = [
                 { name: { $regex: filterValue, $options: "i" } },
@@ -142,10 +140,6 @@ export async function DELETE(req) {
 
         if (!deletedStudent) {
             return NextResponse.json({ error: "Student not found" }, { status: 404 });
-        }
-
-        if (deletedStudent.class) {
-            await Classes.findByIdAndUpdate(deletedStudent.class, { $pull: { students: _id } });
         }
 
         return NextResponse.json({ message: "Student Deleted Successfully" }, { status: 200 });

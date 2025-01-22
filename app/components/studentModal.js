@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Modal, Button, Input, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem } from "@nextui-org/react";
 import { toast } from "sonner";
@@ -7,7 +6,6 @@ import { departmentOptions } from "../utils/department";
 import { DepartmentDropdown } from "./department/DepartmentDropDowns";
 import { Calendar } from "lucide-react";
 import { getAcademicYears } from "../utils/acadmicYears";
-import { ClassDropdown } from "./Class/ClassDropdown";
 
 const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId }) => {
   const [profile, setProfile] = useState(null);
@@ -20,7 +18,6 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
     phoneNo: "",
     password: "",
     year: "",
-    class: "",
     institute: instituteId
   });
 
@@ -36,7 +33,6 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
       setFormData((prev) => ({
         ...prev,
         department: profile?.department
-
       }));
     }
   }, [profile]);
@@ -52,7 +48,6 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
         phoneNo: student.phoneNo,
         password: student.password,
         year: student.year,
-        class: student.class,
         institute: student.institute || instituteId
       });
     } else {
@@ -74,20 +69,12 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
     }));
   };
 
-  const handleClassSelect = (value) => {
-    setFormData((prev) => ({
-      ...prev,
-      class: value
-    }));
-  }
-
   const handleDepartmentSelect = (departmentId) => {
     setFormData((prev) => ({
       ...prev,
       department: departmentId.target.value
     }));
-  }
-
+  };
 
   const handleClear = () => {
     setFormData({
@@ -97,11 +84,9 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
       department: profile?.role === "superadmin" ? "" : profile?.department,
       phoneNo: "",
       email: "",
-      class: '',
       password: "",
       year: "",
       institute: instituteId
-
     });
   };
 
@@ -218,17 +203,6 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
                 selectedDepartment={formData.department}
               />
             )}
-            <ClassDropdown
-              id="class-select"
-              instituteId={profile?.role === "superadmin" ? profile?._id : profile?.institute}
-              onSelect={handleClassSelect}
-              selectedClass={formData?.class}
-           
-              label="Class"
-              acadmicYear={formData?.year}
-              selectedDepartment={profile?.role === "superadmin" ? formData?.department : profile?.id }
-              // className="my-4"
-            />
           </div>
         </ModalBody>
         <ModalFooter>
