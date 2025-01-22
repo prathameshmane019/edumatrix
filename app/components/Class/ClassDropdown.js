@@ -2,11 +2,13 @@
 
 import React, { useEffect, useState } from 'react'
 import { Select, SelectItem } from '@nextui-org/react'
+import axios from 'axios'
 
 export function ClassDropdown({ instituteId, onSelect, selectedClass, selectedDepartment, acadmicYear, className = '', label = "", size = 'sm', handleBatches }) {
     const [classes, setClasses] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
+      console.log(selectedDepartment,selectedClass,instituteId,acadmicYear);
       
     useEffect(() => {
         async function fetchClasses() {
@@ -16,11 +18,10 @@ export function ClassDropdown({ instituteId, onSelect, selectedClass, selectedDe
             }
             setIsLoading(true)
             setError(null)
-
             try {
-                const response = await fetch(`/api/v2/utils/class?institute=${instituteId}&department=${selectedDepartment}&acadmicYear=${acadmicYear}`)
-                if (!response.ok) throw new Error('Failed to fetch classes')
-                const data = await response.json()
+                const response = await axios.get(`/api/v2/utils/class?institute=${instituteId}&department=${selectedDepartment}&acadmicYear=${acadmicYear}`)
+                console.log(response.data);
+                const data = await response.data
                 setClasses(data)
             } catch (error) {
                 console.error('Error:', error)
@@ -44,6 +45,7 @@ export function ClassDropdown({ instituteId, onSelect, selectedClass, selectedDe
 
     }
 
+    
     if (error) return <div>No classes found</div>
 
     return (

@@ -150,10 +150,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, department, us
       toast.error("Please fill in all required fields.");
       return false;
     }
-    if (selectedStudents.size === 0) {
-      toast.error("Please select at least one student.");
-      return false;
-    }
+   
     if (batches.some(batch => !batch.id || !batch.type)) {
       toast.error("Please fill in all batch details.");
       return false;
