@@ -216,7 +216,8 @@ const Sidebar = () => {
         ],
         superadmin: [
           { name: "Profile", href: "/feedback/admin", icon: MdPortrait },
-          { name: "Feedback Evaluation", href: "/feedback/admin/evaluate", icon: TbReportAnalytics },
+          { name: "Feedback Evaluation", href: "/feedback/admin/evaluation", icon: TbReportAnalytics },
+          { name: "Manage Questions", href: "/feedback/admin/questions", icon: GiTeacher },
           { name: "Manage Feedback", href: "/feedback/admin/feedback", icon: MdFeedback },
           { name: "Manage Department", href: "/feedback/admin/department", icon: FaChalkboardTeacher },
           { name: "Manage Students", href: "/feedback/admin/students", icon: PiStudentBold },

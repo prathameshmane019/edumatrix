@@ -96,9 +96,7 @@ const NotFound = () => {
         <h2 className="text-2xl font-semibold text-gray-700 mb-4">
           Houston, we have a problem!
         </h2>
-        <p className="text-gray-500 mb-8">
-          The page you're looking for seems to have drifted into deep space.
-        </p>
+        <p className="text-gray-500 mb-8">The page you&#39;re looking for seems to have drifted into deep space.</p>
 
         <Link 
           href="/"
