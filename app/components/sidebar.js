@@ -242,7 +242,7 @@ const Sidebar = () => {
           { name: "Profile", href: "/attendance/admin", icon: MdPortrait },
           { name: "View Reports", href: "/attendance/admin/reports", icon: AiOutlineSchedule },
           { name: "Daily Absents", href: "/attendance/admin/absent-students", icon: RiCalendarScheduleLine },
-          { name: "Manage Department", href: "/attendance/admin/department", icon: FaChalkboardTeacher },
+          // { name: "Manage Department", href: "/attendance/admin/department", icon: FaChalkboardTeacher },
           { name: "Manage Students", href: "/attendance/admin/students", icon: PiStudentBold },
           { name: "Manage Class", href: "/attendance/admin/classes", icon: SiGoogleclassroom },
           { name: "Manage Subjects", href: "/attendance/admin/subjects", icon: SiGoogleclassroom },
