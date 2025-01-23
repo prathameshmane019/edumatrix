@@ -11,12 +11,15 @@ import {
   CardBody,
   CardHeader,
   CardFooter,
-  ScrollShadow,
+  ScrollShadow, 
 } from "@nextui-org/react"
 import { toast } from "sonner"
 import axios from "axios"
+import { useUser } from "@/app/context/UserContext"
 
 const QuestionPage = () => {
+  const {user}=useUser()
+
   const [formData, setFormData] = useState({
     feedbackType: "",
     subType: "",
@@ -25,17 +28,18 @@ const QuestionPage = () => {
     resourcePerson: "",
     organization: "",
     note: "",
+    institute:""
   })
   const [newQuestion, setNewQuestion] = useState("")
   const [savedQuestions, setSavedQuestions] = useState([])
 
   useEffect(() => {
     fetchSavedQuestions()
-  }, [])
+  }, [user,user?._id])
 
   const fetchSavedQuestions = async () => {
-    try {
-      const response = await axios.get("/api/questions")
+    try { 
+      const response = await axios.get(`/api/questions?institute=${user?._id}`)
       setSavedQuestions(response.data)
     } catch (error) {
       console.error(error)
@@ -69,6 +73,10 @@ const QuestionPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
+      setFormData((prev) => ({ ...prev, institute: user?._id }))
+       
+      console.log(formData);
+      
       await axios.post("/api/questions", formData)
       toast.success("Questions added successfully!")
       setFormData({
@@ -79,6 +87,7 @@ const QuestionPage = () => {
         resourcePerson: "",
         organization: "",
         note: "",
+        institute:user._id
       })
       fetchSavedQuestions()
     } catch (error) {

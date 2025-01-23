@@ -10,9 +10,7 @@ const questionsSchema = new Schema(
       enum: ['academic', 'event']
     },
     subType: {
-      type: String,
-      required: function () { return this.feedbackType === 'academic'; },
-      enum: ['theory', 'practical']
+      type: String, 
     },
     feedbackId: {
       type: String,
