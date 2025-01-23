@@ -92,10 +92,12 @@ export function SubjectDropdown({
 
       value={selectedSubject}
       selectedKeys={selectedSubject ? [selectedSubject] : []}
+
       // onSelectionChange={(keys) => {
       //   const selectedKey = Array.from(keys)[0]
       //   handleSelectChange(selectedKey)
       // }}
+      
       onChange={handleSelectChange}
       className={`w-full max-w-xs  ${className}`}
       isDisabled={isLoading || subjects.length === 0}
