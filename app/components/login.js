@@ -321,7 +321,7 @@ export default function LoginComponent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 to-violet-100 flex items-center justify-center p-4">
       <div className="w-full max-w-6xl bg-white rounded-2xl shadow-xl flex overflow-hidden">
-        {/* Left side - Illustration */}
+ 
         <div className="hidden lg:flex w-1/2 bg-violet-500 p-12 flex-col justify-between relative">
           <div className="relative z-10">
             <h1 className="text-4xl font-bold text-white mb-6">Welcome Back!</h1>
