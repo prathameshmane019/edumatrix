@@ -218,8 +218,9 @@ const Sidebar = () => {
           { name: "Profile", href: "/feedback/admin", icon: MdPortrait },
           { name: "Feedback Evaluation", href: "/feedback/admin/evaluation", icon: TbReportAnalytics },
           { name: "Manage Questions", href: "/feedback/admin/questions", icon: GiTeacher },
-          { name: "Manage Feedback", href: "/feedback/admin/feedback", icon: MdFeedback },
           { name: "Manage Department", href: "/feedback/admin/department", icon: FaChalkboardTeacher },
+          { name: "Manage Feedback", href: "/feedback/admin/feedback", icon: MdFeedback },
+          { name: "Give Feedback", href: "/feedback/admin/response", icon: FaChalkboardTeacher },
           { name: "Manage Students", href: "/feedback/admin/students", icon: PiStudentBold },
           { name: "Manage Class", href: "/feedback/admin/classes", icon: SiGoogleclassroom },
           { name: "Manage Faculty", href: "/feedback/admin/faculty", icon: GiTeacher },
@@ -281,6 +282,7 @@ const Sidebar = () => {
           { name: "Manage Department", href: "/teaching/admin/department", icon: FaChalkboardTeacher },
           { name: "Manage Content", href: "/teaching/admin/content", icon: TbReportAnalytics },
           { name: "Manage Faculty", href: "/teaching/admin/faculty", icon: GiTeacher },
+          
         ],
         faculty: [
           { name: "Profile", href: "/teaching/faculty/", icon: MdPortrait },
