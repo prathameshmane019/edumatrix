@@ -5,7 +5,7 @@ import { Select, SelectItem } from "@nextui-org/react";
 import { Button } from '@nextui-org/react';
 import { useUser } from '@/app/context/UserContext';
 import dynamic from 'next/dynamic';
-import { Tabs, Tab } from "@nextui-org/react"
+import { Tabs, Tab } from "@nextui-org/react";
 
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
@@ -19,14 +19,34 @@ const EvaluationPage = ({ role }) => {
   const [responses, setResponses] = useState([]);
   const [feedbackMode, setFeedbackMode] = useState('cumulative');
   const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [evaluationDetails, setEvaluationDetails] = useState({
+    department: "",
+    institute: "",
+  });
 
-  const user = useUser();
+  const { user } = useUser();
 
+  // Set department and institute based on user role
   useEffect(() => {
-    if (user && !feedbackData == [] && role != 'Central') {
-      fetchFeedbackData(user.department);
+    if (user?.role === "superadmin") {
+      setEvaluationDetails((prev) => ({
+        ...prev,
+        institute: user?._id,
+      }));
+    } else if (user?.role === "admin") {
+      setEvaluationDetails((prev) => ({
+        ...prev,
+        department: user?.id,
+        institute: user?.institute,
+      }));
     }
   }, [user]);
+
+  useEffect(() => {
+    if (evaluationDetails.department) {
+      fetchFeedbackData(evaluationDetails.department);
+    }
+  }, [evaluationDetails]);
 
   const fetchFeedbackData = async (department) => {
     try {
@@ -73,11 +93,11 @@ const EvaluationPage = ({ role }) => {
     const dd = String(date.getDate()).padStart(2, '0');
     const mm = String(date.getMonth() + 1).padStart(2, '0');
     const yyyy = date.getFullYear();
-    return dd + "/" + mm + "/" + yyyy;
+    return `${dd}/${mm}/${yyyy}`;
   };
 
-  // ... (rest of the utility functions remain unchanged)
-
+  // Render functions and other logic remain unchanged...
+  
   const renderEventFeedback = () => {
     return (
       <div id="table-to-print" className="bg-white rounded-lg p-6 text-center">
@@ -86,7 +106,9 @@ const EvaluationPage = ({ role }) => {
         <h2 className="text-lg font-bold mb-2 text-center">
           Event: {selectedFeedback?.feedbackTitle}
         </h2>
-        <p className="mb-2">Date of Feedback: {formatDate(responses[0]?.date)} Total Feedbacks: {responses.length}</p>
+        <p className="mb-2">
+          Date of Feedback: {formatDate(responses[0]?.date)} Total Feedbacks: {responses.length}
+        </p>
         <table className="w-full table-auto">
           <thead>
             <tr>
@@ -96,16 +118,19 @@ const EvaluationPage = ({ role }) => {
             </tr>
           </thead>
           <tbody>
-            {selectedFeedback && selectedFeedback.questions.map((question, index) => {
-              const avgRating = calculateEventQuestionRating(index);
-              return (
-                <tr key={index}>
-                  <td className="border px-2 py-2 text-start min-w-[35vw]">{question}</td>
-                  <td className="border text-center px-1 py-1">{avgRating.toFixed(2)}</td>
-                  <td className="border text-center px-1 py-1">{calculatePercentage(avgRating).toFixed(2)}%</td>
-                </tr>
-              );
-            })}
+            {selectedFeedback &&
+              selectedFeedback.questions.map((question, index) => {
+                const avgRating = calculateEventQuestionRating(index);
+                return (
+                  <tr key={index}>
+                    <td className="border px-2 py-2 text-start min-w-[35vw]">{question}</td>
+                    <td className="border text-center px-1 py-1">{avgRating.toFixed(2)}</td>
+                    <td className="border text-center px-1 py-1">
+                      {calculatePercentage(avgRating).toFixed(2)}%
+                    </td>
+                  </tr>
+                );
+              })}
           </tbody>
         </table>
         <div className="mt-4">
