@@ -11,11 +11,13 @@ const SelectFeedback = () => {
   const [error, setError] = useState("")
   const router = useRouter()
 
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
       try {
         const response = await axios.get("/api/fetchFeedback")
+        console.log(response.data);
         setFeedbackData(response.data)
       } catch (error) {
         setError("Error fetching feedback data")
@@ -28,7 +30,7 @@ const SelectFeedback = () => {
   }, [])
 
   const handleSelectFeedback = (feedbackId) => {
-    router.push(`/givefeedback/${feedbackId}`)
+    router.push(`/feedback/givefeedback/${feedbackId}`)
   }
 
   return (

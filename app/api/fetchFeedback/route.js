@@ -1,12 +1,16 @@
 import { connectMongoDB } from "@/lib/connectDb";
 import { NextResponse } from "next/server";
 import Feedback from "@/models/feedback";
+
+
 export async function GET(req) {
     try {
         const { searchParams } = new URL(req.url);
         const department = searchParams.get("department");
         const _id = searchParams.get("_id");
 
+        console.log(department,_id);
+        
         await connectMongoDB();
 
         let feedbacks;

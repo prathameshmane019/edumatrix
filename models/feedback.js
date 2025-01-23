@@ -27,15 +27,20 @@ const feedbackSchema = new Schema(
       },
     ],
     questions: [
-       {
-          type: String,
-          required: true,
-       }
+      {
+        type: String,
+        required: true,
+      }
     ],
     responses: {
       type: [Schema.Types.ObjectId],
       default: [],
       ref: 'Response'
+    },
+    institute: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Institute',
+      required: true
     },
     students: {
       type: Number,
@@ -54,15 +59,15 @@ const feedbackSchema = new Schema(
     },
     resourcePerson: {
       type: String,
-      
+
     },
     organization: {
       type: String,
-      
+
     },
     note: {
       type: String,
-      
+
     },
     isActive: {
       type: Boolean,

@@ -39,7 +39,7 @@ const FeedbackTable = ({ feedbacks, onDelete, onToggleActive }) => {
     }
 
     const copyToClipboard = (feedbackId) => {
-        const url = `${window.location.origin}/givefeedback/${feedbackId}`
+        const url = `${window.location.origin}/feedback/givefeedback/${feedbackId}`
         navigator.clipboard.writeText(url).then(
             () => {
                 setCopied(feedbackId)
@@ -78,7 +78,7 @@ const FeedbackTable = ({ feedbacks, onDelete, onToggleActive }) => {
                                 </Tooltip>
                             </TableCell>
                             <TableCell>
-                                <Switch checked={feedback.isActive} onChange={() => onToggleActive(feedback._id, feedback.isActive)} />
+                                <Switch isSelected={feedback.isActive} size="sm" onChange={() => onToggleActive(feedback._id, feedback.isActive)} />
                             </TableCell>
                             <TableCell>
                                 <Button color="danger" size="sm" onClick={() => confirmDelete(feedback._id)}>

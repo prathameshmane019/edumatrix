@@ -2,33 +2,55 @@ import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Feedback from "@/models/feedback";
 import Response from "@/models/response";
+import mongoose from "mongoose";
 export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        if(!data.department){
-            return NextResponse.json({ message: "Department missing"},{status:400});
+
+        // Validate department and institute
+        if (!data.department) {
+            return NextResponse.json({ message: "Department missing" }, { status: 400 });
         }
-        console.log(data);    
+        if (!data.institute) {
+            return NextResponse.json({ message: "Institute missing" }, { status: 400 });
+        }
+
         const newFeedback = new Feedback(data);
         await newFeedback.save();
-        console.log("Feedback Created Successfully");
-        console.log(newFeedback);
-        return NextResponse.json({ message: "Feedback Created Successfully", feedback: newFeedback });
+
+        console.log("Feedback Created Successfully", newFeedback);
+        return NextResponse.json({
+            message: "Feedback Created Successfully",
+            feedback: newFeedback
+        });
     } catch (error) {
         console.log(error);
-        return NextResponse.json({ error: "Failed to create feedback" });
+        return NextResponse.json({ error: "Failed to create feedback" }, { status: 500 });
     }
 }
 export async function GET(req) {
     try {
         const {searchParams} = new URL(req.url);
         const department = searchParams.get("department");
+        const institute = searchParams.get("institute");
    
         await connectMongoDB();
         
+        const query = {};
+        
+        // Add department to query if provided
+        if (department) {
+            query.department = department;
+        }
+        
+        // Add institute to query if provided and is a valid ObjectId
+        if (institute && mongoose.Types.ObjectId.isValid(institute)) {
+            query.institute = new mongoose.Types.ObjectId(institute);
+        }
+        
         const feedbacks = await Feedback.aggregate([
-            { $match: { department: department } },
+            { $match: query },
             { $project: {
                 feedbackTitle: 1,
                 isActive: 1,
@@ -74,7 +96,7 @@ export async function DELETE(req) {
 export async function PUT(req) {
     try {
         await connectMongoDB();
-        const {searchParams} = new URL(req.url);
+        const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
         const { isActive } = await req.json();
 
@@ -91,4 +113,3 @@ export async function PUT(req) {
         return NextResponse.json({ error: "Failed to update feedback" });
     }
 }
-

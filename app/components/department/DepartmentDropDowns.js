@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 
 import { Select, SelectItem } from '@nextui-org/react'
 
-export function DepartmentDropdown({ instituteId, onSelect, selectedDepartment, className = '',size='sm' }) {
+export function DepartmentDropdown({ instituteId, onSelect, selectedDepartment, className = '',size='sm' ,label=''}) {
     const [departments, setDepartments] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
@@ -44,6 +44,7 @@ export function DepartmentDropdown({ instituteId, onSelect, selectedDepartment, 
             placeholder={isLoading? "Loading departments...":"Select a department" }
             variant="bordered"
             size={size}
+            label={label}
             value={selectedDepartment}
             onChange={handleSelectChange}
             className="max-w-xs my-4"

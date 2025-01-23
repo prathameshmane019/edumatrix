@@ -1,7 +1,6 @@
 
 // import ResponseForm from '@/app/components/feedback/givefeedback/[id]/page'
-import SelectFeedback from '@/app/components/feedback/givefeedback/page'
-
+import SelectFeedback from '../../givefeedback/page'
 import React from 'react'
 
 const page = () => {

@@ -11,24 +11,24 @@ const questionsSchema = new Schema(
     },
     subType: {
       type: String,
-      required: function() { return this.feedbackType === 'academic'; },
+      required: function () { return this.feedbackType === 'academic'; },
       enum: ['theory', 'practical']
     },
     feedbackId: {
       type: String,
-      
+
     },
     resourcePerson: {
       type: String,
-      
+
     },
     organization: {
       type: String,
-      
+
     },
     note: {
       type: String,
-      
+
     },
     questions: [
       {
@@ -36,9 +36,14 @@ const questionsSchema = new Schema(
         required: true,
       }
     ],
+    institute: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Institute',
+      required: true
+    },
   },
   {
-    timestamps: true, 
+    timestamps: true,
   }
 );
 

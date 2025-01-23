@@ -607,25 +607,47 @@ const FeedbackManagement = () => {
   const [loading, setLoading] = useState(false)
   const { user, loading: userLoading } = useUser()
 
-  useEffect(() => {
-    if (user?.department) {
-      fetchFeedbacks(user.department)
-    }
-  }, [user])
+  // console.log(user);
+  
+  // useEffect(() => {
+  //   if (user?.department) {
+  //     fetchFeedbacks(user.department)
+  //   }
+  //   else{
+  //     fetchFeedbacks()
+  //   }
+  // }, [user])
 
-  const fetchFeedbacks = async (department) => {
-    setLoading(true)
+  const fetchFeedbacks = async () => {
+    // Only fetch if user and department are available
+    if (!user  || !user._id) {
+      return;
+    }
+  
+    setLoading(true);
     try {
-      const response = await axios.get(`/api/feedback?department=${department}`)
-      setFeedbacks(response.data)
+      const response = await axios.get('/api/feedback', {
+        params: {
+          department: user.department,
+          institute: user._id
+        }
+      });
+      
+      setFeedbacks(response.data);
     } catch (error) {
-      console.error("Error fetching feedbacks:", error)
-      toast.error("Failed to fetch feedbacks.")
+      console.error("Error fetching feedbacks:", error);
+      toast.error(error.response?.data?.error || "Failed to fetch feedbacks.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
+  };
+  
+  // Modify useEffect to depend on specific user properties
+  useEffect(() => {
+    if (user?.department || user?._id) {
+      fetchFeedbacks();
+    }
+  }, [user , user?._id]);
   const handleSubmit = async (formData) => {
     setLoading(true)
     try {

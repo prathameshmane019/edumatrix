@@ -10,6 +10,7 @@ import { Tabs, Tab } from "@nextui-org/react";
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 import Image from 'next/image';
+import { DepartmentDropdown } from '../department/DepartmentDropDowns';
 
 const EvaluationPage = ({ role }) => {
   const [cumulativeStudentCategories, setCumulativeStudentCategories] = useState([]);
@@ -19,6 +20,7 @@ const EvaluationPage = ({ role }) => {
   const [responses, setResponses] = useState([]);
   const [feedbackMode, setFeedbackMode] = useState('cumulative');
   const [selectedDepartment, setSelectedDepartment] = useState('');
+
   const [evaluationDetails, setEvaluationDetails] = useState({
     department: "",
     institute: "",
@@ -43,14 +45,14 @@ const EvaluationPage = ({ role }) => {
   }, [user]);
 
   useEffect(() => {
-    if (evaluationDetails.department) {
-      fetchFeedbackData(evaluationDetails.department);
+    if (evaluationDetails?.department && evaluationDetails?.institute) {
+      fetchFeedbackData(evaluationDetails.department, evaluationDetails.institute);
     }
   }, [evaluationDetails]);
 
-  const fetchFeedbackData = async (department) => {
+  const fetchFeedbackData = async (department, institute) => {
     try {
-      const response = await axios.get(`/api/EvalFeedback?department=${department}`);
+      const response = await axios.get(`/api/EvalFeedback?department=${department}&institute=${institute}`);
       const filteredFeedbackData = response.data.filter(
         feedback => !feedback.isActive
       );
@@ -97,7 +99,148 @@ const EvaluationPage = ({ role }) => {
   };
 
   // Render functions and other logic remain unchanged...
-  
+
+  const calculateCumulativeStudentCategories = () => {
+    if (!selectedFeedback || !selectedFeedback.subjects) {
+      return {};
+    }
+
+    const totalResponses = responses.length;
+    const subjectCategories = {};
+
+    selectedFeedback.subjects.forEach(subject => {
+      let noProblemCount = 0;
+      let totalRatings = 0;
+
+      responses.forEach(feedbackEntry => {
+        const ratingsForSubject = feedbackEntry.ratings.find(rating => rating.subject_id === subject._id);
+        if (ratingsForSubject) {
+          ratingsForSubject.ratings.forEach(rating => {
+            if (!isNaN(rating) && rating !== null) {
+              if (rating >= 4) {  // Consider 4 and 5 as "No Problem"
+                noProblemCount++;
+              }
+              totalRatings++;
+            }
+          });
+        }
+      });
+
+      const noProblemPercentage = totalRatings > 0 ? (noProblemCount / totalRatings) * 100 : 0;
+      subjectCategories[subject._id] = { noProblemPercentage };
+    });
+
+    return subjectCategories;
+  };
+
+  const getSuggestionsForSubject = (subjectId) => {
+    const suggestions = [];
+    responses?.forEach((feedbackEntry) => {
+      const suggestionForSubject = feedbackEntry?.ratings?.find(rating => rating.subject_id === subjectId);
+      if (suggestionForSubject && suggestionForSubject?.suggestions) {
+        suggestions.push(suggestionForSubject?.suggestions);
+      }
+    });
+    return suggestions;
+  };
+
+  const calculatePercentage = (averagePoints) => {
+    const maxPoints = 5; // Maximum possible points per question
+    return (averagePoints / maxPoints) * 100;
+  };
+  const calculateTotalPoints = () => {
+    let total = 0;
+    responses.forEach((feedbackEntry) => {
+      const ratingsForSubject = feedbackEntry.ratings.find(rating => rating.subject_id === selectedSubject._id);
+      if (ratingsForSubject) {
+        ratingsForSubject.ratings.forEach((rating) => {
+          if (!isNaN(rating) && rating !== null) {
+            total += rating;
+          }
+        });
+      }
+    });
+
+    return total;
+  };
+
+
+  const calculateAveragePoints = () => {
+    const totalPoints = calculateTotalPoints();
+    const totalQuestions = selectedFeedback.questions.length;
+    return totalPoints / (responses.length * totalQuestions);
+  };
+  const calculateAveragePointsForSubject = (subjectId) => {
+    let totalPoints = 0;
+    let totalRatings = 0;
+
+    responses.forEach((feedbackEntry) => {
+      const ratingsForSubject = feedbackEntry.ratings.find(rating => rating.subject_id === subjectId);
+      if (ratingsForSubject) {
+        ratingsForSubject.ratings.forEach((rating) => {
+          if (!isNaN(rating) && rating !== null) {
+            totalPoints += rating;
+            totalRatings++;
+          }
+        });
+      }
+    });
+
+    return totalRatings > 0 ? totalPoints / totalRatings : 0;
+  };
+
+  const calculatePointsForFacultyAndQuestion = (subjectId, questionIndex) => {
+    let totalPoints = 0;
+    let totalRatings = 0;
+
+    responses.forEach((feedbackEntry) => {
+      const ratingsForSubject = feedbackEntry.ratings.find(rating => rating.subject_id === subjectId);
+      if (ratingsForSubject && !isNaN(ratingsForSubject.ratings[questionIndex])) {
+        totalPoints += ratingsForSubject.ratings[questionIndex];
+        totalRatings++;
+      }
+    });
+
+    return totalRatings > 0 ? totalPoints : 0;
+  };
+  const calculateStudentCategories = () => {
+    const noProblemRatings = [4, 5]; // Ratings indicating no problem
+    const totalResponses = responses.length;
+    let noProblemCount = 0;
+    let problemCount = 0;
+
+    responses?.forEach((feedbackEntry) => {
+      if (selectedSubject) { // Add a guard clause to check if selectedSubject is not null
+        const ratingsForSubject = feedbackEntry?.ratings.find(rating => rating.subject_id === selectedSubject._id);
+        if (ratingsForSubject) {
+          ratingsForSubject.ratings.forEach((rating) => {
+            if (!isNaN(rating) && rating !== null) {
+              if (noProblemRatings.includes(rating)) {
+                noProblemCount++;
+              } else {
+                problemCount++;
+              }
+            }
+          });
+        }
+      }
+    });
+
+    // Check if selectedFeedback is defined before accessing questions
+    if (!selectedFeedback || !selectedFeedback.questions || !selectedFeedback?.questions.length) {
+      console.error('Error: Selected feedback or its questions are not properly initialized.');
+      return { noProblemPercentage: 0, problemPercentage: 0 };
+    }
+
+    const noProblemPercentage = (noProblemCount / (totalResponses * selectedFeedback?.questions?.length)) * 100;
+    const problemPercentage = (problemCount / (totalResponses * selectedFeedback?.questions?.length)) * 100;
+
+    return { noProblemPercentage, problemPercentage };
+  };
+
+  const { noProblemPercentage, problemPercentage } = calculateStudentCategories(); // For individual feedback
+
+
   const renderEventFeedback = () => {
     return (
       <div id="table-to-print" className="bg-white rounded-lg p-6 text-center">
@@ -215,27 +358,24 @@ const EvaluationPage = ({ role }) => {
           <div className='w-full items-end flex justify-end my-2'>
             <Button variant="bordered" onClick={printDiv}>Print</Button>
           </div>}
-        <div className="flex gap-10 mb-4 ">
-          {role && (
+        <div className="flex gap-6 mb-4 ">
+          {user?.role == "superadmin" && (
             <div>
-              <Select
-                label="Select a Department"
-                placeholder="Select a Department"
-                defaultSelectedKeys={[selectedDepartment]}
-                onChange={(e) => fetchFeedbackData(e.target.value)}
-              >
-                <SelectItem key="Central" value="Central">CENTRAL</SelectItem>
-                <SelectItem key="CSE" value="CSE">CSE</SelectItem>
-                <SelectItem key="ENTC" value="ENTC">ENTC</SelectItem>
-                <SelectItem key="ELEC" value="ELEC">ELECTRICAL</SelectItem>
-                <SelectItem key="MECH" value="MECH">MECHANICAL</SelectItem>
-                <SelectItem key="Civil" value="Civil">CIVIL</SelectItem>
-              </Select>
+              <DepartmentDropdown
+                instituteId={user?._id}
+                label="Select Department"
+                onSelect={(e) => fetchFeedbackData(e.target.value, user?._id)}
+                className='min-w-[15vw] '
+                selectedDepartment={selectedDepartment}
+              />
             </div>
           )}
           <div>
             <Select
               label="Select feedback"
+              size='sm'
+              variant='bordered'                 
+              className='min-w-[15vw] my-4'
               placeholder="Select feedback"
               onChange={(e) => setSelectedFeedback(feedbackData?.find(feedback => feedback._id === e.target.value))}
             >
@@ -251,6 +391,10 @@ const EvaluationPage = ({ role }) => {
             <div>
               <Select
                 label="Select Feedback Mode"
+                size='sm'
+                variant='bordered'
+                className='min-w-[15vw] my-4'
+
                 placeholder="Select Feedback Mode"
                 defaultSelectedKeys={[feedbackMode]}
                 onChange={(e) => {
@@ -268,6 +412,9 @@ const EvaluationPage = ({ role }) => {
               <Select
                 label="Select a Subject"
                 placeholder="Select a Subject"
+                size='sm'
+                className='min-w-[15vw] my-4'
+                variant='bordered'
                 onChange={(e) => setSelectedSubject(selectedFeedback?.subjects?.find(subject => subject._id === e.target.value))}
               >
                 {selectedFeedback && selectedFeedback.subjects.map((subject) => (
@@ -281,7 +428,7 @@ const EvaluationPage = ({ role }) => {
         </div>
 
         {selectedFeedback ? (
-          <Tabs aria-label="Evaluation Tabs">
+          <Tabs  aria-label="Evaluation Tabs" className=' w-full mx-auto flex flex-col items-center ' variant='bordered'>
             <Tab key="evaluation" title="Evaluation">
               {selectedFeedback.feedbackType === "event" ? renderEventFeedback() : (
                 <>
@@ -295,7 +442,51 @@ const EvaluationPage = ({ role }) => {
                       <p className="mb-4">Date of Feedback: {formatDate(responses[0]?.date)} Total Feedbacks: {responses.length}</p>
                       <p className="mb-4">Faculty : {selectedSubject.faculty}</p>
                       <table className="w-full table-auto mx-auto">
-                        {/* ... (table content remains the same) ... */}
+                        <thead>
+                          <tr>
+                            <th className="px-1 py-1 text-sm">Que No</th>
+                            <th className="px-1 py-1 text-sm">Question</th>
+                            <th className="px-1 py-1 text-sm">Poor</th>
+                            <th className="px-1 py-1 text-sm">Average</th>
+                            <th className="px-1 py-1 text-sm">Good</th>
+                            <th className="px-1 py-1 text-sm">Very Good</th>
+                            <th className="px-1 py-1 text-sm">Excellent</th>
+                            <th className="px-1 py-1 text-sm">Evaluation Point</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedFeedback && selectedFeedback.questions.map((question, index) => (
+                            <tr key={index}>
+                              <td className="border px-1 py-1 text-center">{index + 1}</td>
+                              <td className="border min-w-[40vw] px-2 py-2 text-sm ">{question}</td>
+                              {Object.values(calculateRatingCounts(index)).map((count, i) => (
+                                <td key={i} className="border px-1 py-1 text-center">{count}</td>
+                              ))}
+                              <td className="border px-1 py-1 text-center">{calculateEvaluationPoint(index).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                          <tr>
+                            <td colSpan="7" className="border text-start font-bold pl-4">Total</td>
+                            <td className="border px-1 py-1 text-center ">{calculateTotalPoints()}</td>
+                          </tr>
+                          <tr>
+                            <td colSpan="7" className="  border text-start font-bold pl-4">Average</td>
+                            <td className="border px-1 py-1 text-center">{calculateAveragePoints().toFixed(2)}</td>
+                          </tr>
+                          <tr >
+                            <td colSpan="7" className=" border text-start font-bold pl-4">Percentage</td>
+                            <td className="border px-1 py-1 text-center">
+                              {calculatePercentage(calculateAveragePoints()).toFixed(2)}%
+                            </td>
+                          </tr>
+                          <tr >
+                            <td colSpan="7" className="border text-start font-bold pl-4">No Problem: </td>
+                            <td className="border px-1 py-1 text-center">
+                              {noProblemPercentage.toFixed(2)}%
+                            </td>
+                          </tr>
+
+                        </tbody>
                       </table>
                       <div className="mt-4">
                         <h3 className="text-lg font-bold">Suggestions for {selectedSubject.faculty}:</h3>
@@ -317,12 +508,68 @@ const EvaluationPage = ({ role }) => {
                       </h2>
                       <p className="mb-2">Date of Feedback: {formatDate(responses[0]?.date)} Total Feedbacks: {responses.length}</p>
                       <table className="w-full table-auto">
-                        {/* ... (table content remains the same) ... */}
+                        <thead>
+                          <tr>
+                            <th className="px-1 py-1">Question</th>
+                            {selectedFeedback && selectedFeedback.subjects && selectedFeedback.subjects.map(subject => (
+                              <th key={subject._id} className="px-1 text-sm">{subject.faculty}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedFeedback && selectedFeedback.questions.map((question, questionIndex) => (
+                            <tr key={questionIndex}>
+                              <td className="border px-2 py-2 text-start min-w-[35vw]">{question}</td>
+                              {selectedFeedback.subjects.map(subject => (
+                                <td key={subject._id} className="border text-center px-1 py-1">{calculatePointsForFacultyAndQuestion(subject._id, questionIndex)}</td>
+                              ))}
+                            </tr>
+                          ))}
+                          <tr>
+                            <th className="px-1 py-1 border text-start">Average Points</th>
+                            {selectedFeedback && selectedFeedback.subjects.map(subject => (
+                              <td key={subject._id} className="border px-1 text-center">{calculateAveragePointsForSubject(subject._id).toFixed(2)}</td>
+                            ))}
+                          </tr>
+                          <tr>
+                            <th className="px-1 py-1 border text-start">Percentage</th>
+                            {selectedFeedback && selectedFeedback.subjects.map(subject => (
+                              <td key={subject._id} className="border px-1 text-center">
+                                {calculatePercentage(calculateAveragePointsForSubject(subject._id)).toFixed(2)}%
+                              </td>
+                            ))}
+                          </tr>
+                          <tr>
+                            <th className="px-1 py-1 border text-start">No Problem Percentage</th>
+                            {selectedFeedback && selectedFeedback.subjects.map(subject => (
+                              <td key={subject._id} className="border px-1 text-center">
+                                {cumulativeStudentCategories[subject._id]?.noProblemPercentage.toFixed(2)}%
+                              </td>
+                            ))}
+                          </tr>
+                        </tbody>
                       </table>
                       <div className="mt-4">
                         <h3 className="text-xl font-bold mb-2">Suggestions:</h3>
                         <table className="w-full table-auto">
-                          {/* ... (table content remains the same) ... */}
+                          <thead>
+                            <tr>
+                              <th>Faculty</th>
+                              <th>Suggestions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedFeedback && selectedFeedback.subjects.map(subject => (
+                              <tr key={subject._id}>
+                                <td className=" border px-1 py-1 text-start">{subject.faculty}</td>
+                                <td className="border px-1 py-1 text-start">
+                                  {getSuggestionsForSubject(subject._id).map((suggestion, index) => (
+                                    <div className="flex" key={index}>{suggestion}</div>
+                                  ))}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
                         </table>
                       </div>
                     </div>
@@ -385,7 +632,7 @@ const EvaluationPage = ({ role }) => {
                             },
                           ]}
                           type="bar"
-                          height={400}width={400}
+                          height={400} width={400}
                         />
 
                         <h3 className="text-lg font-semibold mt-4">Student Categories</h3>
