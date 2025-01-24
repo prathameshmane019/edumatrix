@@ -203,6 +203,24 @@ const EvaluationPage = ({ role }) => {
 
     return totalRatings > 0 ? totalPoints : 0;
   };
+
+  const calculateEventQuestionRating = (questionIndex) => {
+    let totalRating = 0;
+    let count = 0;
+    responses.forEach(response => {
+      if (response.ratings[0] && response.ratings[0].ratings[questionIndex] !== undefined) {
+        totalRating += response.ratings[0].ratings[questionIndex];
+        count++;
+      }
+    });
+    return count > 0 ? totalRating / count : 0;
+  };
+  
+  const getEventSuggestions = () => {
+    return responses.flatMap(response =>
+      response.ratings[0] && response.ratings[0].suggestions ? [response.ratings[0].suggestions] : []
+    );
+  };
   const calculateStudentCategories = () => {
     const noProblemRatings = [4, 5]; // Ratings indicating no problem
     const totalResponses = responses.length;
@@ -363,6 +381,7 @@ const EvaluationPage = ({ role }) => {
             <div>
               <DepartmentDropdown
                 instituteId={user?._id}
+                includeCentral={true} 
                 label="Select Department"
                 onSelect={(e) => fetchFeedbackData(e.target.value, user?._id)}
                 className='min-w-[15vw] '

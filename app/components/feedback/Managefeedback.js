@@ -593,6 +593,7 @@
 
 // export default FeedbackForm;
 "use client"
+
 import React, { useState, useEffect } from "react"
 import axios from "axios"
 import { useUser } from "@/app/context/UserContext"
@@ -607,50 +608,74 @@ const FeedbackManagement = () => {
   const [loading, setLoading] = useState(false)
   const { user, loading: userLoading } = useUser()
 
-  // console.log(user);
-  
-  // useEffect(() => {
-  //   if (user?.department) {
-  //     fetchFeedbacks(user.department)
-  //   }
-  //   else{
-  //     fetchFeedbacks()
-  //   }
-  // }, [user])
-
-  const fetchFeedbacks = async () => {
-    // Only fetch if user and department are available
-    if (!user  || !user._id) {
-      return;
-    }
-  
-    setLoading(true);
-    try {
-      const response = await axios.get('/api/feedback', {
-        params: {
-          department: user.department,
-          institute: user._id
-        }
-      });
-      
-      setFeedbacks(response.data);
-    } catch (error) {
-      console.error("Error fetching feedbacks:", error);
-      toast.error(error.response?.data?.error || "Failed to fetch feedbacks.");
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Modify useEffect to depend on specific user properties
   useEffect(() => {
     if (user?.department || user?._id) {
-      fetchFeedbacks();
+      fetchFeedbacks()
     }
-  }, [user , user?._id]);
-  const handleSubmit = async (formData) => {
+  }, [user, user?._id])
+
+  useEffect(() => {
+    // Add event listener for beforeunload
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => {
+      // Remove event listener when component unmounts
+      window.removeEventListener("beforeunload", handleBeforeUnload)
+    }
+  }, [])
+
+  const handleBeforeUnload = (e) => {
+    // Cancel the event
+    e.preventDefault()
+    // Chrome requires returnValue to be set
+    e.returnValue = ""
+  }
+
+  const fetchFeedbacks = async () => {
+    if (!user || !user._id) {
+      return
+    }
+
     setLoading(true)
     try {
+      const response = await axios.get("/api/feedback", {
+        params: {
+          department: user.department,
+          institute: user._id,
+        },
+      })
+
+      setFeedbacks(response.data)
+    } catch (error) {
+      console.error("Error fetching feedbacks:", error)
+      toast.error(error.response?.data?.error || "Failed to fetch feedbacks.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSubmit = async (formData) => {
+    setLoading(true)
+    console.log(formData);
+    
+    try {
+      if (formData.questions?.length === 0) {
+        toast.error("Questions are missing. Contact superadmin to add questions and try again.")
+        throw new Error("Questions are missing. Contact superadmin to add questions and try again.")
+      }
+      if (!formData.students || formData.students <= 0) {
+        toast.error("Number of students must be a positive number.")
+        throw new Error("Number of students must be a positive number.")
+      }
+
+      if (!formData.pwd) {
+        toast.error("Password is required.")
+        throw new Error("Password is required.")
+      }
+
+      if (!formData.department) {
+        toast.error("Department is required.")
+        throw new Error("Department is required.")
+      }
       const response = await axios.post("/api/feedback", formData)
       setFeedbacks([...feedbacks, response.data.feedback])
       setShowFeedbackForm(false)

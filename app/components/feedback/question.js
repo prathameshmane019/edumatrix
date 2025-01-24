@@ -28,13 +28,14 @@ const QuestionPage = () => {
     resourcePerson: "",
     organization: "",
     note: "",
-    institute:""
+    institute:user?._id || ""
   })
   const [newQuestion, setNewQuestion] = useState("")
   const [savedQuestions, setSavedQuestions] = useState([])
 
   useEffect(() => {
     fetchSavedQuestions()
+    setFormData((prev) => ({ ...prev, institute: user?._id }))
   }, [user,user?._id])
 
   const fetchSavedQuestions = async () => {

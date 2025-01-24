@@ -23,18 +23,28 @@ export const DynamicFieldSelector = ({ formData, handleSelectChange }) => {
     return (
       <>
         <DepartmentDropdown
+          includeCentral={true} 
           instituteId={user?._id}
           onSelect={handleChange("department")}
           className="w-full"
           selectedDepartment={formData?.department}
         />
-        <ClassDropdown
-          instituteId={user?._id || formData?.instituteId}
-          onSelect={handleClassChange("className")}
-          selectedClass={formData?.className}
-          selectedDepartment={formData?.department}
-          acadmicYear={formData?.academicYear}
-        />
+         <Select
+            placeholder={isLoading ? "Loading class data..." : "Select a class"}
+            variant="bordered"
+            label={label}
+            size={size}
+            value={selectedClass}
+            selectedKeys={selectedClass ? [selectedClass] : []}
+            onChange={handleSelectChange}
+            className={`max-w-xs ${className}`}
+        >
+            {classes.map((cls) => (
+                <SelectItem key={cls.value} value={cls.value}>
+                    {cls.label}
+                </SelectItem>
+            ))}
+        </Select>
       </>
     )
   }

@@ -1,16 +1,21 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-
 import { Select, SelectItem } from '@nextui-org/react'
 
-export function DepartmentDropdown({ instituteId, onSelect, selectedDepartment, className = '',size='sm' ,label=''}) {
+export function DepartmentDropdown({ 
+    instituteId, 
+    onSelect, 
+    selectedDepartment, 
+    className = '',
+    size='sm', 
+    label='',
+    includeCentral = false 
+}) {
     const [departments, setDepartments] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
 
-    console.log(instituteId,selectedDepartment);
-    
     useEffect(() => {
         async function fetchDepartments() {
             if (!instituteId) return
@@ -22,7 +27,13 @@ export function DepartmentDropdown({ instituteId, onSelect, selectedDepartment, 
                 const response = await fetch(`/api/v2/utils/department?institute=${instituteId}`)
                 if (!response.ok) throw new Error('Failed to fetch departments')
                 const data = await response.json()
-                setDepartments(data) 
+                
+                // Add CENTRAL option if includeCentral is true
+                const updatedDepartments = includeCentral 
+                    ? [{ value: 'CENTRAL', label: 'CENTRAL' }, ...data]
+                    : data
+
+                setDepartments(updatedDepartments)
 
             } catch (error) {
                 console.error('Error:', error)
@@ -33,7 +44,7 @@ export function DepartmentDropdown({ instituteId, onSelect, selectedDepartment, 
         }
 
         fetchDepartments()
-    }, [instituteId])
+    }, [instituteId, includeCentral])
 
     const handleSelectChange = (value) => {
         onSelect(value)
@@ -41,7 +52,7 @@ export function DepartmentDropdown({ instituteId, onSelect, selectedDepartment, 
 
     return (
         <Select
-            placeholder={isLoading? "Loading departments...":"Select a department" }
+            placeholder={isLoading ? "Loading departments..." : "Select a department"}
             variant="bordered"
             size={size}
             label={label}
@@ -57,6 +68,3 @@ export function DepartmentDropdown({ instituteId, onSelect, selectedDepartment, 
         </Select>
     )
 }
-
-
-

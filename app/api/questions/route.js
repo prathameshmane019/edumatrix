@@ -28,7 +28,7 @@
 //         if(type){
 //             if(type==="academic"){
 //                 const subtype = searchParams.get("subtype");
-        
+
 //                  questions = await Questions.findOne({
 //                     feedbackType:type,
 //                     subType:subtype});
@@ -70,11 +70,12 @@
 import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Questions from "@/models/questions";
+import mongoose from "mongoose";
 export async function POST(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        
+
         // Validate institute is present
         console.log(data);
         if (!data.institute) {
@@ -84,9 +85,9 @@ export async function POST(req) {
         const newQuestions = new Questions(data);
         await newQuestions.save();
 
-        return NextResponse.json({ 
-            message: "Questions added Successfully", 
-            Questions: newQuestions 
+        return NextResponse.json({
+            message: "Questions added Successfully",
+            Questions: newQuestions
         });
     } catch (error) {
         console.error(error);
@@ -101,19 +102,24 @@ export async function GET(req) {
         const institute = searchParams.get("institute");
 
         console.log(institute);
-        
+        console.log(type);
         // Validate institute is provided
         if (!institute) {
             return NextResponse.json({ error: "Institute is required" }, { status: 400 });
         }
 
         await connectMongoDB();
-
-        const query = { institute };
+        let query = {};
+        // Add institute to query if provided and is a valid ObjectId
+        if (institute && mongoose.Types.ObjectId.isValid(institute)) {
+            query.institute = new mongoose.Types.ObjectId(institute);
+        }
 
         if (type) {
             if (type === "academic") {
                 const subtype = searchParams.get("subtype");
+                console.log(subtype);
+
                 query.feedbackType = type;
                 if (subtype) query.subType = subtype;
             } else if (type === "event") {
@@ -122,13 +128,14 @@ export async function GET(req) {
         }
 
         const questions = await Questions.find(query);
+        console.log(questions);
 
         return NextResponse.json(questions);
     } catch (error) {
         console.error("Error fetching questions:", error);
         return NextResponse.json({ error: "Failed to Fetch Questions" }, { status: 500 });
     }
-} 
+}
 export async function DELETE(req) {
     try {
         await connectMongoDB();
