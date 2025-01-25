@@ -174,6 +174,7 @@ import { useState, useEffect, useMemo } from "react";
 import { signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { Tooltip, Skeleton } from "@nextui-org/react";
+import { useUser } from "../context/UserContext";
 
 const Sidebar = () => {
   const router = useRouter();
@@ -182,6 +183,7 @@ const Sidebar = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const {user}=useUser();
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {

@@ -32,6 +32,7 @@ import { DepartmentDropdown } from "./department/DepartmentDropDowns";
 import { getCurrentAcademicYear, getAcademicYears } from '@/app/utils/acadmicYears';
 import { Calendar } from "lucide-react";
 import ClassModal from "./classModal";
+import { useUser } from "../context/UserContext";
 
 const columns = [
   { uid: "id", name: "Class ID", sortable: true },
@@ -66,22 +67,22 @@ export default function ClassTable() {
   const [isLoading, setIsLoading] = useState(false);
   const [academicYear, setAcademicYear] = useState(() => profile?.currentYear || getCurrentAcademicYear());
 
+
+const {user,loading}=useUser()
   useEffect(() => {
-    const storedProfile = sessionStorage.getItem('userProfile');
-    if (storedProfile) {
-      const parsedProfile = JSON.parse(storedProfile);
-      setProfile(parsedProfile);
-      if (parsedProfile.role !== "superadmin") {
-        setSelectedDepartment(parsedProfile.id);
+     if (user) {
+       setProfile(user);   
+      if (user?.role !== "superadmin") { 
+        setSelectedDepartment(user?.id); 
       }
-      if (parsedProfile.currentYear) {
-        setAcademicYear(parsedProfile.currentYear); // Set default year from profile
+      if (profile?.currentYear) {
+        setAcademicYear(profile?.currentYear); // Set default year from profile
       }
     }
-  }, []);
+  }, [user]);
   
   useEffect(() => {
-    if (selectedDepartment) {
+    if (profile?.id || selectedDepartment) {
       fetchData();
     }
   }, [selectedDepartment]);
@@ -351,7 +352,7 @@ export default function ClassTable() {
         onSubmit={fetchData}
         teachers={teachers}
         userRole={profile?.role}
-        department={selectedDepartment}
+        department={selectedDepartment || profile?.department || profile?.id}
         instituteId={profile?.role === 'superadmin' ? profile?._id : profile?.institute}
       />
     </>

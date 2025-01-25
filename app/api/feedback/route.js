@@ -8,8 +8,9 @@ export async function POST(req) {
         await connectMongoDB();
         const data = await req.json();
 
+        console.log("Data received", data);
         // Validate department and institute
-        if (!data.department) {
+        if (data.feedbacktype=="academic" && !data.department) {
             return NextResponse.json({ message: "Department missing" }, { status: 400 });
         }
         if (!data.institute) {
@@ -34,7 +35,6 @@ export async function GET(req) {
         const {searchParams} = new URL(req.url);
         const department = searchParams.get("department");
         const institute = searchParams.get("institute");
-   
         await connectMongoDB();
         
         const query = {};

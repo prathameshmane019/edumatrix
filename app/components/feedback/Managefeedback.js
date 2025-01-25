@@ -609,29 +609,13 @@ const FeedbackManagement = () => {
   const { user, loading: userLoading } = useUser()
 
   useEffect(() => {
-    if (user?.department || user?._id) {
+    if (user?.department || user?.id || "CENTRAL") {
       fetchFeedbacks()
     }
-  }, [user, user?._id])
-
-  useEffect(() => {
-    // Add event listener for beforeunload
-    window.addEventListener("beforeunload", handleBeforeUnload)
-    return () => {
-      // Remove event listener when component unmounts
-      window.removeEventListener("beforeunload", handleBeforeUnload)
-    }
-  }, [])
-
-  const handleBeforeUnload = (e) => {
-    // Cancel the event
-    e.preventDefault()
-    // Chrome requires returnValue to be set
-    e.returnValue = ""
-  }
+  }, [user, user?.id])
 
   const fetchFeedbacks = async () => {
-    if (!user || !user._id) {
+    if (!user) {
       return
     }
 
@@ -639,11 +623,10 @@ const FeedbackManagement = () => {
     try {
       const response = await axios.get("/api/feedback", {
         params: {
-          department: user.department,
-          institute: user._id,
+          department: user.department || user?.id || "CENTRAL",
+          institute: user._id || user?.institute,
         },
       })
-
       setFeedbacks(response.data)
     } catch (error) {
       console.error("Error fetching feedbacks:", error)
@@ -655,9 +638,8 @@ const FeedbackManagement = () => {
 
   const handleSubmit = async (formData) => {
     setLoading(true)
-    console.log(formData);
-    
     try {
+      
       if (formData.questions?.length === 0) {
         toast.error("Questions are missing. Contact superadmin to add questions and try again.")
         throw new Error("Questions are missing. Contact superadmin to add questions and try again.")
@@ -672,7 +654,7 @@ const FeedbackManagement = () => {
         throw new Error("Password is required.")
       }
 
-      if (!formData.department) {
+      if (formData.feedbackType=="academic" && !formData.department) {
         toast.error("Department is required.")
         throw new Error("Department is required.")
       }
@@ -725,10 +707,6 @@ const FeedbackManagement = () => {
         <Spinner size="lg" />
       </div>
     )
-  }
-
-  if (!user) {
-    return <div>Please log in to access this page.</div>
   }
 
   return (

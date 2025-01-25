@@ -25,7 +25,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, department, us
   const [formData, setFormData] = useState({
     id: "",
     academicYear: "",
-    department: "",
+    department: department,
     institute: instituteId,
     teacher: "",
     subjects: {
@@ -41,6 +41,8 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, department, us
   const [isFetchingStudents, setIsFetchingStudents] = useState(false);
   const [previousClassId, setPreviousClassId] = useState("");
 
+ 
+  
   useEffect(() => {
     if (isOpen) {
       if (mode === "edit" && classData) {
@@ -146,7 +148,9 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, department, us
   };
 
   const validateForm = () => {
-    if (!formData.id || !formData.teacher || !formData.academicYear || !formData.department) {
+    console.log(formData);
+    
+    if (!formData.id   || !formData.academicYear || !formData.department) {
       toast.error("Please fill in all required fields.");
       return false;
     }

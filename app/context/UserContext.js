@@ -25,6 +25,8 @@ export const UserProvider = ({ children }) => {
         try {
           const parsedProfile = JSON.parse(storedProfile);
           setUser(parsedProfile);
+          console.log(parsedProfile);
+          
         } catch (error) {
           console.error("Error parsing profile:", error);
         }
@@ -36,8 +38,8 @@ export const UserProvider = ({ children }) => {
       if (session?.user) {
         // If we have a session, update the user state and session storage
         const userProfile = { ...session.user };
-        setUser(userProfile);
-        sessionStorage.setItem('userProfile', JSON.stringify(userProfile));
+        // setUser(userProfile);
+        // sessionStorage.setItem('userProfile', JSON.stringify(userProfile));
         setLoading(false);
       } else {
         // If no session user, try to load from session storage
