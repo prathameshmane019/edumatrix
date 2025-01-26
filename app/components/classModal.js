@@ -78,7 +78,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, department, us
           academicYear: formData.academicYear
         }
       });
-
+ 
       if (response.data) {
         const students = response.data;
         setAllStudents(students);
@@ -280,8 +280,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, department, us
                 selectedDepartment={formData.department}
               />
             )}
-          </div>
-          {mode === "add" && (
+          </div> 
             <div className="mt-4">
               <ClassDropdown
                 id="previous-class-select"
@@ -298,8 +297,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, department, us
                 className="w-full"
                 label="Select Previous Class (Optional)"
               />
-            </div>
-          )}
+            </div> 
           <div className="mt-4">
             <Checkbox
               isSelected={selectAll}

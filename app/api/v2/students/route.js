@@ -95,14 +95,13 @@ export async function GET(req) {
             return NextResponse.json(student, { status: 200 });
         }
 
-        if (department) filter.department = department;
-        if (className) {
-            // Ensure className is a valid ObjectId
-            if (!mongoose.Types.ObjectId.isValid(className)) {
-                return NextResponse.json({ error: "Invalid class ID format" }, { status: 400 });
-            }
+        // if (department) filter.department = department;
+
+        // Add institute to query if provided and is a valid ObjectId
+        if (className && mongoose.Types.ObjectId.isValid(className)) {
             filter.class = new mongoose.Types.ObjectId(className);
         }
+
         console.log(filter);
 
         if (filterValue) {

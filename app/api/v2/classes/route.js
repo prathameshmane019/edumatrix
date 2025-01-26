@@ -10,14 +10,14 @@ export async function POST(req) {
     let session;
     try {
         await connectMongoDB();
-        session = await mongoose.startSession();
-        session.startTransaction();
+        
 
         const data = await req.json();
         console.log(data);
         
         const { id,academicYear, teacher,institute, department, students, batches } = data;
-
+        session = await mongoose.startSession();
+        session.startTransaction();
         const newClass = new Classes({
             id,
             students,
@@ -94,7 +94,7 @@ export async function POST(req) {
 }
 
 export async function PUT(req) {
-    let session;
+    let session; 
     let conn;
     try {
         console.log("Starting database connection");
@@ -106,10 +106,7 @@ export async function PUT(req) {
         session.startTransaction();
         console.log("Transaction started");
 
-        await connectMongoDB();
-        session = await mongoose.startSession();
-        session.startTransaction();
-
+     
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
 

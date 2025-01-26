@@ -7,41 +7,60 @@ export async function POST(req) {
     let session;
     try {
         await connectMongoDB();
-        session = await mongoose.startSession();
-        session.startTransaction();
-
         const data = await req.json();
-        const { students, class: classRef } = data;
+
+        const { students, class: classRef, department } = data;
         console.log("Original data:", data);
+
+        // Validate that department is provided
+        if (!department) {
+            return NextResponse.json({ 
+                error: "Department is required for student registration" 
+            }, { status: 400 });
+        }
+
+        // Validate that all students have the same department
+        const uniqueDepartments = new Set(students.map(student => student.department));
+        if (uniqueDepartments.size > 1) {
+            return NextResponse.json({ 
+                error: "All students must belong to the same department" 
+            }, { status: 400 });
+        }
 
         if (!students || students.length === 0) {
             throw new Error("No student data provided");
         }
 
-        // Trim and process student data
+        // Ensure each student has the correct department
         const processedStudents = students.map(student => ({
             ...student,
             name: student.name.trim(),
             email: student.email.trim().toLowerCase(),
             class: classRef,
-            // Trim all other fields except name
+            department: department, // Override with the provided department
             ...Object.fromEntries(
                 Object.entries(student)
-                    .filter(([key]) => key !== 'name' && key !== 'email' && key !== 'class')
+                    .filter(([key]) => key !== 'name' && key !== 'email' && key !== 'class' && key !== 'department')
                     .map(([key, value]) => [key, typeof value === 'string' ? value.trim() : value])
             )
         }));
 
         console.log("Processed data:", processedStudents);
 
+        session = await mongoose.startSession();
+        session.startTransaction();
+
         const createdStudents = await Student.insertMany(processedStudents, { session });
-        
+
         await session.commitTransaction();
         session.endSession();
 
         console.log("Students Registered Successfully");
         console.log(createdStudents);
-        return NextResponse.json({ message: "Students Registered Successfully", students: createdStudents }, { status: 201 });
+        return NextResponse.json({ 
+            message: "Students Registered Successfully", 
+            students: createdStudents 
+        }, { status: 201 });
     } catch (error) {
         console.error("Error creating students:", error);
         if (session) {
@@ -53,17 +72,22 @@ export async function POST(req) {
             // Duplicate key error
             const duplicateField = Object.keys(error.keyPattern)[0];
             const duplicateValue = error.keyValue[duplicateField];
-            return NextResponse.json({ 
-                error: `Duplicate entry for ${duplicateField}: ${duplicateValue}. This student already exists.` 
+            return NextResponse.json({
+                error: `Duplicate entry for ${duplicateField}: ${duplicateValue}. This student already exists.`
             }, { status: 400 });
         } else if (error.name === 'ValidationError') {
             // Validation error
             const validationErrors = Object.values(error.errors).map(err => err.message);
-            return NextResponse.json({ error: "Validation failed", details: validationErrors }, { status: 400 });
+            return NextResponse.json({ 
+                error: "Validation failed", 
+                details: validationErrors 
+            }, { status: 400 });
         } else {
             // Generic error
-            return NextResponse.json({ error: "Failed to Register Students", details: error.message }, { status: 500 });
+            return NextResponse.json({ 
+                error: "Failed to Register Students", 
+                details: error.message 
+            }, { status: 500 });
         }
     }
 }
-

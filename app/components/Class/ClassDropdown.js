@@ -45,12 +45,10 @@ export function ClassDropdown({ instituteId, onSelect, selectedClass, selectedDe
 
     }
 
-    
-    if (error) return <div>No classes found</div>
-
+   
     return (
         <Select
-            placeholder={isLoading ? "Loading... class data " : "Select a class"}
+            placeholder={isLoading ? "Loading... class data " :error ? "No classes found": "Select a class"}
             variant="bordered"
             label={label}
             size={size}

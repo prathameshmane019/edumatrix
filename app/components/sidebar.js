@@ -211,10 +211,10 @@ const Sidebar = () => {
           { name: "Feedback Evaluation", href: "/feedback/admin/evaluate", icon: TbReportAnalytics },
           { name: "Manage Feedback", href: "/feedback/admin/feedback", icon: MdFeedback },
           { name: "Manage Department", href: "/attendance/admin/department", icon: FaChalkboardTeacher },
-          { name: "Manage Students", href: "/attendance/admin/students", icon: PiStudentBold },
-          { name: "Manage Class", href: "/attendance/admin/classes", icon: SiGoogleclassroom },
-          { name: "Manage Subjects", href: "/feedback/admin/subjects", icon: SiGoogleclassroom },
-          { name: "Manage Faculty", href: "/attendance/admin/faculty", icon: GiTeacher },
+          // { name: "Manage Students", href: "/attendance/admin/students", icon: PiStudentBold },
+
+          // { name: "Manage Subjects", href: "/feedback/admin/subjects", icon: SiGoogleclassroom },
+          // { name: "Manage Faculty", href: "/attendance/admin/faculty", icon: GiTeacher },
         ],
         superadmin: [
           { name: "Profile", href: "/feedback/admin", icon: MdPortrait },
@@ -223,9 +223,9 @@ const Sidebar = () => {
           { name: "Manage Department", href: "/feedback/admin/department", icon: FaChalkboardTeacher },
           { name: "Manage Feedback", href: "/feedback/admin/feedback", icon: MdFeedback },
           { name: "Give Feedback", href: "/feedback/admin/response", icon: FaChalkboardTeacher },
-          { name: "Manage Students", href: "/feedback/admin/students", icon: PiStudentBold },
-          { name: "Manage Class", href: "/feedback/admin/classes", icon: SiGoogleclassroom },
-          { name: "Manage Faculty", href: "/feedback/admin/faculty", icon: GiTeacher },
+          // { name: "Manage Students", href: "/feedback/admin/students", icon: PiStudentBold },
+          // { name: "Manage Class", href: "/feedback/admin/classes", icon: SiGoogleclassroom },
+          // { name: "Manage Faculty", href: "/feedback/admin/faculty", icon: GiTeacher },
         ],
         faculty: [
           { name: "Profile", href: "/feedback/faculty", icon: MdPortrait },

@@ -9,7 +9,7 @@ export async function POST(req) {
     await connectMongoDB();
     const data = await req.json();
 
-    const { name, address, contact, email, instituteCode } = data;
+    const { name, address, contact, email, instituteCode,password} = data;
     console.log(data);
 
     const newInstitute = new Institute({
@@ -17,7 +17,8 @@ export async function POST(req) {
       address,
       contact,
       email,
-      instituteCode
+      instituteCode,
+      password
     });
 
     await newInstitute.save();

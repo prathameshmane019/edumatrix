@@ -69,6 +69,9 @@ export default function ClassTable() {
 
 
 const {user,loading}=useUser()
+
+console.log(user);
+
   useEffect(() => {
      if (user) {
        setProfile(user);   

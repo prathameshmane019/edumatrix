@@ -640,7 +640,7 @@ export default function StudentTable() {
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("add");
-  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedClass, setSelectedClass] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [students, setStudents] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
@@ -776,7 +776,8 @@ export default function StudentTable() {
         try {
           await axios.post('/api/upload', { 
             students: [student],
-            class: selectedClass
+            class: selectedClass,
+            department:selectedDepartment
           });
           uploadedStudents++;
         } catch (error) {
@@ -1008,6 +1009,11 @@ export default function StudentTable() {
   };
 
   const openFileDialog = useCallback(() => {
+    
+    if(!selectedClass){
+      toast.warning("Please Select class before uploading file")
+       
+    }
     const fileInput = document.getElementById('upload-input');
     fileInput.click();
   }, []);
@@ -1140,7 +1146,8 @@ export default function StudentTable() {
             size="sm"
             onClick={openFileDialog}
             endContent={<FaFileUpload />}
-            disabled={!selectedClass}
+            // disabled={!selectedClass}
+
           >
             Upload File
           </Button>
