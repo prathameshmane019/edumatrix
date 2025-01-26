@@ -7,13 +7,14 @@ export async function POST(req) {
     await connectMongoDB();
     const data = await req.json();
 
-    const { name, id, password, institute } = data;
+    const { name, id, password, institute,email } = data;
     console.log(data);
     const newDepartment = new Department({
       id, 
       name,
       password,
-      institute
+      institute,
+      email
     });
 
     await newDepartment.save();
@@ -33,7 +34,7 @@ export async function PUT(req) {
     await connectMongoDB();
     const data = await req.json();
     console.log(data);
-    const { name, id, password, institute } = data;
+    const { name, id, password, institute,email } = data;
     const { searchParams } = new URL(req.url);
     const _id = searchParams.get("_id");
     const existingDepartment = await Department.findByIdAndUpdate(
@@ -42,7 +43,8 @@ export async function PUT(req) {
         name,
         id,
         password,
-        institute
+        institute,
+        email
       },
       { new: true }
     );
