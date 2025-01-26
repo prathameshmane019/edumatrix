@@ -206,10 +206,10 @@ import {
   SelectItem,
 } from "@nextui-org/react";
 import { toast } from "sonner";
-import axios from "axios";
-import { DepartmentDropdown } from "./department/DepartmentDropDowns";
+import axios from "axios"; 
 import { Calendar } from "lucide-react";
 import { getAcademicYears } from "../utils/acadmicYears";
+import { DepartmentDropdown } from "./department/DepartmentDropDowns";
 
 const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
   const [formData, setFormData] = useState({
@@ -233,20 +233,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
   }, []);
 
 
-  const fetchDepartments = async () => {
-    try {
-      const response = await axios.get("/api/v2/department");
-      setDepartmentOptions(response.data.departments || []);
-    } catch (error) {
-      console.error("Error fetching departments:", error);
-      toast.error("Error fetching department options");
-    }
-  };
-    // Fetch department options
-    useEffect(() => {
-      if(profile?.role==="superadmin") fetchDepartments();
-     }, [profile,fetchDepartments]);
-     
+ 
   // Set form data based on mode and profile
   useEffect(() => {
     if (mode === "edit" && faculty) {

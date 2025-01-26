@@ -123,7 +123,7 @@ console.log(user);
   const deleteClass = useCallback(async (_id) => {
     try {
       setIsDeleting(true);
-      await axios.delete(`/api/classes?_id=${_id}`, { timeout: 10000 });
+      await axios.delete(`/api/v2/classes?_id=${_id}`, { timeout: 10000 });
       setClasses(prevClasses => prevClasses.filter(cls => cls._id !== _id));
       toast.success('Class deleted successfully');
     } catch (error) {

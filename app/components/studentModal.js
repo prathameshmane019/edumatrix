@@ -6,8 +6,9 @@ import { departmentOptions } from "../utils/department";
 import { DepartmentDropdown } from "./department/DepartmentDropDowns";
 import { Calendar } from "lucide-react";
 import { getAcademicYears } from "../utils/acadmicYears";
+import { ClassDropdown } from "./Class/ClassDropdown";
 
-const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId }) => {
+const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, selectedClass,academicYear }) => {
   const [profile, setProfile] = useState(null);
   const [formData, setFormData] = useState({
     _id: "",
@@ -17,8 +18,9 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
     email: "",
     phoneNo: "",
     password: "",
-    year: "",
-    institute: instituteId
+    year: academicYear || "",
+    institute: instituteId,
+    class: ""
   });
 
   useEffect(() => {
@@ -48,6 +50,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
         phoneNo: student.phoneNo,
         password: student.password,
         year: student.year,
+        class: student.class,
         institute: student.institute || instituteId
       });
     } else {
@@ -69,6 +72,11 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
     }));
   };
 
+  const handleInputChange=(name,value)=>{
+    setFormData((prev)=>({
+      ...prev,[name]:value
+    }))
+  }
   const handleDepartmentSelect = (departmentId) => {
     setFormData((prev) => ({
       ...prev,
@@ -85,7 +93,8 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
       phoneNo: "",
       email: "",
       password: "",
-      year: "",
+      year: academicYear ||"",
+      class: selectedClass,
       institute: instituteId
     });
   };
@@ -203,6 +212,15 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId })
                 selectedDepartment={formData.department}
               />
             )}
+            <ClassDropdown 
+              id="class-select"
+              instituteId={formData.institute || instituteId}
+              onSelect={(value) => handleInputChange('class', value)}
+              selectedClass={formData.class || selectedClass}
+              acadmicYear={formData.year}
+              selectedDepartment={formData.department  || profile?.id }
+              label="Class" 
+            />
           </div>
         </ModalBody>
         <ModalFooter>

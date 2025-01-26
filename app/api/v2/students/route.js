@@ -2,18 +2,23 @@ import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Student from "@/models/student";
 import mongoose from "mongoose";
+import Classes from "@/models/className";
 
 export async function POST(req) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const data = await req.json();
-        console.log(data);
         await connectMongoDB();
 
-        const { _id, rollNumber, name, year, email, phoneNo, password, department, institute } = data;
-        if (!year || !institute || !rollNumber || !name) {
-            return NextResponse.json({ error: "Missing required fields: year, institute, rollNumber, or name" }, { status: 400 });
+        const { _id, rollNumber, name, year, email, phoneNo, password, department, institute, class: classRef } = data;
+
+        if (!year || !institute || !rollNumber || !name || !classRef) {
+            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
+        // Create new student
         const newStudent = new Student({
             _id,
             rollNumber,
@@ -23,16 +28,40 @@ export async function POST(req) {
             phoneNo,
             password: password || "1234",
             department,
-            institute
+            institute,
+            class: classRef
         });
 
-        await newStudent.save();
+        // Save student
+        await newStudent.save({ session });
+
+        // Update class with student reference
+        const updatedClass = await Classes.findByIdAndUpdate(
+            classRef, 
+            { $addToSet: { students: newStudent._id } }, 
+            { new: true, session }
+        );
+
+        if (!updatedClass) {
+            await session.abortTransaction();
+            return NextResponse.json({ error: "Class not found" }, { status: 404 });
+        }
+
+        // Commit transaction
+        await session.commitTransaction();
+
         console.log("Student Registered Successfully", newStudent);
 
-        return NextResponse.json({ message: "Student Registered Successfully", student: newStudent }, { status: 201 });
+        return NextResponse.json({ 
+            message: "Student Registered Successfully", 
+            student: newStudent 
+        }, { status: 201 });
     } catch (error) {
+        await session.abortTransaction();
         console.error("Error creating student:", error);
         return NextResponse.json({ error: "Failed to Register Student" }, { status: 500 });
+    } finally {
+        session.endSession();
     }
 }
 
@@ -40,7 +69,7 @@ export async function PUT(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, rollNumber, name, year, email, phoneNo, password, department, institute } = data;
+        const { _id, rollNumber, name, year, email, phoneNo, password, department, institute ,class:classRef} = data;
 
         if (!_id) {
             return NextResponse.json({ error: "Missing required field: _id" }, { status: 400 });
@@ -56,7 +85,8 @@ export async function PUT(req) {
                 phoneNo,
                 password,
                 department,
-                institute
+                institute,
+                class:classRef
             },
             { new: true }
         );
@@ -95,7 +125,7 @@ export async function GET(req) {
             return NextResponse.json(student, { status: 200 });
         }
 
-        // if (department) filter.department = department;
+        if (department) filter.department = department;
 
         // Add institute to query if provided and is a valid ObjectId
         if (className && mongoose.Types.ObjectId.isValid(className)) {

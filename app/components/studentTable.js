@@ -703,7 +703,7 @@ export default function StudentTable() {
   const fetchStudents = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`/api/v2/students`, {
+      const response = await axios.get(`/api/v2/students-by-class`, {
         params: {
           department: selectedDepartment,
           class: selectedClass,
@@ -1231,8 +1231,10 @@ export default function StudentTable() {
         onClose={handleModalClose}
         mode={modalMode}
         student={selectedStudent}
-        onSubmit={handleModalSubmit}
+        onSubmit={handleModalSubmit} 
+        selectedClass={selectedClass}
         instituteId={institute}
+        academicYear={academicYear}
       />
       {showConfirmModal && (
         <Modal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)}>

@@ -110,7 +110,7 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     if (userProfile) {
-      const role = userProfile.role === "admin" || userProfile.role === "superadmin" ? "faculty" : userProfile.role
+      const role = userProfile.role === "admin" ? "department": userProfile.role === "superadmin" ? "institute" : userProfile.role
       try {
         const profileToUpdate = {
           ...updatedProfile,
@@ -118,7 +118,7 @@ export default function ProfilePage() {
           sem: updatedProfile.sem || 'sem1'
         }
 
-        await axios.put(`/api/${role}?_id=${userProfile?._id}`, profileToUpdate)
+        await axios.put(`/api/v2/${role}?_id=${userProfile?._id}`, profileToUpdate)
 
         const updatedFullProfile = {
           ...userProfile,

@@ -62,68 +62,68 @@ export default function ResetPasswordComponent() {
 
           {/* Insert the SVG illustration here */}
           <svg
-  viewBox="0 0 800 600"
-  xmlns="http://www.w3.org/2000/svg"
-  className="absolute inset-0 w-full h-full"
->
-  {/* Background Circle */}
-  <rect width="800" height="600" fill="#8b5cf6" />
+            viewBox="0 0 800 600"
+            xmlns="http://www.w3.org/2000/svg"
+            className="absolute inset-0 w-full h-full"
+          >
+            {/* Background Circle */}
+            <rect width="800" height="600" fill="#8b5cf6" />
 
-  {/* Decorative Circles */}
-  <circle cx="400" cy="300" r="250" fill="#a78bfa" opacity="0.1" />
-  <circle cx="400" cy="300" r="200" fill="#c4b5fd" opacity="0.2" />
+            {/* Decorative Circles */}
+            <circle cx="400" cy="300" r="250" fill="#a78bfa" opacity="0.1" />
+            <circle cx="400" cy="300" r="200" fill="#c4b5fd" opacity="0.2" />
 
-  {/* Decorative Lines */}
-  <path
-    d="M200 200 Q400 100 600 200"
-    stroke="#c4b5fd"
-    fill="none"
-    strokeWidth="2"
-  />
-  <path
-    d="M200 400 Q400 500 600 400"
-    stroke="#c4b5fd"
-    fill="none"
-    strokeWidth="2"
-  />
+            {/* Decorative Lines */}
+            <path
+              d="M200 200 Q400 100 600 200"
+              stroke="#c4b5fd"
+              fill="none"
+              strokeWidth="2"
+            />
+            <path
+              d="M200 400 Q400 500 600 400"
+              stroke="#c4b5fd"
+              fill="none"
+              strokeWidth="2"
+            />
 
-  {/* Lock Body */}
-  <rect x="350" y="250" width="100" height="120" rx="10" fill="#6d28d9" />
+            {/* Lock Body */}
+            <rect x="350" y="250" width="100" height="120" rx="10" fill="#6d28d9" />
 
-  {/* Lock Shackle */}
-  <path
-    d="M380 250 L380 200 Q400 180 420 200 L420 250"
-    stroke="#6d28d9"
-    strokeWidth="20"
-    strokeLinecap="round"
-    fill="none"
-  />
+            {/* Lock Shackle */}
+            <path
+              d="M380 250 L380 200 Q400 180 420 200 L420 250"
+              stroke="#6d28d9"
+              strokeWidth="20"
+              strokeLinecap="round"
+              fill="none"
+            />
 
-  {/* Key Hole */}
-  <circle cx="400" cy="300" r="15" fill="white" />
-  <rect x="395" y="310" width="10" height="25" fill="white" />
+            {/* Key Hole */}
+            <circle cx="400" cy="300" r="15" fill="white" />
+            <rect x="395" y="310" width="10" height="25" fill="white" />
 
-  {/* Rotating Elements */}
-  <g transform="translate(400 300)">
-    <circle
-      cx="0"
-      cy="0"
-      r="60"
-      stroke="#6d28d9"
-      strokeWidth="2"
-      fill="none"
-      opacity="0.4"
-    />
-    <circle cx="60" cy="0" r="4" fill="#6d28d9" />
-    <circle cx="-60" cy="0" r="4" fill="#6d28d9" />
-  </g>
+            {/* Rotating Elements */}
+            <g transform="translate(400 300)">
+              <circle
+                cx="0"
+                cy="0"
+                r="60"
+                stroke="#6d28d9"
+                strokeWidth="2"
+                fill="none"
+                opacity="0.4"
+              />
+              <circle cx="60" cy="0" r="4" fill="#6d28d9" />
+              <circle cx="-60" cy="0" r="4" fill="#6d28d9" />
+            </g>
 
-  {/* Dots */}
-  <circle cx="300" cy="200" r="5" fill="#6d28d9" />
-  <circle cx="500" cy="200" r="5" fill="#6d28d9" />
-  <circle cx="300" cy="400" r="5" fill="#6d28d9" />
-  <circle cx="500" cy="400" r="5" fill="#6d28d9" />
-</svg>
+            {/* Dots */}
+            <circle cx="300" cy="200" r="5" fill="#6d28d9" />
+            <circle cx="500" cy="200" r="5" fill="#6d28d9" />
+            <circle cx="300" cy="400" r="5" fill="#6d28d9" />
+            <circle cx="500" cy="400" r="5" fill="#6d28d9" />
+          </svg>
 
         </div>
 

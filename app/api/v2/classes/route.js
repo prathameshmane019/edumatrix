@@ -10,12 +10,12 @@ export async function POST(req) {
     let session;
     try {
         await connectMongoDB();
-        
+
 
         const data = await req.json();
         console.log(data);
-        
-        const { id,academicYear, teacher,institute, department, students, batches } = data;
+
+        const { id, academicYear, teacher, institute, department, students, batches } = data;
         session = await mongoose.startSession();
         session.startTransaction();
         const newClass = new Classes({
@@ -23,7 +23,7 @@ export async function POST(req) {
             students,
             teacher,
             department,
-            year:academicYear,
+            year: academicYear,
             batches,
             institute
         });
@@ -42,7 +42,7 @@ export async function POST(req) {
         // Update faculty
         await Faculty.findByIdAndUpdate(
             teacher,
-            { 
+            {
                 $push: { coordinatedClasses: newClass._id },
                 $set: { classes: newClass._id }
             },
@@ -68,7 +68,7 @@ export async function POST(req) {
                 const batchStudents = batches
                     .filter(batch => subject.batch.includes(batch._id))
                     .flatMap(batch => batch.students);
-                
+
                 await Student.updateMany(
                     { _id: { $in: batchStudents } },
                     { $addToSet: { subjects: subject._id } },
@@ -94,7 +94,7 @@ export async function POST(req) {
 }
 
 export async function PUT(req) {
-    let session; 
+    let session;
     let conn;
     try {
         console.log("Starting database connection");
@@ -106,12 +106,12 @@ export async function PUT(req) {
         session.startTransaction();
         console.log("Transaction started");
 
-     
+
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
 
         const data = await req.json();
-        const { teacher,institute, department, academicYear, students, batches } = data;
+        const { teacher, institute, department, academicYear, students, batches } = data;
 
         // Use findOne with session instead of findById
         const existingClass = await Classes.findOne({ _id }).session(session);
@@ -129,7 +129,7 @@ export async function PUT(req) {
         existingClass.year = academicYear;
         existingClass.students = students;
         existingClass.batches = batches;
-        existingClass.institute=institute;
+        existingClass.institute = institute;
 
         // Remove class reference from previous students
         await Student.updateMany(
@@ -186,7 +186,7 @@ export async function PUT(req) {
                 const batchStudents = batches
                     .filter(batch => subject.batch.includes(batch._id))
                     .flatMap(batch => batch.students);
-                
+
                 if (batchStudents.length > 0) {
                     await Student.updateMany(
                         { _id: { $in: batchStudents } },
@@ -200,7 +200,7 @@ export async function PUT(req) {
         await existingClass.save({ session });
 
         await session.commitTransaction();
-          
+
         console.log("Transaction committed successfully");
 
         return NextResponse.json({ message: "Class Updated Successfully", class: existingClass }, { status: 200 });
@@ -248,7 +248,6 @@ export async function GET(req) {
         return NextResponse.json({ error: "Failed to Fetch Classes" }, { status: 500 });
     }
 }
-
 export async function DELETE(req) {
     let session;
     try {
@@ -260,29 +259,40 @@ export async function DELETE(req) {
         const _id = searchParams.get("_id");
 
         const deletedClass = await Classes.findByIdAndDelete(_id).session(session);
+    
 
         if (!deletedClass) {
             await session.abortTransaction();
             return NextResponse.json({ error: "Class not found" }, { status: 404 });
         }
 
+        // Remove student class references
         await Student.updateMany(
             { _id: { $in: deletedClass.students } },
             { $unset: { class: "" } },
             { session }
         );
 
-        await Faculty.updateOne(
+        // Remove faculty class references
+        const fc = await Faculty.updateOne(
             { _id: deletedClass.teacher },
-            { 
+            {
                 $pull: { coordinatedClasses: deletedClass._id },
                 $unset: { classes: "" }
             },
             { session }
         );
+        // Delete subjects associated with the class
+        const subjects = await Subject.deleteMany(
+            { class: deletedClass._id },
+            { session }
+        );
 
         await session.commitTransaction();
-        console.log("Class Deleted Successfully", deletedClass);
+        console.log(fc);
+        console.log(subjects);
+
+        console.log("Class and Associated Subjects Deleted Successfully", deletedClass);
         return NextResponse.json({ message: "Class Deleted Successfully" }, { status: 200 });
     } catch (error) {
         console.error("Error deleting class:", error);

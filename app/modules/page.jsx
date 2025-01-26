@@ -235,7 +235,7 @@ export default function ModuleSelectionPage() {
     faculty: [
       {
         name: 'Attendance Management',
-        path: `${basePath}/takeattendance`,
+        path: `attendance/${basePath}`,
         description: 'Take and manage daily attendance. View attendance statistics and generate reports for your classes.',
         illustration: AttendanceIllustration,
         bgColor: 'bg-blue-50',

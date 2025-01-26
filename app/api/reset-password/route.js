@@ -3,13 +3,14 @@ import { NextResponse } from "next/server";
 import Faculty from "@/models/faculty";
 import Student from "@/models/student";
 import Institute from "@/models/Institute";
+import Department from "@/models/department";
 export async function POST(req, res) {
   const { identifier, newPassword, oldPassword } = await req.json();
   console.log(identifier);
   try {
     await connectMongoDB();
     let user;
-     user =  await Institute.findOne({_id: identifier}) || await Faculty.findOne({ _id: identifier}) || await Student.findOne({ _id: identifier});
+     user = await Department.findOne({ id: identifier}) || await Institute.findOne({instituteCode: identifier}) || await Faculty.findOne({ id: identifier}) || await Student.findOne({ _id: identifier});
 
     if (!user) {
       console.error('User not found for identifier:', identifier);
