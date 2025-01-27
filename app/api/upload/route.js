@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Student from "@/models/student";
 import mongoose from "mongoose";
+import Classes from "@/models/className";
 
 export async function POST(req) {
     let session;
@@ -52,6 +53,20 @@ export async function POST(req) {
 
         const createdStudents = await Student.insertMany(processedStudents, { session });
 
+          // Get the created student MongoDB _id
+          const studentObjectIds = createdStudents.map(student => student._id);
+
+          // Update the class to add student references
+          const updatedClass = await Classes.findOneAndUpdate(
+              { _id: classRef }, 
+              { $addToSet: { students: { $each: studentObjectIds } } },
+              { session, new: true }
+          );
+  
+          if (!updatedClass) {
+              throw new Error(`Class with ID ${classRef} not found`);
+          }
+  
         await session.commitTransaction();
         session.endSession();
 

@@ -13,7 +13,8 @@ const DepartmentModal = ({ isOpen, onClose, mode,onSubmit, editingDepartment,dep
   const [formData, setFormData] = useState({
     name: "",
     password: "",
-    id:''
+    id:'',
+    email:''
   });
 
   useEffect(() => {
@@ -22,6 +23,7 @@ const DepartmentModal = ({ isOpen, onClose, mode,onSubmit, editingDepartment,dep
         id:editingDepartment.id,
         name: editingDepartment.name,
         password: editingDepartment.password, // Don't populate password for security reasons
+        email:editingDepartment.email
       });
     } else {
       resetForm();
@@ -73,6 +75,13 @@ const DepartmentModal = ({ isOpen, onClose, mode,onSubmit, editingDepartment,dep
               onChange={handleChange}
               isRequired
             />
+            <Input
+              label="Department email"
+              placeholder="Enter department email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+            />
               <Input
                 label="Password"
                 placeholder="Enter password"
@@ -82,6 +91,7 @@ const DepartmentModal = ({ isOpen, onClose, mode,onSubmit, editingDepartment,dep
                 onChange={handleChange}
                 isRequired
               />
+
 
           </ModalBody>
           <ModalFooter>

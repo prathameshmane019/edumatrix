@@ -12,7 +12,6 @@ export async function PUT(req) {
         if (!_id) {
             return NextResponse.json({ error: "Subject ID is required" }, { status: 400 });
         }
-
         const data = await req.json();
         console.log(data);
 

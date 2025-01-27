@@ -40,7 +40,6 @@ export function ClassDropdown({ instituteId, onSelect, selectedClass, selectedDe
             c.value === e.target.value ? c.batches : null
         )
         console.log("batches", batches[0]);
-
         if (handleBatches) handleBatches(batches[0])
 
     }

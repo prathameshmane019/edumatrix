@@ -34,7 +34,7 @@ const columns = [
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["id","name", "password","actions"];
+const INITIAL_VISIBLE_COLUMNS = ["id", "name", "password", "actions"];
 
 export default function DepartmentTable() {
   const [filterValue, setFilterValue] = useState("");
@@ -54,9 +54,11 @@ export default function DepartmentTable() {
   const [editingDepartment, setEditingDepartment] = useState(null);
   const [profile, setProfile] = useState(null);
   useEffect(() => {
-    fetchDepartments();
-  }, []);
- 
+    if (profile?._id) {
+      fetchDepartments();
+    }
+  }, [profile]);
+
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
@@ -74,9 +76,19 @@ export default function DepartmentTable() {
   const fetchDepartments = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get("/api/v2/department");
-      setDepartments(response.data);
-      setIsLoading(false);
+      const response = await axios.get(`/api/v2/department?institute=${profile?._id}`);
+      console.log(response.data);
+
+      if (response.data.status == 404) {
+        toast.warning(response.data.message)
+        setDepartments([])
+
+      }
+      else {
+
+        setDepartments(response.data);
+      }
+      setIsLoading(false)
     } catch (error) {
       console.error("Error fetching departments:", error);
       setIsLoading(false);

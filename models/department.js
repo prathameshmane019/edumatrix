@@ -14,8 +14,7 @@ const departmentSchema = new Schema(
       required: true,
     },
     email: {
-      type: String,
-      required: true, 
+      type: String
     },
     password: {
       type: String,

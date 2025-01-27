@@ -9,7 +9,7 @@ export async function GET(req) {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
         const classId = searchParams.get("class");
-console.log(classId);
+        console.log(classId);
 
         // Validate classId
         if (!classId || !mongoose.Types.ObjectId.isValid(classId)) {
@@ -18,9 +18,9 @@ console.log(classId);
 
         // Find the class and get its students array
         const classDocument = await Classes.findById(classId);
-        
+
         console.log(classDocument);
-        
+
         if (!classDocument) {
             return NextResponse.json({ error: "Class not found" }, { status: 404 });
         }
@@ -31,12 +31,12 @@ console.log(classId);
         }
 
         // Find students using the _id array from the class document
-        const students = await Student.find({ 
-            _id: { $in: classDocument.students } 
+        const students = await Student.find({
+            _id: { $in: classDocument.students }
         });
-console.log(students);
+        console.log(students);
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             students,
             totalStudents: students.length
         }, { status: 200 });
