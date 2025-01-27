@@ -7,10 +7,10 @@ export async function POST(req) {
     await connectMongoDB();
     const data = await req.json();
 
-    const { name, id, password, institute,email } = data;
+    const { name, id, password, institute, email } = data;
     console.log(data);
     const newDepartment = new Department({
-      id, 
+      id,
       name,
       password,
       institute,
@@ -34,7 +34,7 @@ export async function PUT(req) {
     await connectMongoDB();
     const data = await req.json();
     console.log(data);
-    const { name, id, password, institute,email } = data;
+    const { name, id, password, institute, email } = data;
     const { searchParams } = new URL(req.url);
     const _id = searchParams.get("_id");
     const existingDepartment = await Department.findByIdAndUpdate(
@@ -68,12 +68,16 @@ export async function GET(req) {
     await connectMongoDB();
     const { searchParams } = new URL(req.url);
     const _id = searchParams.get("_id");
+    const institute = searchParams.get("institute");
     let department
-    if(_id){
+    if (_id) {
       department = await Department.findById(_id);
       return NextResponse.json(department);
     }
-    department = await Department.find();
+    department = await Department.find({ institute });
+    if (department.length == 0) {
+      return NextResponse.json({ status: 404, message: "No departments found" });
+    }
     console.log("Fetched Data Successfully", department);
     return NextResponse.json(department);
   } catch (error) {

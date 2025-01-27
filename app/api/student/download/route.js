@@ -6,9 +6,11 @@ export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const department = searchParams.get("department");
-    const classId = searchParams.get("classId");
+    const classId = searchParams.get("class");
     await connectMongoDB();
     const students = await Student.find({department,class:classId}).lean();
+    console.log(students);
+    
     return NextResponse.json(students);
   } catch (error) {
     console.error('Error fetching student data:', error);

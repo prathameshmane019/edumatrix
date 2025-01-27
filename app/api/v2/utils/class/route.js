@@ -29,6 +29,7 @@ export async function GET(req) {
       '_id id year batches' // Select id, year, and department fields
     );
 
+    
     if (!classes || classes.length === 0) {
       return NextResponse.json({ message: "No classes found for this institute" }, { status: 404 });
     }
@@ -41,6 +42,7 @@ export async function GET(req) {
       label: `${cls.year} - ${cls.id}`,
       batches:cls.batches
     }));
+console.log(dropdownData);
 
     return NextResponse.json(dropdownData);
   } catch (error) {

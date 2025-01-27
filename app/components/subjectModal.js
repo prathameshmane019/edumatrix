@@ -585,6 +585,8 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
   }, [subjectData, mode]);
 
   const handleBatches = (newBatches) => {
+    console.log(newBatches);
+    
     // Only update batches if we're not in edit mode or if the class has changed
     if (mode === 'add' || formData.class !== subjectData?.class?._id) {
       setBatches(newBatches);
@@ -766,10 +768,10 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
                 label="Faculty"
               />
             )}
-            {(formData.subType === 'practical' || formData.subType === 'tg') && batches.length > 0 && (
+            {(formData.subType === 'practical' || formData.subType === 'tg') && batches?.length > 0 && (
               <div className="col-span-2">
                 <h3 className="text-lg font-semibold mb-2">Batch-Faculty Assignments</h3>
-                {batches.map((batch) => (
+                {batches && batches.map((batch) => (
                   <div key={batch.id} className="flex gap-4 items-center mb-2">
                     <span className="w-24">{batch.id}</span>
                     <FacultyDropdown
