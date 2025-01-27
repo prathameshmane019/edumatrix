@@ -71,7 +71,7 @@ export async function GET(req) {
     const institute = searchParams.get("institute");
     let department
     if (_id) {
-      department = await Department.findById(_id);
+      department = await Department.findById(_id).populate("institute","name address university");
       return NextResponse.json(department);
     }
     department = await Department.find({ institute });

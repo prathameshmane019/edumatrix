@@ -118,7 +118,7 @@ export async function GET(req) {
 
         if (id) {
             const faculty = await Faculty.findOne({ id })
-                .populate('institute', 'name')
+                .populate('institute', 'name address university')
                 .lean();
 
             if (!faculty) {
@@ -129,7 +129,7 @@ export async function GET(req) {
             return NextResponse.json(faculty, { status: 200 });
         } else {
             const faculties = await Faculty.find(filter)
-                .populate('institute', 'name')
+                .populate('institute', 'name address university')
                 .lean();
 
             console.log("Fetched Faculties Successfully", faculties);

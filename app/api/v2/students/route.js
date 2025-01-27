@@ -118,7 +118,7 @@ export async function GET(req) {
         let filter = {};
 
         if (id) {
-            const student = await Student.findById(id);
+            const student = await Student.findById(id).populate("institute","name address");
             if (!student) {
                 return NextResponse.json({ error: "Student not found" }, { status: 404 });
             }

@@ -14,6 +14,10 @@ const InstituteSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  university:{
+    type:String
+  },
+  
   contact: {
     type: String,
     required: true

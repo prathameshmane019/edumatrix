@@ -168,10 +168,12 @@ import { UserCircle, BookOpen, Calendar, Building2, Mail, Clock, GraduationCap }
 import AttendanceIllustration from '@/public/illustrations/attendance.svg';
 import FeedbackIllustration from '@/public/illustrations/feedback.svg';
 import { RxExit } from 'react-icons/rx';
+import { useUser } from '../context/UserContext';
 
 export default function ModuleSelectionPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { user ,loading} = useUser()
 
   React.useEffect(() => {
     if (status === 'unauthenticated') {
@@ -179,7 +181,7 @@ export default function ModuleSelectionPage() {
     }
   }, [status, router]);
 
-  if (status === 'loading') {
+  if (!user ||loading || status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
@@ -188,8 +190,8 @@ export default function ModuleSelectionPage() {
   }
 
   const handleSignOut = async () => {
-    await signOut({ redirect: false ,callbackUrl:'/'});
-    sessionStorage.clear(); 
+    await signOut({ redirect: false, callbackUrl: '/' });
+    sessionStorage.clear();
   };
 
   const role = session?.user?.role;
@@ -272,26 +274,26 @@ export default function ModuleSelectionPage() {
               />
               <div className="space-y-1 text-center sm:text-left">
                 <h1 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight tracking-tight">
-                  Savitribai Phule Shikshan Prasarak Mandal&apos;s
-                  <span className="block text-primary font-semibold">SKN Sinhgad College of Engineering</span>
+                {user?.role == "superadmin" ? user?.university : user?.institute?.university ||"Savitribai Phule Shikshan Prasarak Mandal's"}
+                  <span className="block text-primary font-semibold">{user?.role == "superadmin" ? user?.name : user?.institute?.name}</span>
                 </h1>
-                <p className="text-sm text-gray-500 tracking-wide">At Post: Korti, Tal: Pandharpur, Dist: Solapur, Maharashtra 413304</p>
+                <p className="text-sm text-gray-500 tracking-wide">{user?.role == "superadmin" ? user?.address : user?.institute?.address}</p>
               </div>
             </div>
 
-            <div className="text-center lg:text-right space-y-1">
+            <div className="text-center lg:text-left  space-y-1">
               {/* <div className="flex items-center gap-2 justify-center lg:justify-end">
                 <Calendar className="h-4 w-4 text-primary" />
                 <p className="text-sm text-gray-600">AY: {session?.user?.currentYear}</p>
               </div> */}
-              <div className="flex items-center gap-2 justify-center lg:justify-end">
+              <div className="flex items-center gap-2 justify-center lg:justify-start">
                 <Building2 className="h-4 w-4 text-primary" />
-                <p className="text-sm text-gray-600">Dept: {session?.user?.department || session?.user?.name}</p>
+                <p className="text-sm text-gray-600">Dept: {user?.department || user?.name}</p>
               </div>
               {role === 'faculty' && (
-                <div className="flex items-center gap-2 justify-center lg:justify-end">
+                <div className="flex items-center gap-2 justify-center lg:justify-start">
                   <UserCircle className="h-4 w-4 text-primary" />
-                  <p className="text-sm text-gray-600">ID: {session?.user?.id}</p>
+                  <p className="text-sm text-gray-600">ID: {user?.id}</p>
                 </div>
               )}
               {session?.user?.email && (
@@ -311,7 +313,7 @@ export default function ModuleSelectionPage() {
                 {role === 'faculty' && (
                   <div className="flex items-center gap-3">
                     <BookOpen className="h-5 w-5 text-primary" />
-                    <p className="text-sm text-gray-600">Semester: {session?.user?.sem}</p>
+                    <p className="text-sm text-gray-600">Semester: {user?.sem}</p>
                   </div>
                 )}
               </div>

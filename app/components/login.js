@@ -212,8 +212,9 @@ import { RiShieldUserFill } from "react-icons/ri";
 import { toast } from 'sonner';
 import axios from 'axios';
 import Loader from './loader';
+import { useSearchParams } from 'next/navigation';
 
-export default function LoginComponent() {
+export default function LoginComponent({params}) {
   const [isVisible, setIsVisible] = useState(false);
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
@@ -224,11 +225,17 @@ export default function LoginComponent() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [userProfile, setUserProfile] = useState(null);
+  
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callback');
+  console.log(callbackUrl);
+  
+
   useEffect(() => {
     if (userProfile?.role) {
       const role = userProfile.role;
       // const redirectPath = role === 'superadmin' || role === 'admin' ? `/admin` : `/${role}`;
-      const redirectPath = `/modules`;
+      const redirectPath = callbackUrl || `/modules`;
       router.replace(redirectPath);
     }
   }, [userProfile]);
@@ -250,7 +257,6 @@ export default function LoginComponent() {
         } else {
           try {
             console.log(_id);
-
             const res = await axios.get(`/api/v2/${role}?_id=${_id}`);
             console.log(res.data);
 

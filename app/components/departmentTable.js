@@ -77,20 +77,17 @@ export default function DepartmentTable() {
     try {
       setIsLoading(true);
       const response = await axios.get(`/api/v2/department?institute=${profile?._id}`);
-      console.log(response.data);
 
-      if (response.data.status == 404) {
-        toast.warning(response.data.message)
-        setDepartments([])
-
+      if (response.data.status === 404) {
+        toast.warning(response.data.message);
+        setDepartments([]);
+      } else {
+        setDepartments(Array.isArray(response.data) ? response.data : []);
       }
-      else {
-
-        setDepartments(response.data);
-      }
-      setIsLoading(false)
     } catch (error) {
       console.error("Error fetching departments:", error);
+      toast.error("Error fetching departments");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -98,7 +95,10 @@ export default function DepartmentTable() {
   const deleteDepartment = async (_id) => {
     try {
       await axios.delete(`/api/v2/department?_id=${_id}`);
-      fetchDepartments();
+      // Update local state by filtering out the deleted department
+      setDepartments(prevDepartments => 
+        prevDepartments.filter(dept => dept._id !== _id)
+      );
       toast.success("Department deleted successfully");
     } catch (error) {
       console.error("Error deleting department:", error);
@@ -106,7 +106,7 @@ export default function DepartmentTable() {
     }
   };
 
-  const pages = Math.ceil(departments.length / rowsPerPage);
+  const pages = Math.ceil((departments?.length || 0) / rowsPerPage);
   const hasSearchFilter = Boolean(filterValue);
 
   const headerColumns = useMemo(() => {
@@ -114,12 +114,15 @@ export default function DepartmentTable() {
     return columns.filter((column) => visibleColumns.has(column.uid));
   }, [visibleColumns]);
 
+
   const filteredItems = useMemo(() => {
+    if (!Array.isArray(departments)) return [];
+    
     let filteredDepartments = [...departments];
 
     if (hasSearchFilter) {
       filteredDepartments = filteredDepartments.filter((department) =>
-        department.department.toLowerCase().includes(filterValue.toLowerCase())
+        department.department?.toLowerCase().includes(filterValue.toLowerCase())
       );
     }
 
@@ -308,7 +311,6 @@ export default function DepartmentTable() {
       </div>
     );
   }, [selectedKeys, filteredItems.length, page, pages]);
-
   return (
     <>
       <Table
@@ -360,4 +362,3 @@ export default function DepartmentTable() {
     </>
   );
 }
-
