@@ -108,7 +108,7 @@ console.log(user);
         setClasses(classesResponse.data);
       } else {
         setClasses([]);
-        toast.error('Invalid class data received');
+        toast.error('No class data ');
       }
 
     } catch (error) {

@@ -298,8 +298,10 @@ export default function LoginComponent({params}) {
       } else {
         if (result.error === 'Invalid username') {
           setUserIdError('Invalid username');
+          toast.error('Invalid username');
         } else if (result.error === 'Invalid password') {
           setPasswordError('Invalid password');
+          toast.error('Invalid Password');
         } else {
           toast.error('Failed to login');
         }
