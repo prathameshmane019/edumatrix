@@ -768,7 +768,7 @@ export default function SubjectModal({ isOpen, onClose, department, mode, subjec
                 label="Faculty"
               />
             )}
-            {(formData.subType === 'practical' || formData.subType === 'tg') && batches?.length > 0 && (
+            {(formData.subType === 'practical' || formData.subType === 'tg') && batches.length > 0 && (
               <div className="col-span-2">
                 <h3 className="text-lg font-semibold mb-2">Batch-Faculty Assignments</h3>
                 {batches && batches.map((batch) => (

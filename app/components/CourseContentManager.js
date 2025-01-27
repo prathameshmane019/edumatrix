@@ -1,31 +1,31 @@
 import React, { useState, useRef } from 'react';
-import { 
-  Button, 
-  Input, 
-  Modal, 
-  ModalContent, 
-  ModalHeader, 
-  ModalBody, 
-  ModalFooter, 
-  useDisclosure 
+import {
+  Button,
+  Input,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure
 } from '@nextui-org/react';
-import { 
-  CloudUpload, 
-  Download, 
-  FileText 
+import {
+  CloudUpload,
+  Download,
+  FileText
 } from 'lucide-react';
-import { 
-  handleExcelUpload, 
-  handleExcelDownload, 
-  downloadSampleExcel 
+import {
+  handleExcelUpload,
+  handleExcelDownload,
+  downloadSampleExcel
 } from '../utils/excelHandlers';
 import { toast } from 'sonner';
 
-const CourseContentManager = ({ 
-  subjectType, 
-  content, 
-  onContentUpdate, 
-  availableBatches = ['A', 'B', 'C'] 
+const CourseContentManager = ({
+  subjectType,
+  content,
+  onContentUpdate,
+  availableBatches = ['A', 'B', 'C']
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
@@ -37,7 +37,7 @@ const CourseContentManager = ({
 
     // Validate file type
     const allowedTypes = [
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'application/vnd.ms-excel'
     ];
     if (!allowedTypes.includes(file.type)) {
@@ -48,7 +48,7 @@ const CourseContentManager = ({
     setIsUploading(true);
     try {
       const updatedContent = await handleExcelUpload(file, subjectType);
-      
+
       // Validate parsed content
       if (!updatedContent || updatedContent.length === 0) {
         toast.warning('No valid content found in the uploaded file');
@@ -110,8 +110,8 @@ const CourseContentManager = ({
       />
 
       <div className="flex space-x-4">
-        <Button 
-          color="primary" 
+        <Button
+          color="primary"
           variant="solid"
           startContent={<CloudUpload size={20} />}
           onClick={triggerFileInput}
@@ -121,8 +121,8 @@ const CourseContentManager = ({
           {isUploading ? 'Uploading...' : 'Upload Content'}
         </Button>
 
-        <Button 
-          color="secondary" 
+        <Button
+          color="secondary"
           variant="solid"
           startContent={<Download size={20} />}
           onClick={handleDownload}
@@ -131,16 +131,16 @@ const CourseContentManager = ({
         >
           Download Content
         </Button>
-    
-      <Button 
-        color="default" 
-        variant="bordered"
-        startContent={<FileText size={20} />}
-        onClick={handleDownloadSample}
-        className="flex-1"
-      >
-        Download Sample Template
-      </Button>
+
+        <Button
+          color="default"
+          variant="bordered"
+          startContent={<FileText size={20} />}
+          onClick={handleDownloadSample}
+          className="flex-1"
+        >
+          Download Sample Template
+        </Button>
       </div>
     </div>
   );

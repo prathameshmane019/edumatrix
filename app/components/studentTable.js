@@ -686,7 +686,7 @@ export default function StudentTable() {
     }
     if(profile?.role) {
       console.log(profile);
-      const instituteId =profile?.role==="superadmin"? profile?._id : profile?.institute
+      const instituteId = profile?.role==="superadmin"? profile?._id : profile?.institute._id
       setInstitute(instituteId)
       console.log(instituteId);
     }

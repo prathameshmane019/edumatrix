@@ -69,15 +69,14 @@ export default function SubjectTable({ user }) {
   }, []);
 
   useEffect(() => {
-
-    if (profile && profile.id) {
+    if (profile && profile.id && selectedClass) {
       fetchData();
     }
-  }, [profile?.id, academicYear, selectedSemester,selectedClass]);
+  }, [profile?.id, academicYear, selectedSemester, selectedClass]);
 
   useEffect(() => {
     if (profile) {
-      const instituteId = profile.role === "superadmin" ? profile._id : profile.institute
+      const instituteId = profile.role === "superadmin" ? profile._id : profile.institute._id
       setInstitute(instituteId)
       setSelectedSemester(profile?.defaultSemester || 'sem1');
       setAcademicYear(profile?.defaultAcademicYear || getCurrentAcademicYear());
@@ -252,7 +251,7 @@ export default function SubjectTable({ user }) {
           selectedClass={selectedClass}
           acadmicYear={academicYear}
           selectedDepartment={selectedDepartment}
-       
+
         />
         <Select
           placeholder="Select Semester"

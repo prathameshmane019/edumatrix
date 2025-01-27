@@ -260,7 +260,7 @@ console.log(user);
         </Select>
         {profile?.role !== "admin" && (
           <DepartmentDropdown 
-          instituteId={profile?.role==="superadmin"? profile?._id:profile?.institute}
+          instituteId={profile?.role==="superadmin"? profile?._id:profile?.institute?._id}
           onSelect={handleDepartmentSelect}
           className="w-full"
           selectedDepartment={selectedDepartment}
@@ -356,7 +356,7 @@ console.log(user);
         teachers={teachers}
         userRole={profile?.role}
         department={selectedDepartment || profile?.department || profile?.id}
-        instituteId={profile?.role === 'superadmin' ? profile?._id : profile?.institute}
+        instituteId={profile?.role === 'superadmin' ? profile?._id : profile?.institute?._id}
       />
     </>
   );
