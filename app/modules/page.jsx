@@ -80,6 +80,15 @@ export default function ModuleSelectionPage() {
         bgColor: "bg-green-50",
         textColor: "text-green-600",
       },
+      // {
+      //   name: "Add Grievance",
+      //   path: "/grievance",
+      //   description: "Submit and track your grievances for timely resolution.",
+      //   // illustration: "/illustrations/grievance.svg", // Add an appropriate SVG or image
+      //   bgColor: "bg-red-50",
+      //   textColor: "text-red-600",
+      // },
+      
     ],
     faculty: [
       {
@@ -109,7 +118,11 @@ export default function ModuleSelectionPage() {
 
   const handleModuleClick = (moduleName, modulePath) => {
     setLoadingModule(moduleName)
-    router.push(modulePath)
+    if (moduleName === "Add Grievance") {
+      router.push("/grievance")
+    } else {
+      router.push(modulePath)
+    }
   }
 
   return (
