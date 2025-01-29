@@ -21,8 +21,7 @@ export async function GET(req) {
     if (!subjectId || !dateString || !session) {
       return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
     }
-
-    const date = new Date(dateString);
+    const dateParam = new Date(dateString); // Get date from query
     const subject = await Subject.findById(subjectId)
       .populate({
         path: 'class',
@@ -84,16 +83,29 @@ export async function GET(req) {
     }
 
     // Create date range for attendance search
-    const startOfDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-    const endOfDay = new Date(startOfDay);
-    endOfDay.setUTCDate(endOfDay.getUTCDate() + 1);
-
+   // Create date range for attendance search
+   const startOfDay = new Date(Date.UTC(
+    dateParam.getUTCFullYear(),
+    dateParam.getUTCMonth(),
+    dateParam.getUTCDate(),
+    0, 0, 0, 0
+  ));
+  
+  // Ensure the end of the day in UTC
+  const endOfDay = new Date(Date.UTC(
+    dateParam.getUTCFullYear(),
+    dateParam.getUTCMonth(),
+    dateParam.getUTCDate(),
+    23, 59, 59, 999
+  ));
+  
+console.log("Date range:", { startOfDay, endOfDay });
     // Find attendance record
     const attendanceRecord = await Attendance.findOne({
       subject: subjectId,
       date: { $gte: startOfDay, $lt: endOfDay },
       session: parseInt(session),
-      ...(batchId && { batchId }) // Include batchId in query if it exists
+      batch:batchId// Include batchId in query if it exists
     }).lean();
 
     // Map students with their attendance status

@@ -8,12 +8,15 @@ import getCallbackUrl from "@/lib/callbackURL";
 export default async function RootLayout({ children }) {
   const session = await getServerSession(authOptions);
   const role = session?.user?.role
-  const callbackUrl = await getCallbackUrl();
 
-  if (!(role=== "admin" || "superadmin") || !session) {
+  if (  !session) {
     console.log("unauthorised") 
+    const callbackUrl = await getCallbackUrl();
     redirect(`/login?callback=${callbackUrl} `);
    }
+   else if(role!=="admin" || role!=="superadmin"){
+    redirect(`/login`);
+  }
   return (
   <div className="flex h-screen">
     <Sidebar />

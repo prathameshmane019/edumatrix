@@ -7,12 +7,17 @@ import getCallbackUrl from "@/lib/callbackURL";
 export default async function RootLayout({ children }) {
     const session = await getServerSession(authOptions);
     const role = session?.user?.role
-    const callbackUrl = await getCallbackUrl();
 
 
-    if (!(role=="faculty") || !session) {
+    if (!session) {
       console.log("unauthorised")
+      const callbackUrl = await getCallbackUrl();
+
       redirect(`/login?callback=${callbackUrl} `);
+      }
+      else if(role!=="faculty"){
+        redirect(`/login`);
+
       }
   return (<div className="flex">
     <Sidebar/>

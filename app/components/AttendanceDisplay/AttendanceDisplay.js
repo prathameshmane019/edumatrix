@@ -31,8 +31,7 @@ export default function AttendanceDisplay() {
     if(userProfile?.role) {
       console.log(userProfile);
       const instituteId =userProfile?.role==="superadmin"? userProfile?._id : userProfile?.institute?._id
-      setInstitute(instituteId)
-      console.log(instituteId);
+      setInstitute(instituteId) 
     }
       
   },[userProfile])
@@ -53,7 +52,7 @@ export default function AttendanceDisplay() {
     case 'student':
       return <StudentAttendance institute={institute} studentId={userProfile._id} sem={sem} year={year}  />
     case 'faculty':
-      return <FacultyAttendance institute={institute?._id} facultyId={userProfile._id} sem={sem} year={year} />
+      return <FacultyAttendance institute={institute } facultyId={userProfile._id} sem={sem} year={year} />
     case 'admin':
       return <AdminAttendance institute={institute} adminId={userProfile._id} year={year} sem={sem} department={userProfile.id} />
     case 'superadmin':

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { Input, Textarea, Checkbox, Button, Card, CardBody, Divider } from "@nextui-org/react"
 import {  Trash2 } from 'lucide-react'
-import { formatDateForPicker, formatDateForDisplay, parseFlexibleDate } from '@/app/utils/dateFormater'
+import { formatDateForPicker, formatDateForStorage, parseFlexibleDate } from '@/app/utils/dateFormater'
 
 export default function PracticalContent({ content, subject, isEditing, isLoading, onSubmit, onCancel }) {
   const [localContent, setLocalContent] = useState(content || [])

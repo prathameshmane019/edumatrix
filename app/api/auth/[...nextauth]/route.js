@@ -5,6 +5,7 @@ import Faculty from '@/models/faculty'
 import Student from '@/models/student'
 import Institute from '@/models/Institute'
 import Department from '@/models/department'
+import { NextResponse } from 'next/server'
 
 export const authOptions = {
   providers: [
@@ -54,6 +55,7 @@ export const authOptions = {
           // Validate user
           let user = faculty || student || department || institute
           if (!user) {
+            
             throw new Error('User not found')
           }
           console.log(user);

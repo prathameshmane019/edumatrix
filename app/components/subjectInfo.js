@@ -8,11 +8,11 @@ export default function SubjectInfo({ subject }) {
       <h2 className="text-lg font-bold mb-2">Subject Information</h2>
       <p>Department: {subject.department}</p>
       <p>Name: {subject.name}</p>
-      <p>Code: {subject.id}</p>
-      <p>Class: {subject.class.id}</p>
-      <p>Faculty: {subject.teacher.name}</p>
-      <p>Type: {subject.subType}</p>
-      {subject.subType === 'practical' && subject.batch && (
+      <p>Code: {subject?.id}</p>
+      <p>Class: {subject.class?.id}</p>
+      <p>Faculty: {subject?.teacher?.name}</p>
+      <p>Type: {subject?.subType}</p>
+      {subject.subType === 'practical' && subject?.batch && (
         <p>Batches: {subject.batch.join(', ')}</p>
       )}
     </div>

@@ -1,14 +1,27 @@
 "use client";
+
 import { SessionProvider } from "next-auth/react";
-import {NextUIProvider} from "@nextui-org/react";
-import { Toaster } from 'sonner'
+import { NextUIProvider } from "@nextui-org/react";
+import { Toaster } from 'sonner';
 import { UserProvider } from "./context/UserContext";
+
 export const AuthProvider = ({ children }) => {
-  return ( 
-  <NextUIProvider>
-    
+  return (
     <SessionProvider>
-      <UserProvider>{children}</UserProvider>
-    <Toaster richColors /></SessionProvider>
-    </NextUIProvider>)
+      <NextUIProvider>
+        <UserProvider>
+          {children}
+          <Toaster 
+            richColors 
+            position="top-right"
+            closeButton
+            expand
+            visibleToasts={6}
+          />
+        </UserProvider>
+      </NextUIProvider>
+    </SessionProvider>
+  );
 };
+
+export default AuthProvider;

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import axios from 'axios';
 
 const UserContext = createContext();
 
@@ -11,97 +12,100 @@ export const useUser = () => {
   return context;
 };
 
-
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const { data: session, status } = useSession();
 
-
   const fetchUserProfile = async () => {
-    if (status === 'authenticated' && session?.user?.role) {
-      let role ;
-       if (session?.user?.role === "admin") role="department"
-       else if(session.user.role=== "superadmin") role ="institute" 
-       else role = session.user.role;
-      //  console.log(session?.user?.role);
-
-      const { _id } = session?.user;
-      const storedProfile = sessionStorage.getItem('userProfile');
-
-      if (storedProfile) {
-        setUser(JSON.parse(storedProfile));
-      } else {
-        try {
-          console.log(_id);
-          const res = await axios.get(`/api/v2/${role}?_id=${_id}`);
-          console.log(res.data);
-
-          const profileData = Array.isArray(res.data) ? res.data[0] : res.data; // Ensure userProfile is an object
-          profileData.role = session?.user?.role; // Add role to profile data
-          sessionStorage.setItem('userProfile', JSON.stringify(profileData));
-          setUser(profileData);
-          console.log(profileData);
-
-        } catch (error) {
-          console.error("Error fetching user profile:", error);
-        }
+    try {
+      if (!session?.user?._id || !session?.user?.role) {
+        return null;
       }
+
+      const role = session.user.role === "admin" 
+        ? "department"
+        : session.user.role === "superadmin" 
+          ? "institute" 
+          : session.user.role;
+
+      const res = await axios.get(`/api/v2/${role}?_id=${session.user._id}`);
+      const profileData = Array.isArray(res.data) ? res.data[0] : res.data;
+      
+      return {
+        ...profileData,
+        role: session.user.role
+      };
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      return null;
     }
   };
 
   useEffect(() => {
-    const loadUserProfile = async () => {
-      // First try to get from session
-      
-      // If no session, try to get from sessionStorage
-      const storedProfile = sessionStorage.getItem('userProfile');
-      if (storedProfile) {
-        try {
-          const parsedProfile = JSON.parse(storedProfile);
-          setUser(parsedProfile);
-        } catch (error) {
-          console.error("Error parsing profile:", error);
-          sessionStorage.removeItem('userProfile'); // Clear invalid data
+    let mounted = true;
+
+    const initializeUser = async () => {
+      setLoading(true);
+
+      if (status === 'authenticated') {
+        // Try to get from sessionStorage first
+        const storedProfile = sessionStorage.getItem('userProfile');
+        
+        if (storedProfile) {
+          try {
+            const parsedProfile = JSON.parse(storedProfile);
+            if (mounted) {
+              setUser(parsedProfile);
+              setLoading(false);
+            }
+          } catch (error) {
+            console.error("Error parsing stored profile:", error);
+            sessionStorage.removeItem('userProfile');
+          }
+        }
+
+        // Fetch fresh data regardless of storage
+        const freshProfile = await fetchUserProfile();
+        
+        if (mounted && freshProfile) {
+          sessionStorage.setItem('userProfile', JSON.stringify(freshProfile));
+          setUser(freshProfile);
+        }
+      } else if (status === 'unauthenticated') {
+        if (mounted) {
+          setUser(null);
+          sessionStorage.removeItem('userProfile');
         }
       }
-      else if (session?.user) {
-        await fetchUserProfile()
-        setLoading(false);
-        return;
-      }
-      else{
-        setUser(null);
-      sessionStorage.removeItem('userProfile');
-      setLoading(false);
-      }
 
-      setLoading(false);
+      if (mounted) {
+        setLoading(false);
+      }
     };
 
-    if (status === 'authenticated') {
-      loadUserProfile();
-    } else if (status === 'unauthenticated') {
-      setUser(null);
-      sessionStorage.removeItem('userProfile');
-      setLoading(false);
-    } else {
-      // While loading, try to get from sessionStorage
-      const storedProfile = sessionStorage.getItem('userProfile');
-      if (storedProfile) {
-        try {
-          const parsedProfile = JSON.parse(storedProfile);
-          setUser(parsedProfile);
-        } catch (error) {
-          console.error("Error parsing profile:", error);
-        }
-      }
-      setLoading(false);
-    }
+    initializeUser();
+
+    return () => {
+      mounted = false;
+    };
   }, [session, status]);
 
+  const contextValue = {
+    user,
+    loading,
+    setUser: (newUserData) => {
+      setUser(newUserData);
+      if (newUserData) {
+        sessionStorage.setItem('userProfile', JSON.stringify(newUserData));
+      } else {
+        sessionStorage.removeItem('userProfile');
+      }
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ user, loading, setUser }}>
+    <UserContext.Provider value={contextValue}>
       {children}
     </UserContext.Provider>
   );
