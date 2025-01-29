@@ -219,7 +219,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
               selectedClass={formData.class || selectedClass}
               acadmicYear={formData.year}
               selectedDepartment={formData.department  || profile?.id }
-              label="Class" 
+              label="Class (Compulsory)" 
             />
           </div>
         </ModalBody>
