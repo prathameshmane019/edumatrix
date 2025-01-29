@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import Grievance from '@/models/grievance';
-import { connectMongoDB } from '@/libs/connectDb';
+import { connectMongoDB } from '@/lib/connectDb';
 import { uploadImage } from '@/lib/uploadImage';
 
 
@@ -17,7 +17,7 @@ export async function POST(req) {
    
     const files = formData.getAll("file");
 
-    if (!name || !email || !issue ) {
+    if (!name || !email  ) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
