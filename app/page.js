@@ -276,6 +276,7 @@
 'use client'
 
 import Link from 'next/link'
+import GrievanceForm from './components/grievance/grievanceForm'
 import Head from 'next/head'
 import Image from 'next/image'
 import { motion, useScroll, useAnimation } from 'framer-motion'
@@ -407,6 +408,15 @@ export default function Home() {
                   variants={fadeInUp}
                   className="flex flex-col sm:flex-row gap-4"
                 >
+                     <Button 
+                  as={Link}
+                  href="/grievance"
+                  variant="bordered"
+                  size="lg"
+                  className="font-medium border-2"
+                >
+                  Give Grievance
+                </Button>
                   <Button
                     as={Link}
                     href="/demo"
