@@ -412,7 +412,8 @@ export default function Home() {
                   as={Link}
                   href="/grievance"
                   variant="bordered"
-                  className="font-medium"
+                  size="lg"
+                  className="font-medium border-2"
                 >
                   Give Grievance
                 </Button>

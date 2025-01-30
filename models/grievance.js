@@ -17,7 +17,7 @@ const grievanceSchema = new Schema({
   },
   suggestion: {
     type: String,
-     // Optional field
+    
   },
   image: {
     image_url:{
