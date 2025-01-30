@@ -183,7 +183,7 @@ const Sidebar = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const {user}=useUser();
+  // const {user}=useUser();
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {

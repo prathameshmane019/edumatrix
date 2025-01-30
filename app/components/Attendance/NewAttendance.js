@@ -20,6 +20,7 @@ import axios from 'axios';
 import { Calendar, Users, BookOpen, CheckSquare, PlusCircle, Trash2 } from 'lucide-react';
 import { SubjectDropdown } from "../subject/SubjectDropdown";
 import { BatchDropdown } from "../subject/BatchDropdown";
+import Loader from "../loader";
 
 const MemoizedPointInput = React.memo(({ value, onChange, onRemove, canRemove, index }) => (
     <div className="flex gap-2 items-center">
@@ -234,7 +235,7 @@ export default function AttendanceSystem() {
   const [tgSessions, setTgSessions] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
   const [subjectType, setSubjectType] = useState(null);
-
+ const [isLoading, setIsLoading] = useState(false)
 
  
   useEffect(() => {
@@ -260,15 +261,22 @@ export default function AttendanceSystem() {
   }, []);
 
   const fetchAvailableSessions = useCallback(async (subjectId, batchId, date) => {
+    setIsLoading(true)
+
     try {
       const response = await axios.get(`/api/utils/available-sessions?subjectId=${subjectId}&batchId=${batchId || ''}&date=${date}`);
       setAvailableSessions(response.data.availableSessions);
     } catch (error) {
       console.error('Error fetching available sessions:', error);
     }
+    finally {
+      setIsLoading(false)
+    }
   }, []);
 
   const fetchSubjectDetails = useCallback(async (subjectId, batchId) => {
+    setIsLoading(true)
+    
     try {
       const response = await axios.get(`/api/v2/utils/attendance-data?_id=${subjectId}&batchId=${batchId || ''}`);
       const { subject, batches, students } = response.data;
@@ -283,6 +291,9 @@ export default function AttendanceSystem() {
       }
     } catch (error) {
       console.error('Error fetching subject details:', error);
+    }
+    finally {
+      setIsLoading(false)
     }
   }, []);
 
@@ -336,6 +347,8 @@ export default function AttendanceSystem() {
   }, [selectedDate, tgSessions, pointInputs]);
 
   const submitAttendance = useCallback(async () => {
+    setIsLoading(true)
+
     if (!selectedSubject) {
       alert("Please select a subject");
       return;
@@ -383,6 +396,10 @@ export default function AttendanceSystem() {
       console.error('Failed to submit attendance:', error);
       alert("Failed to submit attendance");
     }
+    finally {
+      setIsLoading(false)
+    }
+
   }, [selectedSubject, selectedSession, subjectDetails, validateTGSession, students, selectedKeys, selectedBatch, selectedDate, pointInputs, selectedContentIds, fetchSubjectDetails, resetForm]);
 
   const StudentListTable = useMemo(() => {
@@ -428,7 +445,13 @@ export default function AttendanceSystem() {
     );
   }, [students, selectedKeys]);
 
+  {isLoading && (
+    <div className="flex justify-center items-center">
+     <Loader/>
+    </div>
+  )}
   return (
+    
     <div className="flex flex-col gap-4 p-4 max-w-7xl mx-auto">
       <Card>
         <CardBody>
