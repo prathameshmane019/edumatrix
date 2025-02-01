@@ -14,7 +14,7 @@ export default async function RootLayout({ children }) {
     const callbackUrl = await getCallbackUrl();
     redirect(`/login?callback=${callbackUrl} `);
    }
-   else if(role!=="admin" || role!=="superadmin"){
+   else if(!role=="admin" || !role=="superadmin"){
     redirect(`/login`);
   }
   return (

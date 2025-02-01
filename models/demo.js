@@ -1,30 +1,20 @@
-import mongoose from "mongoose"
-const { Schema, model } = mongoose;
+import mongoose from 'mongoose';
 
-const demoSchema = new Schema({
-  name: {
-    type: String,
-    required: true,
+const demoRequestSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true },
+  phone: { type: String, required: true },
+  status: { 
+    type: String, 
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
   },
-  email: {
-    type: String,
-    required: true,
-
+  credentials: {
+    username: String,
+    password: String
   },
-  phone: {
-    type: String,
-    required: true,
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
 
-  }
- 
-}, {
-  timestamps: true,  
-})
-
-const Demo = mongoose.models.Demo || mongoose.model("Demo", demoSchema)
-
-export default Demo
-
-
-
-
+export const DemoRequest = mongoose.model('DemoRequest', demoRequestSchema);

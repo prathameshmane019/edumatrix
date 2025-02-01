@@ -6,14 +6,17 @@ import getCallbackUrl from "@/lib/callbackURL";
 
 export default async function RootLayout({ children }) {
   const session = await getServerSession(authOptions);
+  console.log(session);
+  
   const role = session?.user?.role
 
-  if (  !session) {
+  if ( !session || !role) {
     console.log("unauthorised") 
     const callbackUrl = await getCallbackUrl();
     redirect(`/login?callback=${callbackUrl} `);
    }
-   else if(role!=="admin" || role!=="superadmin"){
+   else if(!role=="admin" || !role=="superadmin"){
+    console.log("unauthorised");
     redirect(`/login`);
   }
   return (

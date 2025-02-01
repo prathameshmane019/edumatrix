@@ -34,7 +34,9 @@ export const UserProvider = ({ children }) => {
       
       return {
         ...profileData,
-        role: session.user.role
+        role: session.user.role,
+        hasActiveSubscription: session.user.hasActiveSubscription,
+        subscribedServices: session.user.subscribedServices,
       };
     } catch (error) {
       console.error("Error fetching user profile:", error);
@@ -89,7 +91,7 @@ export const UserProvider = ({ children }) => {
     return () => {
       mounted = false;
     };
-  }, [session, status]);
+  }, [status]);
 
   const contextValue = {
     user,
