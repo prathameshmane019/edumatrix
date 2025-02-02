@@ -311,6 +311,7 @@ export default function ModuleSelectionPage() {
       </div>
     )
   }
+  console.log(user);
 
   if (!user && !loading) {
     router.push('/login')

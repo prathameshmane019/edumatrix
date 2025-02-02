@@ -69,8 +69,7 @@ export default function ClassTable() {
 
 
 const {user,loading}=useUser()
-
-console.log(user);
+ 
 
   useEffect(() => {
      if (user) {
@@ -178,9 +177,7 @@ console.log(user);
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
   }, [sortDescriptor, items]);
-
-  console.log(profile);
-
+ 
   const renderCell = useCallback((cls, columnKey) => {
     const cellValue = cls[columnKey];
     switch (columnKey) {

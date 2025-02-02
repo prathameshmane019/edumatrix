@@ -14,6 +14,8 @@ export async function POST(req) {
 
         const { _id, rollNumber, name, year, email, phoneNo, password, department, institute, class: classRef } = data;
 
+        console.log(data);
+        
         if (!year || !institute || !rollNumber || !name || !classRef) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }

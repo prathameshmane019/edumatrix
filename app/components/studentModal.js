@@ -20,7 +20,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
     password: "",
     year: academicYear || "",
     institute: instituteId,
-    class: ""
+    class: selectedClass || ""
   });
 
   useEffect(() => {
@@ -107,8 +107,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
   }, [instituteId]);
 
   const handleSubmit = async () => {
-    try {
-      console.log(formData);
+    try { 
       let response;
       if (mode === "add") {
         response = await axios.post("/api/v2/students", formData);

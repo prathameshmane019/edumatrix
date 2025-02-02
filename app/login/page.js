@@ -6,8 +6,8 @@ const page = () => {
   return (
     <div className=''>
       <Suspense fallback={<div className="w-full lg:w-1/2 p-12 flex items-center justify-center"><Loader /></div>}>
-  <LoginComponent />
-</Suspense>
+        <LoginComponent />
+      </Suspense>
     </div>
   )
 }

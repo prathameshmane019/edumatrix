@@ -139,7 +139,8 @@ export const authOptions = {
         try {
           await connectMongoDB()
           const identifier = credentials.userId
-
+          console.log(credentials);
+          
           // Try to find user across different models without population
           let user = null
           let userType = null
@@ -161,12 +162,12 @@ export const authOptions = {
                 { phoneNo: identifier },
                 { id: identifier }
               ]
-            }).select('+password instituteId name email department')
+            }).select('+password institute name email department')
 
             if (faculty) {
               user = faculty
               userType = 'faculty'
-              instituteId = faculty.instituteId
+              instituteId = faculty.institute
             } else {
               // Check Student
               const student = await Student.findOne({
@@ -175,7 +176,7 @@ export const authOptions = {
                   { phoneNo: identifier },
                   { _id: identifier }
                 ]
-              }).select('+password instituteId name email department')
+              }).select('+password institute name email department')
 
               if (student) {
                 user = student
@@ -188,12 +189,12 @@ export const authOptions = {
                     { department: identifier },
                     { id: identifier }
                   ]
-                }).select('+password instituteId name department')
+                }).select('+password institute name')
 
                 if (department) {
                   user = department
                   userType = 'admin'
-                  instituteId = department.instituteId
+                  instituteId = department.institute
                 }
               }
             }
@@ -204,7 +205,7 @@ export const authOptions = {
           }
 
           // Verify password
-          if (user.password !== credentials.password) {
+          if (!user.password == credentials.password) {
             throw new Error('Invalid credentials')
           }
 
