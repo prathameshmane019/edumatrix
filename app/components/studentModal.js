@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Modal, Button, Input, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem } from "@nextui-org/react";
 import { toast } from "sonner";
 import axios from "axios";
-import { departmentOptions } from "../utils/department";
-import { DepartmentDropdown } from "./department/DepartmentDropDowns";
 import { Calendar } from "lucide-react";
 import { getAcademicYears } from "../utils/acadmicYears";
+import { DepartmentDropdown } from "./department/DepartmentDropDowns";
 import { ClassDropdown } from "./Class/ClassDropdown";
 
-const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, selectedClass,academicYear }) => {
+const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, selectedClass, academicYear }) => {
   const [profile, setProfile] = useState(null);
   const [formData, setFormData] = useState({
     _id: "",
@@ -22,7 +21,23 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
     institute: instituteId,
     class: selectedClass || ""
   });
+  const [isClassValid, setIsClassValid] = useState(true);
 
+  // Memoize initial form state
+  const initialFormState = useMemo(() => ({
+    _id: "",
+    rollNumber: "",
+    name: "",
+    department: "",
+    email: "",
+    phoneNo: "",
+    password: "",
+    year: academicYear || "",
+    institute: instituteId,
+    class:  ""
+  }), [academicYear, instituteId, selectedClass]);
+
+  // Load profile from session storage only once
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
@@ -30,15 +45,17 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
     }
   }, []);
 
+  // Update department based on profile
   useEffect(() => {
     if (profile?.role !== "superadmin") {
-      setFormData((prev) => ({
+      setFormData(prev => ({
         ...prev,
         department: profile?.department
       }));
     }
   }, [profile]);
 
+  // Handle student data for edit mode
   useEffect(() => {
     if (mode === "edit" && student) {
       setFormData({
@@ -56,82 +73,104 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
     } else {
       handleClear();
     }
-  }, [mode, student]);
+  }, [mode, student, instituteId]);
 
+  // Reset form when modal closes
   useEffect(() => {
     if (!isOpen) {
       handleClear();
     }
   }, [isOpen]);
 
-  const handleChange = (e) => {
+  // Update institute ID when it changes
+  useEffect(() => {
+    if (instituteId) {
+      setFormData(prev => ({
+        ...prev,
+        institute: instituteId
+      }));
+    }
+  }, [instituteId]);
+
+  // Memoized handlers
+  const handleChange = useCallback((e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-  };
+  }, []);
 
-  const handleInputChange=(name,value)=>{
-    setFormData((prev)=>({
-      ...prev,[name]:value
-    }))
-  }
-  const handleDepartmentSelect = (departmentId) => {
-    setFormData((prev) => ({
-      ...prev,
-      department: departmentId.target.value
-    }));
-  };
-
-  const handleClear = () => {
-    setFormData({
-      _id: "",
-      rollNumber: "",
-      name: "",
-      department: profile?.role === "superadmin" ? "" : profile?.department,
-      phoneNo: "",
-      email: "",
-      password: "",
-      year: academicYear ||"",
-      class: selectedClass,
-      institute: instituteId
-    });
-  };
-
-  useEffect(() => {
+  const handleInputChange = useCallback((name, value) => {
     setFormData(prev => ({
       ...prev,
-      institute: instituteId || prev.institute
+      [name]: value
     }));
-  }, [instituteId]);
+    
+    // Reset class validity when class is changed
+    if (name === 'class') {
+      setIsClassValid(true);
+    }
+  }, []);
+
+  const handleDepartmentSelect = useCallback((departmentId) => {
+    setFormData(prev => ({
+      ...prev,
+      department: departmentId.target.value,
+      class: '' // Reset class when department changes
+    }));
+    setIsClassValid(true);
+  }, []);
+
+  const handleClear = useCallback(() => {
+    setFormData(prev => ({
+      ...initialFormState,
+      department: profile?.role === "superadmin" ? "" : profile?.department
+    }));
+    setIsClassValid(true);
+  }, [initialFormState, profile]);
+
+  // Validate form data
+  const validateForm = useCallback(() => {
+    if (!formData.department) {
+      toast.error("Please select department");
+      return false;
+    }
+    if (!formData.class) {
+      toast.error("Please select class");
+      return false;
+    }
+    if (!isClassValid) {
+      toast.error("Selected class is not available. Please choose a valid class");
+      return false;
+    }
+    return true;
+  }, [formData.department, formData.class, isClassValid]);
 
   const handleSubmit = async () => {
-    try { 
-      if (!formData.department) {
-        toast.error("Please select department");
-        return;
-      }
-      if (!formData.class) {
-        toast.error("Please select class");
-        return;
-      }
-      let response;
-      if (mode === "add") {
-        response = await axios.post("/api/v2/students", formData);
-        toast.success("Student added successfully");
-      } else if (mode === "edit") {
-        response = await axios.put(`/api/v2/students?_id=${formData._id}`, formData);
-        toast.success("Student updated successfully");
-      }
+    try {
+      if (!validateForm()) return;
+
+      const endpoint = mode === "add" 
+        ? "/api/v2/students"
+        : `/api/v2/students?_id=${formData._id}`;
+
+      const method = mode === "add" ? "post" : "put";
+      
+      await axios[method](endpoint, formData);
+      toast.success(`Student ${mode === "add" ? "added" : "updated"} successfully`);
       onSubmit();
       onClose();
       handleClear();
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Error occurred while saving student data");
+      const errorMessage = error.response?.data?.message || "Error occurred while saving student data";
+      toast.error(errorMessage);
     }
   };
+
+  // Memoize academic years options
+  const academicYearsOptions = useMemo(() => getAcademicYears(10), []);
 
   return (
     <Modal isOpen={isOpen} size="2xl" onClose={onClose}>
@@ -171,13 +210,14 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
               placeholder="Select Year"
               label="Select Year"
               variant="bordered"
+              required
               size="sm"
               selectedKeys={formData.year ? [formData.year] : []}
-              onSelectionChange={(keys) => setFormData((prev) => ({ ...prev, year: Array.from(keys)[0] }))}
+              onSelectionChange={(keys) => handleInputChange('year', Array.from(keys)[0])}
               startContent={<Calendar className="w-4 h-4 text-default-400" />}
               className="w-full"
             >
-              {getAcademicYears(10).map((year) => (
+              {academicYearsOptions.map((year) => (
                 <SelectItem key={year.value} value={year.value}>
                   {year.label}
                 </SelectItem>
@@ -208,6 +248,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
               onChange={handleChange}
               required
               variant="bordered"
+
               size="sm"
             />
             {profile?.role !== "admin" && (
@@ -223,10 +264,11 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
               id="class-select"
               instituteId={formData.institute || instituteId}
               onSelect={(value) => handleInputChange('class', value)}
-              selectedClass={selectedClass || formData.class}
+              selectedClass={ formData.class}
               acadmicYear={formData.year}
-              selectedDepartment={formData.department  || profile?.id }
-              label="Class (Compulsory)" 
+              selectedDepartment={formData.department || profile?.id}
+              label="Class (Compulsory)"
+              onValidityChange={setIsClassValid}
             />
           </div>
         </ModalBody>

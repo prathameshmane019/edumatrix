@@ -25,7 +25,7 @@ const initialFormState = {
   selectedQuestionSet: null,
 }
 
-const FeedbackForm = ({ onSubmit, onCancel, user }) => {
+export default function FeedbackForm ({ onSubmit, onCancel, user }) {
   const [formData, setFormData] = useState(initialFormState)
   const [loading, setLoading] = useState(false)
   const [questionSets, setQuestionSets] = useState([])
@@ -324,4 +324,3 @@ const FeedbackForm = ({ onSubmit, onCancel, user }) => {
   )
 }
 
-export default FeedbackForm
