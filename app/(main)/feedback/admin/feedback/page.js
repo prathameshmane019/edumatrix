@@ -1,6 +1,5 @@
 
-import FeedbackManagement from '@/app/components/feedback/Managefeedback'
-import FeedbackForm from '@/app/components/feedback/Managefeedback'
+import FeedbackManagement from '@/app/components/feedback/Managefeedback' 
 import React from 'react'
 
 const page = () => {
