@@ -701,6 +701,9 @@ export default function StudentTable() {
 
   const fetchStudents = async () => {
     try {
+      if(!selectedClass || !selectedDepartment ) {
+        return
+      }
       setIsLoading(true);
       const response = await axios.get(`/api/v2/students-by-class`, {
         params: {

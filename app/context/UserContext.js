@@ -19,6 +19,8 @@ export const UserProvider = ({ children }) => {
 
   const fetchUserProfile = async () => {
     try {
+      console.log(session);
+      
       if (!session?.user?._id || !session?.user?.role) {
         return null;
       }
@@ -53,7 +55,7 @@ export const UserProvider = ({ children }) => {
       if (status === 'authenticated') {
         // Try to get from sessionStorage first
         const storedProfile = sessionStorage.getItem('userProfile');
-        
+        let freshProfile
         if (storedProfile) {
           try {
             const parsedProfile = JSON.parse(storedProfile);
@@ -66,9 +68,12 @@ export const UserProvider = ({ children }) => {
             sessionStorage.removeItem('userProfile');
           }
         }
+        
+        else{
+         freshProfile = await fetchUserProfile();
+        }
 
         // Fetch fresh data regardless of storage
-        const freshProfile = await fetchUserProfile();
         
         if (mounted && freshProfile) {
           sessionStorage.setItem('userProfile', JSON.stringify(freshProfile));

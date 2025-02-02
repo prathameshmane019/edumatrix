@@ -68,7 +68,7 @@ export default function ClassTable() {
   const [academicYear, setAcademicYear] = useState(() => profile?.currentYear || getCurrentAcademicYear());
 
 
-const {user,loading}=useUser()
+const {user,loading}= useUser()
  
 
   useEffect(() => {

@@ -108,6 +108,14 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
 
   const handleSubmit = async () => {
     try { 
+      if (!formData.department) {
+        toast.error("Please select department");
+        return;
+      }
+      if (!formData.class) {
+        toast.error("Please select class");
+        return;
+      }
       let response;
       if (mode === "add") {
         response = await axios.post("/api/v2/students", formData);
@@ -215,7 +223,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
               id="class-select"
               instituteId={formData.institute || instituteId}
               onSelect={(value) => handleInputChange('class', value)}
-              selectedClass={formData.class || selectedClass}
+              selectedClass={selectedClass || formData.class}
               acadmicYear={formData.year}
               selectedDepartment={formData.department  || profile?.id }
               label="Class (Compulsory)" 
