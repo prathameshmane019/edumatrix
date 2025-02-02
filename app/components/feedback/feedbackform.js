@@ -9,7 +9,7 @@ import { Calendar } from "lucide-react"
 import { getAcademicYears } from "@/app/utils/acadmicYears"
 import { toast } from "sonner"
 
-export const FeedbackForm = ({ onSubmit, onCancel, user }) => {
+const FeedbackForm = ({ onSubmit, onCancel, user }) => {
   const [formData, setFormData] = useState({
     feedbackTitle: "",
     feedbackType: "",
@@ -305,5 +305,4 @@ export const FeedbackForm = ({ onSubmit, onCancel, user }) => {
   )
 }
 
-
-
+export default FeedbackForm;
