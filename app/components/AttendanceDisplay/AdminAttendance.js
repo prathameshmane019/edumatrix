@@ -612,6 +612,7 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
             selectedClass={selectedClass}
             acadmicYear={year}
             size="md"
+            className='my-4'
             selectedDepartment={selectedDepartment}
           />
           <Dropdown>
