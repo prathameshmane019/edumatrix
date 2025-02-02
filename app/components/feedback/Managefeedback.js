@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react"
 import axios from "axios"
 import { useUser } from "@/app/context/UserContext"
 import { toast } from "sonner"
-import { FeedbackForm } from "./FeedbackForm"
+import FeedbackForm from "./FeedbackForm"
 import FeedbackTable from "./FeedbackTable"
 import { Button, Spinner } from "@nextui-org/react"
 
