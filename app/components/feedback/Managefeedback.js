@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react"
 import axios from "axios"
 import { useUser } from "@/app/context/UserContext"
 import { toast } from "sonner"
-import FeedbackForm from "./FeedbackForm"
+import FeedbackFormComponent from "./FeedbackForm"
 import FeedbackTable from "./FeedbackTable"
 import { Button, Spinner } from "@nextui-org/react"
 
@@ -125,7 +125,7 @@ const FeedbackManagement = () => {
         </div>
       )}
       {showFeedbackForm ? (
-        <FeedbackForm onSubmit={handleSubmit} onCancel={() => setShowFeedbackForm(false)} user={user} />
+        <FeedbackFormComponent onSubmit={handleSubmit} onCancel={() => setShowFeedbackForm(false)} user={user} />
       ) : (
         <FeedbackTable feedbacks={feedbacks} onDelete={handleDeleteFeedback} onToggleActive={handleToggleIsActive} />
       )}

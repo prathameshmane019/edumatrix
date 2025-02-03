@@ -25,7 +25,7 @@ const initialFormState = {
   selectedQuestionSet: null,
 }
 
-export default function FeedbackForm ({ onSubmit, onCancel, user }) {
+export default function FeedbackFormComponent ({ onSubmit, onCancel, user }) {
   const [formData, setFormData] = useState(initialFormState)
   const [loading, setLoading] = useState(false)
   const [questionSets, setQuestionSets] = useState([])
