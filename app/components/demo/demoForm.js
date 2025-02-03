@@ -54,7 +54,7 @@ const DemoForm = () => {
   if (success) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <Card className="max-w-lg w-full text-center p-6">
+        <Card className="max-w-lg w-full text-center p-4">
           <CardBody>
             <div className="text-green-500 text-4xl mb-4">✓</div>
             <h2 className="text-2xl font-bold mb-2">Thank You!</h2>
@@ -71,8 +71,8 @@ const DemoForm = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 to-violet-100 flex items-center justify-center p-4">
-      <Card className="max-w-4xl w-full flex flex-row p-6 border border-gray-200 rounded-lg shadow-md ">
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 to-violet-100 flex items-center justify-center ">
+      <Card className="max-w-4xl w-full flex flex-row p-4 border border-gray-200 rounded-lg shadow-md ">
         <div className="w-1/2 flex justify-center items-center">
           <Image
             src="/demo.jpg"
@@ -83,12 +83,12 @@ const DemoForm = () => {
           />
         </div>
         <div className="w-1/2 p-6 flex flex-col justify-center">
-        <CardHeader className="text-center pb-4">
-  <h2 className="text-2xl font-bold">Schedule a Demo</h2>
-  <p className="text-violet-600 hover:text-violet-700 transition-colors mt-2">
-    Experience the power of EduMatrix Pro firsthand
-  </p>
-</CardHeader>
+          <CardHeader className="text-center flex flex-col pb-4">
+            <h2 className="text-2xl font-bold">Schedule a Demo</h2>
+            <p className="text-violet-600 hover:text-violet-700 transition-colors mt-2">
+              Experience the power of EduMatrix Pro firsthand
+            </p>
+          </CardHeader>
 
           <CardBody>
             <form onSubmit={handleSubmit} className="space-y-4">

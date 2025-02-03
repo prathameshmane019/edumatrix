@@ -52,28 +52,28 @@ export default function GrievanceForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 to-violet-100 flex items-center justify-center p-4">
-    <div className="max-w-5xl mx-auto p-6 bg-violet-200 shadow-md rounded-lg flex flex-col md:flex-row items-center">
+    <div className="min-h-screen rounded-lg bg-gradient-to-br from-violet-50 to-violet-100 flex items-center justify-center p-10">
+    <div className="mx-auto gap-5 w-[70vw]   bg-violet-400 shadow-md rounded-lg flex flex-col md:flex-row items-center">
       {/* Left Side - Illustration Image */}
-      <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-6">
-      <h3 className="text-lg font-semibold mt-4 text-center text-violet-800">Raise Your Concern & Get It Resolved</h3>
+      <div className="w-full md:w-1/2 flex flex-col  items-center justify-center p-6">
+      <h3 className="text-lg font-semibold mt-4 text-center text-violet-50">Raise Your Concern & Get It Resolved</h3>
         <Image src="/grievance.png" alt="Grievance Illustration" width={400} height={400} />
         
       </div>
 
       {/* Right Side - Grievance Form */}
-      <div className="w-full md:w-1/2 p-6 bg-violet-200 ">
-        <h2 className="text-2xl font-bold mb-6 text-center">Submit a Grievance</h2>
+      <div className="w-full md:w-1/2 p-6 bg-violet-50 rounded-lg ">
+        <h2 className="text-2xl font-bold mb-6 text-center text-violet-800">Submit a Grievance</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input label="Name" placeholder="Enter your name" name="name" required />
-          <Input label="Email" placeholder="Enter your email" name="email" type="email" required />
+          <Input label="Name" placeholder="Enter your name" name="name" required variant="bordered" />
+          <Input label="Email" placeholder="Enter your email" name="email" type="email" required variant="bordered"/>
 
           <Textarea
             label="Issue"
             placeholder="Please describe the issue you are facing"
             name="issue"
-            minRows={4}
-            required
+            minRows={4} 
+            variant="bordered"
           />
 
           <Textarea
@@ -81,6 +81,7 @@ export default function GrievanceForm() {
             placeholder="Any suggestions to resolve the issue"
             name="suggestion"
             minRows={4}
+            variant="bordered"
           />
 
           {/* File Upload Field */}

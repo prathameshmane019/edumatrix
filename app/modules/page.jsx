@@ -302,6 +302,7 @@ export default function ModuleSelectionPage() {
   const { user, loading } = useUser()
   const [loadingModule, setLoadingModule] = useState(null)
 
+  console.log(user);
 
 
   if (loading) {
