@@ -14,14 +14,17 @@ export const DynamicFieldSelector = ({ formData, handleSelectChange }) => {
   const handleChange = (field) => (value) => {
     handleSelectChange(field, value)
   }
-
+const handleDepartmentChange = (field) => (value) => {
+    handleSelectChange(field, value.target.value)
+    handleChange("className")(null)
+  }
   if (user?.role === "superadmin") {
     return (
       <>
         <DepartmentDropdown
           includeCentral={true}
           instituteId={user?._id}
-          onSelect={handleChange("department")}
+          onSelect={handleDepartmentChange("department")}
           className="w-full"
           selectedDepartment={formData?.department}
         />
@@ -30,7 +33,7 @@ export const DynamicFieldSelector = ({ formData, handleSelectChange }) => {
           onSelect={handleChange("className")}
           selectedClass={formData?.className}
           selectedDepartment={formData?.department}
-          academicYear={formData?.academicYear}
+          acadmicYear={formData?.academicYear}
         />
       </>
     )

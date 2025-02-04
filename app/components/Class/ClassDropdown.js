@@ -89,6 +89,8 @@ export function ClassDropdown({
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
 
+    console.log(selectedDepartment, selectedClass, instituteId, acadmicYear);
+    
     useEffect(() => {
         async function fetchClasses() {
             if (!instituteId || !selectedDepartment || !acadmicYear) {

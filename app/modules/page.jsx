@@ -311,8 +311,7 @@ export default function ModuleSelectionPage() {
         <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
       </div>
     )
-  }
-  console.log(user);
+  } 
 
   if (!user && !loading) {
     router.push('/login')
