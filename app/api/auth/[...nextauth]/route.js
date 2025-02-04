@@ -55,7 +55,7 @@
 //           // Validate user
 //           let user = faculty || student || department || institute
 //           if (!user) {
-            
+
 //             throw new Error('User not found')
 //           }
 //           console.log(user);
@@ -140,7 +140,7 @@ export const authOptions = {
           await connectMongoDB()
           const identifier = credentials.userId
           console.log(credentials);
-          
+
           // Try to find user across different models without population
           let user = null
           let userType = null
@@ -219,6 +219,7 @@ export const authOptions = {
             access: true
           }).select('serviceId')
 
+
           // Get service details
           const serviceIds = activeSubscriptions.map(sub => sub.serviceId)
           const services = await Service.find({
@@ -234,9 +235,11 @@ export const authOptions = {
             department: user.department,
             instituteId: instituteId,
             subscribedServices: services.map(service => (
-              service._id.toString())),
+            service._id.toString())),
             hasActiveSubscription: activeSubscriptions.length > 0
           }
+
+          console.log(profile);
 
           return profile
         } catch (error) {

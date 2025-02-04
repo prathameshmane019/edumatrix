@@ -1,78 +1,3 @@
-// import { NextResponse } from 'next/server';
-// import jwt from 'jsonwebtoken';
-// import Student from '@/models/student';
-// import Faculty from '@/models/faculty';
-// import Subject from '@/models/subject';
-// import Institute from '@/models/Institute';
-// import { connectMongoDB } from '@/lib/connectDb';
-// const SECRET_KEY = process.env.NEXTAUTH_SECRET
-
-// export async function POST(request) {
-//   const { _id, password, role } = await request.json();
-//   console.log({ _id, password, role });
-
-//   try {
-//     await connectMongoDB()
-//     let user;
-//     if (role === 'faculty') {
-//       user = await Faculty.findOne({id:_id})
-//       .populate('institute',"name address");
-//     } else if (role === 'student') {
-//       user = await Student.findById(_id)
-//       .populate('institute',"name address");
-//     } else {
-//       return NextResponse.json({ msg: 'Invalid role' }, { status: 400 });
-//     }
-
-//     console.log(user);
-//     if (!user) {
-//       return NextResponse.json({ msg: 'Invalid credentials' }, { status: 401 });
-//     }
-//     if (user.password !== password) { // In a real app, use proper password comparison
-//       return NextResponse.json({ msg: 'Invalid credentials' }, { status: 401 });
-//     }
-
-//     let subjects = [];
-//     // If faculty, fetch their subjects
-//     if (role === 'faculty') {
-//       subjects = await Subject.find({
-//         teacher: user._id,
-//         sem: user.sem,
-//         academicYear: user.currentYear
-//       }).populate('class','id')
-//       .select('_id id name batch subType ');
-//     }
-
-//     const token = jwt.sign({ user: { id: user._id, role: role} }, SECRET_KEY, { expiresIn: '7h' });
-    
-//     return NextResponse.json({ 
-//       token, 
-//       user: {
-//         ...user.toObject(),
-//         role: role,
-//         subjects: subjects
-//       } 
-//     });
-//   } catch (err) {
-//     console.error(err.message);
-//     return NextResponse.json({ msg: 'Server error' }, { status: 500 });
-//   }
-// }
-
-// export async function GET(request) {
-//   const authHeader = request.headers.get('authorization');
-//   const token = authHeader && authHeader.split(' ')[1];
-
-//   if (!token) return NextResponse.json({ msg: 'Access denied' }, { status: 401 });
-
-//   try {
-//     const decoded = jwt.verify(token, SECRET_KEY);
-//     return NextResponse.json({ msg: 'This is protected data', user: decoded.user });
-//   } catch (err) {
-//     return NextResponse.json({ msg: 'Invalid token' }, { status: 403 });
-//   }
-// }
-
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import Student from '@/models/student';
@@ -81,6 +6,8 @@ import Subject from '@/models/subject';
 import Institute from '@/models/Institute';
 import { connectMongoDB } from '@/lib/connectDb';
 import mongoose from 'mongoose';
+import Service from '@/models/service';
+import Subscription from '@/models/subscription';
 
 const SECRET_KEY = process.env.NEXTAUTH_SECRET;
 
@@ -90,8 +17,11 @@ export async function POST(request) {
 
   try {
     await connectMongoDB();
-    let user;
-    
+
+    // Try to find user across different models without population
+    let user = null
+    let instituteId = null
+
     if (role === 'faculty') {
       user = await Faculty.findOne({ id: _id })
         .populate('institute', "name address");
@@ -103,6 +33,7 @@ export async function POST(request) {
     }
 
     console.log(user);
+
     if (!user) {
       return NextResponse.json({ msg: 'Invalid credentials' }, { status: 401 });
     }
@@ -110,11 +41,31 @@ export async function POST(request) {
       return NextResponse.json({ msg: 'Invalid credentials' }, { status: 401 });
     }
 
+    // Get active subscriptions
+    const currentDate = new Date()
+    const activeSubscriptions = await Subscription.find({
+      userId: user.institute._id,
+      status: 'active',
+      startDate: { $lte: currentDate },
+      endDate: { $gte: currentDate },
+      access: true
+    }).select('serviceId')
+
+    console.log(activeSubscriptions);
+
+    // Get service details
+    const serviceIds = activeSubscriptions.map(sub => sub.serviceId)
+    const services = await Service.find({
+      _id: { $in: serviceIds }
+    }).select('name _id')
+    console.log(serviceIds);
+
+
     let subjects = [];
     // If faculty, fetch their subjects
     if (role === 'faculty') {
       // Convert user._id to ObjectId if it's a string
-      const facultyId = typeof user._id === 'string' ? 
+      const facultyId = typeof user._id === 'string' ?
         new mongoose.Types.ObjectId(user._id) : user._id;
 
       // Fetch both theory subjects and practical/TG subjects
@@ -135,8 +86,8 @@ export async function POST(request) {
           }
         ]
       })
-      .populate('class', 'id name')
-      .lean();
+        .populate('class', 'id name')
+        .lean();
 
       // Process subjects to include batch information
       subjects = allSubjects.map(subject => {
@@ -163,11 +114,14 @@ export async function POST(request) {
     }
 
     const token = jwt.sign({ user: { id: user._id, role: role } }, SECRET_KEY, { expiresIn: '7h' });
-    
+
     // Convert user document to plain object and add role and subjects
     const userObj = {
       ...user.toObject(),
       role: role,
+      subscribedServices: services.map(service => (
+        service._id.toString())),
+      hasActiveSubscription: activeSubscriptions.length > 0,
       subjects: subjects.map(subject => ({
         _id: subject._id,
         id: subject.id,
@@ -177,8 +131,8 @@ export async function POST(request) {
         assignedBatches: subject.assignedBatches
       }))
     };
-
-    return NextResponse.json({ 
+    console.log(userObj);
+    return NextResponse.json({
       token,
       user: userObj
     });
