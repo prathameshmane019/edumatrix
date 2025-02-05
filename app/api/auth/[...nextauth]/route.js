@@ -181,7 +181,7 @@ export const authOptions = {
               if (student) {
                 user = student
                 userType = 'student'
-                instituteId = student.instituteId
+                instituteId = student.institute
               } else {
                 // Check Department
                 const department = await Department.findOne({

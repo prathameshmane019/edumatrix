@@ -267,7 +267,7 @@ const Sidebar = () => {
           { name: "View Reports", href: "/attendance/faculty/reports", icon: TbReportAnalytics }
         ],
         student: [
-          { name: "Profile", href: "/attendance/student/", icon: MdPortrait },
+          { name: "Profile", href: "/attendance/student", icon: MdPortrait },
           { name: "View Attendance", href: "/attendance/student/view", icon: AiOutlineSchedule }
         ]
       }

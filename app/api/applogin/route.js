@@ -37,7 +37,8 @@ export async function POST(request) {
     if (!user) {
       return NextResponse.json({ msg: 'Invalid credentials' }, { status: 401 });
     }
-    if (user.password !== password) { // In a real app, use proper password comparison
+    if (!user.password === password) { // In a real app, use proper password comparison
+      console.log("Invalid Password");
       return NextResponse.json({ msg: 'Invalid credentials' }, { status: 401 });
     }
 

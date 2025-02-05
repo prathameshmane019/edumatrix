@@ -33,8 +33,7 @@ export async function GET(req) {
         const subjects = await Subject.find({
             class: student.class,
             sem: semester,
-            academicYear: academicYear,
-            isActive: true
+            academicYear: academicYear 
         }).select('_id name subType batch').lean();
 
         if (!subjects || subjects.length === 0) {

@@ -18,9 +18,7 @@ export const UserProvider = ({ children }) => {
   const { data: session, status } = useSession();
 
   const fetchUserProfile = async () => {
-    try {
-      console.log(session);
-      
+    try { 
       if (!session?.user?._id || !session?.user?.role) {
         return null;
       }
@@ -29,7 +27,9 @@ export const UserProvider = ({ children }) => {
         ? "department"
         : session.user.role === "superadmin" 
           ? "institute" 
-          : session.user.role;
+          : session.user.role ==="student"
+          ? "students":
+          session.user.role
 
       const res = await axios.get(`/api/v2/${role}?_id=${session.user._id}`);
       const profileData = Array.isArray(res.data) ? res.data[0] : res.data;
