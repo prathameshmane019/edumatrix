@@ -21,7 +21,8 @@ export async function GET(req) {
     if (!subjectId || !dateString || !session) {
       return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
     }
-    const dateParam = new Date(dateString); // Get date from query
+
+    const dateParam = new Date(dateString);
     const subject = await Subject.findById(subjectId)
       .populate({
         path: 'class',
@@ -42,12 +43,10 @@ export async function GET(req) {
     let students = [];
     switch(subject.subType) {
       case 'theory':
-        // For theory subjects, use all students from the class
         students = subject.class.students || [];
         break;
 
       case 'practical':
-        // For practical subjects, handle batch-specific students
         if (batchId) {
           const classDoc = await Classes.findById(subject.class._id)
             .populate({
@@ -68,13 +67,11 @@ export async function GET(req) {
 
           students = selectedBatch.students || [];
         } else {
-          // If no specific batch is provided, use all students (fallback)
           students = subject.class.students || [];
         }
         break;
 
       case 'tg':
-        // For TG subjects, use all class students
         students = subject.class.students || [];
         break;
 
@@ -83,30 +80,33 @@ export async function GET(req) {
     }
 
     // Create date range for attendance search
-   // Create date range for attendance search
-   const startOfDay = new Date(Date.UTC(
-    dateParam.getUTCFullYear(),
-    dateParam.getUTCMonth(),
-    dateParam.getUTCDate(),
-    0, 0, 0, 0
-  ));
-  
-  // Ensure the end of the day in UTC
-  const endOfDay = new Date(Date.UTC(
-    dateParam.getUTCFullYear(),
-    dateParam.getUTCMonth(),
-    dateParam.getUTCDate(),
-    23, 59, 59, 999
-  ));
-  
-console.log("Date range:", { startOfDay, endOfDay });
-    // Find attendance record
-    const attendanceRecord = await Attendance.findOne({
+    const startOfDay = new Date(Date.UTC(
+      dateParam.getUTCFullYear(),
+      dateParam.getUTCMonth(),
+      dateParam.getUTCDate(),
+      0, 0, 0, 0
+    ));
+    
+    const endOfDay = new Date(Date.UTC(
+      dateParam.getUTCFullYear(),
+      dateParam.getUTCMonth(),
+      dateParam.getUTCDate(),
+      23, 59, 59, 999
+    ));
+    
+    // Modify attendance record query to handle batch-specific records
+    const attendanceQuery = {
       subject: subjectId,
       date: { $gte: startOfDay, $lt: endOfDay },
-      session: parseInt(session),
-      batch:batchId// Include batchId in query if it exists
-    }).lean();
+      session: parseInt(session)
+    };
+
+    // Add batch to query only for practical subjects
+    if (subject.subType === 'practical' && batchId) {
+      attendanceQuery.batch = batchId;
+    }
+
+    const attendanceRecord = await Attendance.findOne(attendanceQuery).lean();
 
     // Map students with their attendance status
     const studentsWithAttendance = students.map(student => ({
@@ -126,7 +126,7 @@ console.log("Date range:", { startOfDay, endOfDay });
         name: subject.name,
         subType: subject.subType,
         content: subject.content,
-        batchId: batchId || null // Include selected batchId in response
+        batchId: batchId || null
       }
     }, { status: 200 });
 
@@ -139,6 +139,7 @@ console.log("Date range:", { startOfDay, endOfDay });
     }, { status: 500 });
   }
 }
+
 export async function PUT(req) {
   try {
     await connectMongoDB();

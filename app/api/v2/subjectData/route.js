@@ -35,7 +35,8 @@ export async function GET(req) {
             sem: 1,
             academicYear: 1,
             class: 1,
-            batchFaculties: 1
+            batchFaculties: 1,
+            content:1
           };
         // Fetch subjects based on filter
         const subjects = await Subject.find(subjectFilter).select(selectFields)

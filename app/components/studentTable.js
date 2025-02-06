@@ -717,7 +717,7 @@ export default function StudentTable() {
       if(response.status==400){
         toast.warning('Please select department and class ')
       }
-      else if(response.status==404){
+      else if(response.status == 404){
         toast.warning('No students found')
       }
       

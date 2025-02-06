@@ -446,6 +446,8 @@ export default function UpdateAttendance() {
       })
 
       const { subject, batches, students, attendanceRecord } = response.data
+      console.log(response.data);
+      
       setSubjectDetails(subject)
       setBatches(batches || [])
       setStudents(students || [])

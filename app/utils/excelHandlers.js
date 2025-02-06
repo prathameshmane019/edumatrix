@@ -34,8 +34,10 @@ console.log(subject);
         title: row[0] || '',
         description: row[1] || '',
         references: row[2] || '',
-        proposedDate: parseFlexibleDate(row[3]) ? formatDateForStorage(row[3]) : null,
-        completedDate: parseFlexibleDate(row[4]) ? formatDateForStorage(row[4]) : null
+        courseOutcomes: row[3] || '',
+        programOutcomes: row[4] || '',
+        proposedDate: parseFlexibleDate(row[5]) ? formatDateForStorage(row[5]) : null,
+        completedDate: parseFlexibleDate(row[6]) ? formatDateForStorage(row[6]) : null
       }));
     case 'tg':
       return contentData.map(row => ({
@@ -93,6 +95,8 @@ export const handleExcelDownload = (content, subject) => {
         'Title': item.title || '',
         'Description': item.description || '',
         'References': item.references || '',
+        'Course Outcomes': item.courseOutcomes || '',
+        'Program Outcomes': item.programOutcomes || '',
         'Proposed Date': formatDateForDisplay(item.proposedDate),
         'Completed Date': formatDateForDisplay(item.completedDate)
       }));
@@ -168,12 +172,15 @@ export const downloadSampleExcel = (subjectType, batches = ['A', 'B', 'C']) => {
       ];
       break;
     case 'theory':
-      headers = ['Title', 'Description', 'References', 'Proposed Date', 'Completed Date'];
+      headers = ['Title', 'Description', 'References', 'Course Outcomes', 
+        'Program Outcomes', 'Proposed Date', 'Completed Date'];
       sampleData = [
         [
           'Introduction to React', 
           'Learn React fundamentals', 
           'React official docs', 
+          '2',
+          '3,4',
           formatDateForDisplay(currentDate), 
           formatDateForDisplay(currentDate)
         ]
