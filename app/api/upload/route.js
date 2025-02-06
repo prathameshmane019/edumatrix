@@ -10,7 +10,7 @@ export async function POST(req) {
         await connectMongoDB();
         const data = await req.json();
 
-        const { students, class: classRef, department } = data;
+        const { students, class: classRef, department,institute } = data;
         console.log("Original data:", data);
 
         // Validate that department is provided
@@ -38,6 +38,7 @@ export async function POST(req) {
             name: student.name.trim(),
             email: student.email.trim().toLowerCase(),
             class: classRef,
+            institute:institute,
             department: department, // Override with the provided department
             ...Object.fromEntries(
                 Object.entries(student)
@@ -78,19 +79,20 @@ export async function POST(req) {
         }, { status: 201 });
     } catch (error) {
         console.error("Error creating students:", error);
+
         if (session) {
             await session.abortTransaction();
             session.endSession();
         }
 
-        if (error.code === 11000) {
-            // Duplicate key error
+
+        if (error.errorResponse.code === 11000) { 
             const duplicateField = Object.keys(error.keyPattern)[0];
             const duplicateValue = error.keyValue[duplicateField];
             return NextResponse.json({
-                error: `Duplicate entry for ${duplicateField}: ${duplicateValue}. This student already exists.`
+                error: `Duplicate students`
             }, { status: 400 });
-        } else if (error.name === 'ValidationError') {
+            } else if (error.validationErrors) {
             // Validation error
             const validationErrors = Object.values(error.errors).map(err => err.message);
             return NextResponse.json({ 

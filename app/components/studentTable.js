@@ -786,21 +786,22 @@ export default function StudentTable() {
           await axios.post('/api/upload', { 
             students: [student],
             class: selectedClass,
-            department:selectedDepartment
+            department:selectedDepartment,
+            institute:institute
           });
           uploadedStudents++;
         } catch (error) {
           if (error.response && error.response.data) {
-            if (error.response.data.error.includes("duplicate key error")) {
+            if (error.response.data.error.includes("Duplicate students")) {
               errors.push(`${student.name || 'Unknown student'}: Duplicate student found. This student already exists.`);
             } else {
               errors.push(`${student.name || 'Unknown student'}: ${error.response.data.error}`);
             }
           } else {
-            errors.push(`${student.name || 'Unknown student'}: Unknown error occurred`);
+            errors.push(`${student.name || 'Unknown student'}: Validation Failed`);
           }
-        }
-
+          toast("Failed to upload students please check all fields are correct and not duplicates")
+        } 
         setUploadProgress(Math.round((uploadedStudents / totalStudents) * 100));
       }
 
@@ -841,12 +842,8 @@ export default function StudentTable() {
       const workbook = XLSX.utils.book_new();
 
       Object.entries(studentsByYear).forEach(([year, students]) => {
-        const dataToExport = students.map(({ createdAt, updatedAt, subjects, __v, ...rest }) => ({
-          ...rest,
-          "Admission Year": year
-        }));
-
-        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      
+        const worksheet = XLSX.utils.json_to_sheet(students);
         XLSX.utils.book_append_sheet(workbook, worksheet, `Year ${year}`);
       });
 
@@ -859,44 +856,6 @@ export default function StudentTable() {
       setIsLoading(false);
     }
   };
-  // const downloadExcel = async () => {
-  //   try {
-  //     setIsLoading(true);
-  //     // Updated endpoint to remove classId as it is no longer used
-  //     const response = await axios.get(`/api/student/download?department=${selectedDepartment}`);
-      
-  //     const studentsByYear = response.data.reduce((acc, student) => {
-  //       const year = student.year || 'Unknown'; // Group students by their year
-  //       if (!acc[year]) acc[year] = [];
-  //       acc[year].push(student);
-  //       return acc;
-  //     }, {});
-  
-  //     const workbook = XLSX.utils.book_new(); // Create a new Excel workbook
-  
-  //     Object.entries(studentsByYear).forEach(([year, students]) => {
-  //       // Map the data, excluding unnecessary fields like createdAt, updatedAt, etc.
-  //       const dataToExport = students.map(({ createdAt, updatedAt, subjects, __v, ...rest }) => ({
-  //         ...rest,
-  //         "Admission Year": year // Add year information as a column
-  //       }));
-  
-  //       const worksheet = XLSX.utils.json_to_sheet(dataToExport); // Create a worksheet from JSON data
-  //       XLSX.utils.book_append_sheet(workbook, worksheet, `Year ${year}`); // Add the worksheet to the workbook
-  //     });
-  
-  //     // Save the Excel file with the name "student_data.xlsx"
-  //     XLSX.writeFile(workbook, "student_data.xlsx");
-  //     toast.success('Student data downloaded successfully'); // Success notification
-  //   } catch (error) {
-  //     console.error("Error downloading student data:", error);
-  //     toast.error('Error downloading student data: ' + (error.response?.data?.error || error.message)); // Error notification
-  //   } finally {
-  //     setIsLoading(false); // Reset loading state
-  //   }
-  // };
-  
-
   const deleteStudent = async (_id) => {
     setStudentToDelete(_id);
     setShowDeleteConfirmModal(true);
@@ -1162,9 +1121,7 @@ export default function StudentTable() {
             variant="ghost"
             size="sm"
             onClick={openFileDialog}
-            endContent={<FaFileUpload />}
-            // disabled={!selectedClass}
-
+            endContent={<FaFileUpload />} 
           >
             Upload File
           </Button>

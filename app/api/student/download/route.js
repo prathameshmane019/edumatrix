@@ -8,7 +8,7 @@ export async function GET(req) {
     const department = searchParams.get("department");
     const classId = searchParams.get("class");
     await connectMongoDB();
-    const students = await Student.find({department,class:classId}).lean();
+    const students = await Student.find({department,class:classId}).select('-password -institute -class -createdAt -updatedAt -__v').lean();
     console.log(students);
     
     return NextResponse.json(students);
