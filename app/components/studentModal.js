@@ -22,6 +22,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
     class: selectedClass || ""
   });
   const [isClassValid, setIsClassValid] = useState(true);
+  const [isSubmiting, setIsSubmiting] = useState(false);
 
   // Memoize initial form state
   const initialFormState = useMemo(() => ({
@@ -50,7 +51,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
     if (profile?.role !== "superadmin") {
       setFormData(prev => ({
         ...prev,
-        department: profile?.department
+        department: profile?.id
       }));
     }
   }, [profile]);
@@ -125,7 +126,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
   const handleClear = useCallback(() => {
     setFormData(prev => ({
       ...initialFormState,
-      department: profile?.role === "superadmin" ? "" : profile?.department
+      department: profile?.role === "superadmin" ? "" : profile?.id
     }));
     setIsClassValid(true);
   }, [initialFormState, profile]);
@@ -148,7 +149,12 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
   }, [formData.department, formData.class, isClassValid]);
 
   const handleSubmit = async () => {
+    if (isSubmiting) return // Prevent multiple submissions
+ 
+    setIsSubmiting(true)
     try {
+      console.log(formData);
+      
       if (!validateForm()) return;
 
       const endpoint = mode === "add" 
@@ -166,6 +172,9 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
       console.error("Error:", error);
       const errorMessage = error.response?.data?.message || "Error occurred while saving student data";
       toast.error(errorMessage);
+    }
+    finally{
+      setIsSubmiting(false)
     }
   };
 
@@ -273,10 +282,10 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
           </div>
         </ModalBody>
         <ModalFooter>
-          <Button auto flat color="error" onClick={() => { onClose(); handleClear(); }}>
+          <Button auto flat color="error" isDisabled={isSubmiting} onClick={() => { onClose(); handleClear(); }}>
             Cancel
           </Button>
-          <Button auto color="primary" onClick={handleSubmit}>
+          <Button auto color="primary" isLoading={isSubmiting}  isDisabled={isSubmiting} onClick={handleSubmit}>
             {mode === "add" ? "Add" : "Update"}
           </Button>
         </ModalFooter>

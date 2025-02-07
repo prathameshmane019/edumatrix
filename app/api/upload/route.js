@@ -87,10 +87,10 @@ export async function POST(req) {
         }
 
 
-        if (error.errorResponse.code === 11000) {
+        if (error.code === 11000) {
             console.log("Duplicate field occured");
-            const duplicateField = Object.keys(error.keyPattern)[0];
-            const duplicateValue = error.keyValue[duplicateField];
+            // const duplicateField = Object.keys(error.keyPattern)[0];
+            // const duplicateValue = error.keyValue[duplicateField];
             return NextResponse.json({
                 error: `Duplicate students`
             }, { status: 400 });

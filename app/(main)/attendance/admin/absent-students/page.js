@@ -86,8 +86,8 @@ const AbsentStudentsPage = () => {
       toast.success("Absent students data fetched successfully.");
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error(
-        "Failed to fetch absent students data. Please try again.");
+      toast.warning(
+        "No absent students data. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -295,14 +295,13 @@ const AbsentStudentsPage = () => {
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required
-              className="max-w-60"
-
+              className="max-w-60" 
               variant="bordered"
               size="sm"
             />
             <ClassDropdown
             id="class-select"
-            instituteId={userProfile?.institute}
+            instituteId={userProfile?.institute?._id}
             onSelect={handleClassSelect}
             selectedClass={selectedClass}
             acadmicYear={academicYear}

@@ -223,6 +223,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
     institute: null,
   });
   const [profile, setProfile] = useState(null);
+  const [isSubmiting, setIsSubmiting] = useState(false);
 
   // Fetch user profile from session storage
   useEffect(() => {
@@ -287,6 +288,10 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
   }
 
   const handleSubmit = async () => {
+    if (isSubmiting) {
+      return
+    }
+    setIsSubmiting(true)
     try {
       const dataToSubmit = {
         ...formData,
@@ -307,6 +312,9 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
     } catch (error) {
       console.error("Error:", error);
       toast.error("Error occurred while saving faculty data");
+    }
+    finally{
+      setIsSubmiting(false)
     }
   };
 
@@ -399,10 +407,10 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
           </Select>
         </ModalBody>
         <ModalFooter>
-          <Button auto flat color="error" onClick={onClose}>
+          <Button   isDisabled={isSubmiting} auto flat color="error" onClick={onClose}>
             Cancel
           </Button>
-          <Button auto onClick={handleSubmit}>
+          <Button isLoading={isSubmiting}  isDisabled={isSubmiting} auto onClick={handleSubmit}>
             {mode === "add" ? "Add" : "Update"}
           </Button>
         </ModalFooter>

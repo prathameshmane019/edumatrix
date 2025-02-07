@@ -302,7 +302,8 @@ export default function StudentTable() {
   const confirmDeleteStudent = async () => {
     try {
       await axios.delete(`/api/v2/students?_id=${studentToDelete}`);
-      fetchStudents();
+      // fetchStudents();
+      setAllStudents(prev=>  prev.filter(student => student._id !== studentToDelete ))
       toast.success('Student deleted successfully');
     } catch (error) {
       console.error("Error deleting student:", error);

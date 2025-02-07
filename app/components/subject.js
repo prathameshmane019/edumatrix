@@ -86,6 +86,7 @@ export default function SubjectTable({ user }) {
       setSelectedDepartment(profile.id)
     }
   }, [profile]);
+  
   const fetchData = async () => {
     try {
       if(!selectedClass || !academicYear || !profile?.id){
@@ -118,7 +119,8 @@ export default function SubjectTable({ user }) {
   const confirmDelete = async (_id) => {
     try {
       await axios.delete(`/api/v2/subject?_id=${_id}`);
-      fetchData();
+      setSubjects(prev => prev.filter(s => !s._id === _id ))
+    
       toast.success('Subject deleted successfully');
     } catch (error) {
       console.error("Error deleting subject:", error);
@@ -341,6 +343,7 @@ export default function SubjectTable({ user }) {
         classes={classes}
         instituteId={institute}
         department={profile?.id}
+        isLoading={isLoading}
       />
        <SubjectDeleteConfirmModal
         isOpen={isDeleteModalOpen}

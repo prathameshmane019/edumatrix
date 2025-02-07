@@ -524,318 +524,6 @@
 // //     </Modal>
 // //   );
 // // }
-// 'use client'
-// import React, { useState, useEffect } from 'react';
-// import axios from 'axios';
-// import {
-//   Modal,
-//   ModalContent,
-//   ModalHeader,
-//   ModalBody,
-//   Button,
-//   Input,
-//   Select,
-//   SelectItem,
-//   Checkbox,
-// } from '@nextui-org/react';
-// import { FacultyDropdown } from './faculty/FacultyDropdown';
-// import { Calendar } from 'lucide-react';
-// import { ClassDropdown } from './Class/ClassDropdown';
-// import { getCurrentAcademicYear, getAcademicYears } from '../utils/acadmicYears';
-
-// export default function SubjectModal({ isOpen, onClose, department, mode, subjectData, onSubmit, classes, instituteId, teachers }) {
-//   const [formData, setFormData] = useState({
-//     id: '',
-//     name: '',
-//     class: '',
-//     teacher: '',
-//     subType: '',
-//     batch: [],
-//     batchFaculties: [],
-//     sem: '',
-//     academicYear: '',
-//   });
-
-//   const [batches, setBatches] = useState([]);
-//   useEffect(() => {
-//     if (subjectData && mode === 'edit') {
-//       const existingBatches = subjectData.batch?.map(batchId => ({
-//         id: batchId,
-//         type: 'existing'
-//       })) || [];
-
-//       setBatches(existingBatches);
-
-//       setFormData({
-//         id: subjectData.id || '',
-//         name: subjectData.name || '',
-//         class: subjectData.class?._id || '',
-//         teacher: subjectData.teacher?._id || '',
-//         subType: subjectData.subType || '',
-//         batch: subjectData.batch || [],
-//         batchFaculties: subjectData.batchFaculties?.map(bf => ({
-//           batchId: bf.batchId,
-//           faculty: bf.faculty._id || bf.faculty
-//         })) || [],
-//         sem: subjectData.sem || '',
-//         academicYear: subjectData.academicYear || '',
-//       });
-//     } else {
-//       resetForm();
-//     }
-//   }, [subjectData, mode]);
-
-//   const handleBatches = (newBatches) => {
-//     console.log(newBatches);
-
-//     // Only update batches if we're not in edit mode or if the class has changed
-//     if (mode === 'add' || formData.class !== subjectData?.class?._id) {
-//       setBatches(newBatches);
-//       setFormData(prev => ({
-//         ...prev,
-//         batch: (newBatches || []).map(batch => batch.id),
-//         batchFaculties: (newBatches || []).map(batch => ({
-//           batchId: batch.id,
-//           faculty: prev.batchFaculties.find(bf => bf.batchId === batch.id)?.faculty._id || ''
-//         }))
-//       }));
-//     }
-//   };
-
-//   const resetForm = () => {
-//     setFormData({
-//       id: '',
-//       name: '',
-//       class: '',
-//       teacher: '',
-//       subType: '',
-//       batch: [],
-//       batchFaculties: [],
-//       sem: '',
-//       academicYear: '',
-//     });
-//     setBatches([]);
-//   };
-
-//   const handleInputChange = (field, value) => {
-//     if (field === 'subType') {
-//       // Reset batch-related fields when switching subject type
-//       setFormData(prev => ({
-//         ...prev,
-//         [field]: value,
-//         batch: value === 'theory' ? [] : prev.batch,
-//         batchFaculties: value === 'theory' ? [] : prev.batchFaculties,
-//         teacher: value !== 'theory' ? '' : prev.teacher
-//       }));
-//     } else {
-//       setFormData(prev => ({ ...prev, [field]: value }));
-//     }
-//   };
-
-//   const handleBatchFacultyAssignment = (batchId, facultyId) => {
-//     console.log(facultyId, batchId);
-
-//     setFormData(prev => ({
-//       ...prev,
-//       batchFaculties: prev.batchFaculties.map(bf =>
-//         bf.batchId === batchId ? { ...bf, faculty: facultyId } : bf
-//       )
-//     }));
-//   };
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     try {
-//       const payload = {
-//         ...formData,
-//         department,
-//         institute: instituteId,
-//       };
-
-//       if (formData.subType === 'theory') {
-//         delete payload.batchFaculties;
-//         delete payload.batch;
-//       } else {
-//         delete payload.teacher;
-//         // Only include batchFaculties for selected batches
-//         payload.batchFaculties = payload.batchFaculties.filter(bf =>
-//           payload.batch.includes(bf.batchId)
-//         ).map(bf => ({
-//           batchId: bf.batchId,
-//           faculty: bf.faculty._id || bf.faculty
-//         }));
-//       }
-
-//       if (mode === 'add') {
-//         await axios.post('/api/v2/subject', payload);
-//       } else {
-//         await axios.put(`/api/v2/subject?_id=${subjectData._id}`, payload);
-//       }
-//       onSubmit();
-//       onClose();
-//     } catch (error) {
-//       console.error('Error submitting subject:', error);
-//     }
-//   };
-//   return (
-//     <Modal
-//       isOpen={isOpen}
-//       onClose={onClose}
-//       placement="top-center"
-//       className="max-w-[40vw] max-h-[80vh] overflow-y-auto"
-//     >
-//       <ModalContent>
-//         <ModalHeader>{mode === 'add' ? 'Add New Subject' : 'Edit Subject'}</ModalHeader>
-//         <ModalBody>
-//           <form onSubmit={handleSubmit} className="w-full bg-white p-2 grid grid-cols-2 gap-4">
-//             <Input
-//               type="text"
-//               variant="bordered"
-//               size="sm"
-//               label="Subject ID"
-//               value={formData.id}
-//               onChange={(e) => handleInputChange('id', e.target.value)}
-//               required
-//               disabled={mode !== 'add'}
-//               placeholder="Course ID"
-//               className="col-span-1 w-full"
-//             />
-//             <Input
-//               type="text"
-//               variant="bordered"
-//               placeholder="Subject Name"
-//               size="sm"
-//               label="Name"
-//               value={formData.name}
-//               onChange={(e) => handleInputChange('name', e.target.value)}
-//               required
-//               className="col-span-1 w-full"
-//             />
-//             <Select
-//               placeholder="Select Year"
-//               selectedKeys={formData.academicYear ? [formData.academicYear] : []}
-//               onSelectionChange={(keys) => handleInputChange('academicYear', Array.from(keys)[0])}
-//               startContent={<Calendar className="w-4 h-4 text-default-400" />}
-//               variant="bordered"
-//               size="sm"
-//               label="Academic Year"
-//               className="w-full"
-//             >
-//               {getAcademicYears(10).map((year) => (
-//                 <SelectItem key={year.value} value={year.value}>
-//                   {year.label}
-//                 </SelectItem>
-//               ))}
-//             </Select>
-//             <ClassDropdown
-//               id="class-select"
-//               instituteId={instituteId}
-//               onSelect={(value) => handleInputChange('class', value)}
-//               selectedClass={formData.class}
-//               acadmicYear={formData.academicYear}
-//               selectedDepartment={department}
-//               label="Class"
-//               handleBatches={handleBatches}
-//             />
-//             <Select
-//               label="Subject Type"
-//               placeholder="Select Subject Type"
-//               className="col-span-1 w-full"
-//               selectedKeys={[formData.subType]}
-//               onSelectionChange={(keys) => handleInputChange('subType', keys.currentKey)}
-//               required
-//               variant="bordered"
-//               size="sm"
-//             >
-//               <SelectItem key="theory" value="theory">Theory</SelectItem>
-//               <SelectItem key="practical" value="practical">Practical</SelectItem>
-//               <SelectItem key="tg" value="tg">Teacher Guardian</SelectItem>
-//             </Select>
-//             <Select
-//               label="Semester"
-//               placeholder="Select Semester"
-//               className="col-span-1 w-full"
-//               selectedKeys={[formData.sem]}
-//               onSelectionChange={(keys) => handleInputChange('sem', keys.currentKey)}
-//               required
-//               variant="bordered"
-//               size="sm"
-//             >
-//               <SelectItem key="sem1" value="sem1">Semester 1</SelectItem>
-//               <SelectItem key="sem2" value="sem2">Semester 2</SelectItem>
-//             </Select>
-//             {formData.subType === "theory" && (
-//               <FacultyDropdown
-//                 instituteId={instituteId}
-//                 onSelect={(value) => handleInputChange('teacher', value)}
-//                 selectedFaculty={formData.teacher}
-//                 className="w-full"
-//                 label="Faculty"
-//               />
-//             )}
-//             {(formData.subType === 'practical' || formData.subType === 'tg') && batches.length > 0 && (
-//               <div className="col-span-2">
-//                 <h3 className="text-lg font-semibold mb-2">Batch-Faculty Assignments</h3>
-//                 {batches.map((batch) => (
-//                   <div key={batch.id} className="flex gap-4 items-center mb-2">
-//                     <span className="w-24">{batch.id}</span>
-//                     <div className="flex gap-2 items-center w-full">
-//                       <Checkbox
-//                         isSelected={formData.batch.includes(batch.id)}
-//                         onValueChange={(isSelected) => {
-//                           const newBatch = isSelected
-//                             ? [...formData.batch, batch.id]
-//                             : formData.batch.filter(id => id !== batch.id);
-
-//                           const newBatchFaculties = isSelected
-//                             ? [...formData.batchFaculties]
-//                             : formData.batchFaculties.filter(bf => bf.batchId !== batch.id);
-
-//                           setFormData(prev => ({
-//                             ...prev,
-//                             batch: newBatch,
-//                             batchFaculties: newBatchFaculties
-//                           }));
-//                         }}
-//                       />
-//                       {formData.batch.includes(batch.id) && (
-//                         <FacultyDropdown
-//                           instituteId={instituteId}
-//                           onSelect={(value) => handleBatchFacultyAssignment(batch.id, value)}
-//                           selectedFaculty={formData.batchFaculties.find(bf => bf.batchId === batch.id)?.faculty || ''}
-//                           className="w-full"
-//                           label={`Faculty for ${batch.id}`}
-//                         />
-//                       )}
-//                     </div>
-//                   </div>
-//                 ))}
-//               </div>
-//             )}
-//             <div className="col-span-2 flex justify-end gap-4">
-//               <Button
-//                 variant="ghost"
-//                 size="sm"
-//                 onClick={onClose}
-//                 className="w-fit px-3 font-normal bg-gray-200 text-gray-600"
-//               >
-//                 Cancel
-//               </Button>
-//               <Button
-//                 type="submit"
-//                 variant="flat"
-//                 size="sm"
-//                 color="primary"
-//                 className="w-fit px-3 font-normal"
-//               >
-//                 {mode === 'add' ? 'Add Subject' : 'Update Subject'}
-//               </Button>
-//             </div>
-//           </form>
-//         </ModalBody>
-//       </ModalContent>
-//     </Modal>
-//   );
-// }
 
 "use client"
 import { useState, useEffect } from "react"
@@ -855,6 +543,7 @@ import { FacultyDropdown } from "./faculty/FacultyDropdown"
 import { Calendar } from "lucide-react"
 import { ClassDropdown } from "./Class/ClassDropdown"
 import { getAcademicYears } from "../utils/acadmicYears"
+import Loader from "./loader"
 
 export default function SubjectModal({
   isOpen,
@@ -864,8 +553,7 @@ export default function SubjectModal({
   subjectData,
   onSubmit,
   classes,
-  instituteId,
-  teachers,
+  instituteId, 
 }) {
   const [formData, setFormData] = useState({
     id: "",
@@ -878,9 +566,9 @@ export default function SubjectModal({
     sem: "",
     academicYear: "",
   })
+ const [isSubmiting, setIsSubmiting] = useState(false);
 
-  const [batches, setBatches] = useState([])
-
+  const [batches, setBatches] = useState([]) 
   useEffect(() => {
     if (subjectData && mode === "edit") {
       setFormData({
@@ -1008,14 +696,15 @@ export default function SubjectModal({
   }
 
   const handleSubmit = async (e) => {
+    if (isSubmiting) return // Prevent multiple submissions
     e.preventDefault()
+    setIsSubmiting(true)
     try {
       const payload = {
         ...formData,
         department,
         institute: instituteId,
-      }
-
+      } 
       if (formData.subType === "theory") {
         delete payload.batchFaculties
         delete payload.batch
@@ -1039,8 +728,11 @@ export default function SubjectModal({
     } catch (error) {
       console.error("Error submitting subject:", error)
     }
+    finally{
+      setIsSubmiting(false)
+    }
   }
-
+ 
   return (
     <Modal
       isOpen={isOpen}
@@ -1183,7 +875,7 @@ export default function SubjectModal({
               >
                 Cancel
               </Button>
-              <Button type="submit" variant="flat" size="sm" color="primary" className="w-fit px-3 font-normal">
+              <Button isLoading={isSubmiting}  isDisabled={isSubmiting} type="submit" variant="flat" size="sm" color="primary" className="w-fit px-3 font-normal">
                 {mode === "add" ? "Add Subject" : "Update Subject"}
               </Button>
             </div>
