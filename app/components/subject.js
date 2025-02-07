@@ -28,6 +28,8 @@ import Image from 'next/image';
 import { getCurrentAcademicYear, getAcademicYears } from '@/app/utils/acadmicYears';
 import { Calendar } from 'lucide-react';
 import { ClassDropdown } from './Class/ClassDropdown';
+import SubjectTableSkeleton from './SkeletonLoaders/SubjectTableSkeleton';
+import SubjectDeleteConfirmModal from './ConfirmModal/SubjectDelete';
 
 const columns = [
   { uid: "id", name: "ID", sortable: true },
@@ -58,7 +60,8 @@ export default function SubjectTable({ user }) {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [institute, setInstitute] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
-
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
@@ -85,6 +88,9 @@ export default function SubjectTable({ user }) {
   }, [profile]);
   const fetchData = async () => {
     try {
+      if(!selectedClass || !academicYear || !profile?.id){
+        return
+      }
       setIsLoading(true);
       const response = await axios.get(`/api/v2/subjectData?department=${profile.id}&acadmicYear=${academicYear}&sem=${selectedSemester}&class=${selectedClass}`);
       setSubjects(response.data.subjects);
@@ -103,7 +109,13 @@ export default function SubjectTable({ user }) {
     setSelectedClass(value)
   }
 
-  const deleteSubject = async (_id) => {
+  const handleDeleteClick = (subject) => {
+    setSelectedSubject(subject);
+    setIsDeleteModalOpen(true);
+  };
+
+ 
+  const confirmDelete = async (_id) => {
     try {
       await axios.delete(`/api/v2/subject?_id=${_id}`);
       fetchData();
@@ -170,7 +182,7 @@ export default function SubjectTable({ user }) {
             </span>
             <span
               className="text-lg text-danger cursor-pointer active:opacity-50"
-              onClick={() => deleteSubject(subject._id)}
+              onClick={() => handleDeleteClick(subject)}
             >
               <DeleteIcon />
             </span>
@@ -226,6 +238,7 @@ export default function SubjectTable({ user }) {
     );
   };
 
+  
   return (
     <>
       <div className="flex justify-between my-4 gap-3 items-end">
@@ -295,12 +308,14 @@ export default function SubjectTable({ user }) {
           </Button>
         </div>
       </div>
-      {sortedItems.length > 0 ? (
+      {sortedItems.length > 0 && !isLoading ? (
         <Table aria-label="Subject Table" sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
           <TableHeader columns={headerColumns}>
             {(column) => <TableColumn key={column.uid}>{renderHeader(column)}</TableColumn>}
           </TableHeader>
-          <TableBody isLoading={isLoading} loadingContent={<Spinner label="Please Wait ... fetching Subjects Data" />} items={sortedItems}>
+          <TableBody isLoading={isLoading} 
+          loadingContent={<Spinner label="Please Wait ... fetching Subjects Data" />} 
+          items={sortedItems}>
             {(item) => (
               <TableRow key={item._id}>
                 {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
@@ -308,7 +323,9 @@ export default function SubjectTable({ user }) {
             )}
           </TableBody>
         </Table>
-      ) : (
+      ): isLoading ?
+      <SubjectTableSkeleton/>
+      : (
         <div className="flex flex-col items-center justify-center mt-4">
           <Image src="/subject.svg" alt="No subjects found" width={450} height={450} />
           <p className="mt-2 text-gray-500">No subjects found in selected criteria</p>
@@ -324,6 +341,12 @@ export default function SubjectTable({ user }) {
         classes={classes}
         instituteId={institute}
         department={profile?.id}
+      />
+       <SubjectDeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirmDelete={confirmDelete}
+        subject={selectedSubject}
       />
     </>
   );

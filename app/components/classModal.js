@@ -356,7 +356,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, department, us
                   <SelectItem key="practical" textValue="Practical">
                     Practical
                   </SelectItem>
-                  <SelectItem key="TG" textValue="TG">
+                  <SelectItem key="tg" textValue="TG">
                     TG
                   </SelectItem>
                 </Select>

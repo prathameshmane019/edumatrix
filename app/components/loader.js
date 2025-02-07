@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 
-const Loader = ({ size = 'medium', color = 'primary' }) => {
+const Loader = ({text, size = 'medium', color = 'primary' }) => {
   const sizeClasses = {
     small: 'w-6 h-6',
     medium: 'w-8 h-8',
@@ -21,7 +21,7 @@ const Loader = ({ size = 'medium', color = 'primary' }) => {
         role="status"
         aria-label="loading"
       >
-        <span className="sr-only">Loading...</span>
+        <span className="sr-only">{text ||"Loading..."}</span>
       </div>
     </div>
   );

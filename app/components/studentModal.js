@@ -208,7 +208,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
             />
             <Select
               placeholder="Select Year"
-              label="Select Year"
+              label="Admission Year"
               variant="bordered"
               required
               size="sm"
@@ -276,7 +276,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
           <Button auto flat color="error" onClick={() => { onClose(); handleClear(); }}>
             Cancel
           </Button>
-          <Button auto onClick={handleSubmit}>
+          <Button auto color="primary" onClick={handleSubmit}>
             {mode === "add" ? "Add" : "Update"}
           </Button>
         </ModalFooter>

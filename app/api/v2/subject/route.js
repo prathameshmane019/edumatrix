@@ -273,6 +273,8 @@ export async function POST(request) {
       academicYear
     } = data;
 
+    console.log(data);
+    
     const newSubject = new Subject({
       id,
       name,

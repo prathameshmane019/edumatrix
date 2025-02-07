@@ -27,7 +27,7 @@ export async function GET(req) {
 
         // Validate students array
         if (!classDocument.students || classDocument.students.length === 0) {
-            return NextResponse.json({ error: "No students in this class" }, { status: 404 });
+            return NextResponse.json({ message: "No students in this class" }, { status: 404 });
         }
 
         // Find students using the _id array from the class document
