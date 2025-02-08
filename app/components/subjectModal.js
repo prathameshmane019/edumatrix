@@ -657,8 +657,7 @@ export default function SubjectModal({
       } else if (field === "class" && mode === "add") {
         updatedForm.batch = []
         updatedForm.batchFaculties = []
-      }
-
+      } 
       return updatedForm
     })
   }
@@ -710,8 +709,10 @@ export default function SubjectModal({
         delete payload.batch
       } else {
         delete payload.teacher
+        console.log(formData.batchFaculties);
+        
         payload.batchFaculties = formData.batchFaculties
-          .filter((bf) => formData.batch.includes(bf.batchId))
+          .filter((bf) => (formData.batch.includes(bf.batchId) && bf.faculty!==""))
           .map((bf) => ({
             batchId: bf.batchId,
             faculty: bf.faculty,
