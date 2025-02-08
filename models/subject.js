@@ -4,78 +4,84 @@ import Classes from './className';
 
 
 const BatchStatusSchema = new mongoose.Schema({
-    batchId: {
-        type: String,
-        required: true
-    },
-    status: {
-        type: String,
-        enum: ['covered', 'not_covered'],
-        default: 'not_covered'
-    },
-    proposedDate: {
-        type: String
-    },
-    completedDate: {
-        type: String
-    }
+  batchId: {
+    type: String,
+    required: true
+  },
+  status: {
+    type: String,
+    enum: ['covered', 'not_covered'],
+    default: 'not_covered'
+  },
+  proposedDate: {
+    type: String
+  },
+  completedDate: {
+    type: String
+  }
 }, { _id: false });
 
 const ContentSchema = new mongoose.Schema({
-    title: {
-        type: String,
-        required: true
-    },
-    description: {
-        type: String,
-        required: true
-    },
-    references: {
-        type: String
-    },
-    status: {
-        type: String,
-        enum: ['covered', 'not_covered'],
-        default: 'not_covered'
-    },
-    courseOutcomes: {
-        type: String
-    },
-    completedDate:{
-        type: String
-    },
-    proposedDate:{
-        type: String
-    },
-    programOutcomes: {
-        type: String
-    },
-    batchStatus: {
-        type: [BatchStatusSchema],
-        default: undefined,
-        validate: {
-            validator: function(v) {
-                const subject = this.parent();
-                return !subject || subject.subType !== 'practical' || (Array.isArray(v) && v.length > 0);
-            },
-            message: 'Batch status is required for practical subjects'
-        }
+  title: {
+    type: String,
+    required: true
+  },
+  description: {
+    type: String,
+    required: true
+  },
+  references: {
+    type: String
+  },
+  status: {
+    type: String,
+    enum: ['covered', 'not_covered'],
+    default: 'not_covered'
+  },
+  courseOutcomes: {
+    type: String
+  },
+  completedDate: {
+    type: String
+  },
+  proposedDate: {
+    type: String
+  },
+  programOutcomes: {
+    type: String
+  },
+  batchStatus: {
+    type: [BatchStatusSchema],
+    default: undefined,
+    validate: {
+      validator: function (v) {
+        const subject = this.parent();
+        return !subject || subject.subType !== 'practical' || (Array.isArray(v) && v.length > 0);
+      },
+      message: 'Batch status is required for practical subjects'
     }
+  }
 }, {
-    _id: true,
+  _id: true,
 });
 
 const TGSessionSchema = new mongoose.Schema({
-    date: {
-        type: String,
-        required: true
-    },
-    pointsDiscussed: {
-        type: [String],
-        default: undefined
-    },
+  date: {
+    type: String,
+    required: true
+  },
+  pointsDiscussed: {
+    type: [String],
+    required: true,
+    validate: {
+      validator: function (v) {
+        return Array.isArray(v) && v.length > 0;
+      },
+      message: 'Points discussed cannot be empty'
+    }
+  }
 }, {
-    _id: true
+  _id: true
 });
 
 // Create a new schema for batch-faculty mapping
@@ -118,7 +124,7 @@ const SubjectSchema = new mongoose.Schema({
   batchFaculties: {
     type: [BatchFacultySchema],
     validate: {
-      validator: function(v) {
+      validator: function (v) {
         return this.subType === 'theory' || (Array.isArray(v) && v.length > 0);
       },
       message: 'Batch-faculty mapping is required for practical/TG subjects'
@@ -139,7 +145,7 @@ const SubjectSchema = new mongoose.Schema({
     type: [ContentSchema],
     default: undefined,
     validate: {
-      validator: function(v) {
+      validator: function (v) {
         return this.subType !== 'tg' || (v === undefined || v.length === 0);
       },
       message: 'Content should be empty for TG subjects'
@@ -147,12 +153,23 @@ const SubjectSchema = new mongoose.Schema({
   },
   tgSessions: {
     type: [TGSessionSchema],
-    default: undefined,
     validate: {
-      validator: function(v) {
-        return this.subType === 'tg' || (v === undefined || v.length === 0);
+      validator: function (v) {
+        // Using function keyword to maintain 'this' context
+        if (!this || typeof this.subType === 'undefined') {
+          // If we can't access subType, don't validate
+          return true;
+        }
+
+        if (this.subType === 'tg') {
+          // For TG subjects, allow array of sessions
+          return true;
+        } else {
+          // For non-TG subjects, ensure no sessions
+          return !v || v.length === 0;
+        }
       },
-      message: 'TG sessions should only be present for TG subjects'
+      message: 'TG sessions are only allowed for TG subjects'
     }
   },
   sem: {
@@ -166,6 +183,30 @@ const SubjectSchema = new mongoose.Schema({
   }
 }, {
   timestamps: true,
+});
+// Add a pre-save middleware to ensure data consistency
+SubjectSchema.pre('save', function(next) {
+  if (this.subType !== 'tg' && Array.isArray(this.tgSessions)) {
+      this.tgSessions = [];
+  }
+  next();
+});
+
+// Add a pre-update middleware
+SubjectSchema.pre(['updateOne', 'findOneAndUpdate'], function(next) {
+  const update = this.getUpdate();
+  if (update.$push && update.$push.tgSessions) {
+      // If we're pushing to tgSessions, make sure we're operating on a TG subject
+      this.model.findOne(this.getFilter()).then(doc => {
+          if (!doc || doc.subType !== 'tg') {
+              next(new Error('Cannot add TG sessions to non-TG subject'));
+          } else {
+              next();
+          }
+      }).catch(next);
+  } else {
+      next();
+  }
 });
 
 const Subject = mongoose.models.Subject || mongoose.model('Subject', SubjectSchema);

@@ -8,7 +8,7 @@ export async function POST(req) {
   try {
     await connectMongoDB();
     const data = await req.json();
-    console.log(data);
+    console.log("Received data:", data);
 
     const {
       subject,
@@ -17,25 +17,13 @@ export async function POST(req) {
       batchId,
       attendanceRecords,
       pointsDiscussed,
-      contents,
       institute
     } = data;
 
-    // Validate required fields
+    // Initial validation
     if (!subject || !session || !date || !attendanceRecords || !institute) {
       return NextResponse.json({ message: "Invalid Input Data" }, { status: 400 });
     }
-
-    // Verify institute exists
-    const instituteDoc = await Institute.findById(institute);
-    if (!instituteDoc) {
-      return NextResponse.json({ message: "Institute not found" }, { status: 404 });
-    }
-
-    const [year, month, day] = date.split('-');
-    const attendanceDate = new Date(Date.UTC(year, month - 1, day));
-
-    const sessions = Array.isArray(session) ? session : [session];
 
     // Get the subject document
     const subjectDoc = await Subject.findById(subject);
@@ -43,8 +31,59 @@ export async function POST(req) {
       return NextResponse.json({ message: "Subject not found" }, { status: 404 });
     }
 
+    console.log("Processing subject:", {
+      id: subjectDoc._id,
+      type: subjectDoc.subType,
+      name: subjectDoc.name
+    });
+
+    const [year, month, day] = date.split('-');
+    const attendanceDate = new Date(Date.UTC(year, month - 1, day));
+    const formattedDate = attendanceDate.toISOString().split('T')[0];
+
+    // Handle TG sessions first if applicable
+    if (subjectDoc.subType === 'tg' && Array.isArray(pointsDiscussed) && pointsDiscussed.length > 0) {
+      try {
+        // First query to check current state
+        const currentSubject = await Subject.findById(subject);
+        if (!currentSubject) {
+          throw new Error('Subject not found during TG session update');
+        }
+
+        // Update the document
+        const updatedSubject = await Subject.findByIdAndUpdate(
+          subject,
+          {
+            $push: {
+              tgSessions: {
+                date: formattedDate,
+                pointsDiscussed: pointsDiscussed
+              }
+            }
+          },
+          {
+            new: true,
+            runValidators: false  // We'll validate manually
+          }
+        );
+
+        if (!updatedSubject) {
+          throw new Error('Failed to update TG sessions');
+        }
+
+        console.log("Updated TG sessions successfully");
+      } catch (error) {
+        console.error("Error updating TG sessions:", error);
+        return NextResponse.json({
+          error: "Failed to update TG sessions",
+          details: error.message
+        }, { status: 500 });
+      }
+    }
+
+    // Process attendance records
+    const sessions = Array.isArray(session) ? session : [session];
     const attendanceRecordsPromises = sessions.map(async (sess) => {
-      // Prepare attendance record data
       const attendanceData = {
         date: attendanceDate,
         subject,
@@ -57,115 +96,23 @@ export async function POST(req) {
         }))
       };
 
-      // Create or update attendance record
-      const filter = {
-        date: attendanceDate,
-        subject,
-        session: sess,
-        institute,
-        ...(batchId && { batch: batchId })
-      };
-
-      const options = { upsert: true, new: true, runValidators: true };
-
-      const attendanceRecord = await Attendance.findOneAndUpdate(filter, attendanceData, options);
-      console.log(subjectDoc);
-
-
-      async function handleTGSessionUpdate(subject, attendanceDate, pointsDiscussed) {
-        // Quick validation
-        if (!subject || !attendanceDate || !pointsDiscussed?.length) return null;
-
-        try {
-          const formattedDate = attendanceDate.toISOString().split('T')[0];
-
-          return await Subject.findOneAndUpdate(
-            { _id: subject, subType: 'tg' },
-            {
-              $push: {
-                tgSessions: {
-                  $each: [{
-                    date: formattedDate,
-                    pointsDiscussed: [...new Set(pointsDiscussed)]  // Remove duplicates
-                  }],
-                  $position: 0,  // Add to the beginning
-                }
-              }
-            },
-            {
-              new: true,
-              runValidators: true
-            }
-          );
-        } catch (error) {
-          console.error('TG Session Update Error:', error);
-          throw new Error(`Failed to update TG session: ${error.message}`);
-        }
-      }
-      // In POST handler
-      if (subjectDoc.subType === 'tg' && pointsDiscussed?.length) {
-        await handleTGSessionUpdate(subject, attendanceDate, pointsDiscussed);
-      }
-
-      // Update content status for non-TG subjects
-      if (subjectDoc.subType !== 'tg' && contents && contents.length > 0) {
-        const indianFormattedDate = attendanceDate.toLocaleString('en-IN', {
-          timeZone: 'Asia/Kolkata',
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true
-        });
-
-        if (subjectDoc.subType === 'practical' && batchId) {
-          await Subject.updateOne(
-            { _id: subject, "content._id": { $in: contents } },
-            {
-              $set: {
-                "content.$[elem].batchStatus.$[batch].status": "covered",
-                "content.$[elem].batchStatus.$[batch].completedDate": indianFormattedDate
-              }
-            },
-            {
-              arrayFilters: [
-                { "elem._id": { $in: contents } },
-                { "batch.batchId": batchId, "batch.status": { $ne: "covered" } }
-              ]
-            }
-          );
-        } else if (subjectDoc.subType === 'theory') {
-          await Subject.updateOne(
-            { _id: subject },
-            {
-              $set: {
-                "content.$[elem].status": "covered",
-                "content.$[elem].completedDate": indianFormattedDate
-              }
-            },
-            {
-              arrayFilters: [
-                { "elem._id": { $in: contents }, "elem.status": { $ne: "covered" } }
-              ]
-            }
-          );
-        }
-      }
-
-      // Add attendance record reference to subject
-      await Subject.findByIdAndUpdate(
-        subject,
-        { $addToSet: { reports: attendanceRecord._id } }
+      return await Attendance.findOneAndUpdate(
+        {
+          date: attendanceDate,
+          subject,
+          session: sess,
+          institute,
+          ...(batchId && { batch: batchId })
+        },
+        attendanceData,
+        { upsert: true, new: true }
       );
-
-      return attendanceRecord;
     });
 
     const attendanceRecordsResult = await Promise.all(attendanceRecordsPromises);
 
     return NextResponse.json({
-      message: "Attendance Recorded Successfully",
+      message: "Attendance and TG Session Recorded Successfully",
       attendance: attendanceRecordsResult
     }, { status: 200 });
 
