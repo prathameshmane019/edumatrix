@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { Button, Input, Card, CardBody, CardHeader } from "@nextui-org/react";
 import Image from "next/image";
+import { useRouter } from "next/router";
+import Link from "next/link";
 
 const DemoForm = () => {
   const [formData, setFormData] = useState({
@@ -21,11 +23,12 @@ const DemoForm = () => {
     });
     setError("");
   };
-
+ 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+
 
     try {
       const response = await fetch("/api/v2/schedule-demo", {
@@ -64,6 +67,11 @@ const DemoForm = () => {
             {/* <Button color="primary" onClick={() => setSuccess(false)}>
             Start Demo
             </Button> */}
+            <Link href="/">
+          <Button color="primary" className="w-full">
+            Back to Home
+          </Button>
+        </Link>
           </CardBody>
         </Card>
       </div>

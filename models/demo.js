@@ -17,4 +17,4 @@ const demoRequestSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
-export const DemoRequest = mongoose.model('DemoRequest', demoRequestSchema);
+export const DemoRequest = mongoose.models.DemoRequest || mongoose.model('DemoRequest', demoRequestSchema);
