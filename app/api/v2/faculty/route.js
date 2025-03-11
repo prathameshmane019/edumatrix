@@ -27,6 +27,15 @@ export async function POST(req) {
             return NextResponse.json({error:"department is missing"}, { status: 400 });
         }
 
+        // Check if faculty with the same ID already exists
+        const existingFaculty = await Faculty.findOne({ id });
+        if (existingFaculty) {
+            return NextResponse.json(
+                { error: `Faculty with ID ${id} already exists` }, 
+                { status: 409 }  // 409 Conflict status code
+            );
+        }
+
         // Retrieve the logged-in user's institute or use a default
         const instituteId = institute || (await Institute.findOne()).id;
 
@@ -49,6 +58,15 @@ export async function POST(req) {
         }, { status: 201 });
     } catch (error) {
         console.error("Error creating faculty:", error);
+        
+        // Handle duplicate key error specifically
+        if (error.code === 11000) {
+            const keyValue = error.keyValue ? JSON.stringify(error.keyValue) : 'unknown';
+            return NextResponse.json({ 
+                error: `Duplicate key error: ${keyValue} already exists` 
+            }, { status: 409 });
+        }
+        
         return NextResponse.json({ error: "Failed to Register" }, { status: 500 });
     }
 }
@@ -93,16 +111,16 @@ export async function PUT(req) {
         }
 
         console.log("Faculty Updated Successfully", existingFaculty);
-        return NextResponse.json(existingFaculty,{ 
-            message: "Faculty Updated Successfully", 
-        }, { status: 200 });
+        return NextResponse.json(
+            existingFaculty,
+            { status: 200 }
+        );
 
     } catch (error) {
         console.error("Error updating faculty:", error);
         return NextResponse.json({ error: "Failed to Update" }, { status: 500 });
     }
 }
-
 export async function GET(req) {
     try {
         await connectMongoDB();

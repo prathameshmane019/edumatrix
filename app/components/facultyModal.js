@@ -286,38 +286,61 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
       department: departmentId.target.value
     }));
   }
-
   const handleSubmit = async () => {
     if (isSubmiting) {
-      return
+      return;
     }
-    setIsSubmiting(true)
+    setIsSubmiting(true);
     try {
       const dataToSubmit = {
         ...formData,
         department: profile?.role === "superadmin" ? formData.department : profile?.id,
         institute: formData.institute || (profile?.role === "superadmin" ? profile._id : profile?.institute),
       };
-
+  
+      let response;
+      
       if (mode === "add") {
-        await axios.post("/api/v2/faculty", dataToSubmit);
+        response = await axios.post("/api/v2/faculty", dataToSubmit);
         toast.success("Faculty added successfully");
         onSubmit();
       } else if (mode === "edit") {
-        await axios.put("/api/v2/faculty", dataToSubmit);
+        response = await axios.put("/api/v2/faculty", dataToSubmit);
         toast.success("Faculty updated successfully");
+        onSubmit();
       }
+      
+      console.log(response?.data);
       onClose();
       handleClear();
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Error occurred while saving faculty data");
-    }
-    finally{
-      setIsSubmiting(false)
+      
+      // Handle specific error responses from the API
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        const errorMessage = error.response.data.error || "Error occurred while saving faculty data";
+        
+        // Check for specific error types
+        if (error.response.status === 409) {
+          toast.error(errorMessage); // Display the duplicate ID error message
+        } else if (error.response.status === 400) {
+          toast.error(errorMessage); // Display validation error
+        } else {
+          toast.error("Error occurred while saving faculty data");
+        }
+      } else if (error.request) {
+        // The request was made but no response was received
+        toast.error("No response received from server. Please try again.");
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        toast.error("Error occurred while saving faculty data");
+      }
+    } finally {
+      setIsSubmiting(false);
     }
   };
-
   useEffect(() => {
     if (!isOpen) {
       handleClear();
