@@ -174,8 +174,7 @@ export async function GET(req) {
                 belowThreshold: processedData.filter(student => 
                     student.overallPercentage < 75).length
             };
-        }
-        console.log(response);
+        } 
         
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
