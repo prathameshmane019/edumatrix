@@ -16,7 +16,7 @@ import { useState, useEffect, useMemo } from "react";
 import { signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { Tooltip, Skeleton } from "@nextui-org/react";
- 
+
 const Sidebar = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -32,16 +32,16 @@ const Sidebar = () => {
     }
     setTimeout(() => setIsLoading(false), 1000);
   }, []);
- 
+
   const moduleOptions = {
     feedback: {
       options: {
         admin: [
           { name: "Profile", href: "/feedback/admin", icon: MdPortrait },
-          { name: "Feedback Evaluation", href: "/feedback/admin/evaluate", icon: TbReportAnalytics },
+          { name: "Feedback Evaluation", href: "/feedback/admin/evaluation", icon: TbReportAnalytics },
           { name: "Manage Feedback", href: "/feedback/admin/feedback", icon: MdFeedback },
           { name: "Manage Department", href: "/attendance/admin/department", icon: FaChalkboardTeacher },
-         ],
+        ],
         superadmin: [
           { name: "Profile", href: "/feedback/admin", icon: MdPortrait },
           { name: "Feedback Evaluation", href: "/feedback/admin/evaluation", icon: TbReportAnalytics },
