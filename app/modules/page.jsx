@@ -1,4 +1,3 @@
- 
 "use client"
 
 import React, { useState, useEffect } from "react"
@@ -37,7 +36,55 @@ const MODULE_CONFIG = {
       admin: "Manage and review feedback. Analyze student responses and generate insights for improvement.",
       superadmin: "Manage and review feedback. Analyze student responses and generate insights for improvement."
     }
+  },
+  student_management: {
+    id: 'student-service',
+    name: "Student Management",
+    illustration: "/illustrations/students.svg",
+    bgColor: "bg-purple-50",
+    textColor: "text-purple-600",
+    descriptions: {
+      admin: "Manage student profiles, track academic progress, and handle student-related administrative tasks.",
+      superadmin: "Complete oversight of student data across all institutes. Manage enrollments and student policies." 
+    }
+  },
+  faculty_management: {
+    id: 'faculty-service',
+    name: "Faculty Management",
+    illustration: "/illustrations/faculty.svg",
+    bgColor: "bg-amber-50",
+    textColor: "text-amber-600",
+    descriptions: {
+      admin: "Manage faculty information, track performance, handle assignments and department allocation.",
+      superadmin: "Oversee all faculty across institutes, manage hiring policies, and monitor faculty development.",
+    }
+  },
+  department_management: {
+    id: 'department-service',
+    name: "Department Management",
+    illustration: "/illustrations/department.svg",
+    bgColor: "bg-rose-50",
+    textColor: "text-rose-600",
+    descriptions: {
+      superadmin: "Establish departments across institutes, implement organizational policies, and monitor performance.",
+    
+    }
   }
+,
+  course_management: {
+    id: 'course-service',
+    name: "Course Management",
+    illustration: "/illustrations/course.svg",
+    bgColor: "bg-teal-50",
+    textColor: "text-teal-600",
+    descriptions: {
+      admin: "Manage course offerings, allocate resources, handle course scheduling and room assignments.",
+      superadmin: "Oversee curriculum development across institutes, establish course standards and policies.",
+      faculty: "Manage your course content, share learning materials, create assignments and assess student work."
+    }
+  } ,
+
+  
 }
 
 export default function ModuleSelectionPage() {
@@ -56,9 +103,7 @@ export default function ModuleSelectionPage() {
   if (!user && !loading) {
     router.push('/login')
   }
-
-console.log(user);
-
+ 
   const handleSignOut = async () => {
     await signOut({ redirect: false, callbackUrl: "/" })
     sessionStorage.clear()
@@ -157,9 +202,9 @@ console.log(user);
       </header>
 
       {/* Main Content */}
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto p-2">
         {/* Modules Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {availableModules.map((module) => (
             <Card
               key={module.name}

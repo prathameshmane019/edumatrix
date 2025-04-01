@@ -34,6 +34,46 @@ const Sidebar = () => {
   }, []);
 
   const moduleOptions = {
+    student_management: {
+      options: {
+        admin: [
+          { name: "Student Management", href: "/student_management/admin", icon: MdPortrait },
+        ],
+        superadmin: [
+          { name: "Student Management", href: "/student_management/admin", icon: MdPortrait },
+        ],
+         
+      }
+    },
+    faculty_management: {
+      options: {
+        admin: [
+          { name: "Faculty Management", href: "/faculty_management/admin", icon: MdPortrait },
+        ],
+        superadmin: [
+          { name: "Faculty Management", href: "/faculty_management/admin", icon: MdPortrait },
+        ],
+         
+      }
+    },
+    department_management: {
+      options: {
+        superadmin: [
+          { name: "Department Manage", href: "/department_management/admin", icon: MdPortrait },
+        ],
+         
+      }
+    },
+    course_management: {
+      options: {
+        admin: [
+          { name: "Course Management", href: "/course_management/admin", icon: MdPortrait },
+        ],
+        superadmin: [
+          { name: "Course Management", href: "/course_management/admin", icon: MdPortrait },
+        ],  
+      }
+    },
     feedback: {
       options: {
         admin: [
@@ -46,12 +86,9 @@ const Sidebar = () => {
           { name: "Profile", href: "/feedback/admin", icon: MdPortrait },
           { name: "Feedback Evaluation", href: "/feedback/admin/evaluation", icon: TbReportAnalytics },
           { name: "Manage Questions", href: "/feedback/admin/questions", icon: GiTeacher },
-          { name: "Manage Department", href: "/feedback/admin/department", icon: FaChalkboardTeacher },
           { name: "Manage Feedback", href: "/feedback/admin/feedback", icon: MdFeedback },
           { name: "Give Feedback", href: "/feedback/admin/response", icon: FaChalkboardTeacher },
-          // { name: "Manage Students", href: "/feedback/admin/students", icon: PiStudentBold },
-          // { name: "Manage Class", href: "/feedback/admin/classes", icon: SiGoogleclassroom },
-          // { name: "Manage Faculty", href: "/feedback/admin/faculty", icon: GiTeacher },
+          
         ],
         faculty: [
           { name: "Profile", href: "/feedback/faculty", icon: MdPortrait },
@@ -69,8 +106,6 @@ const Sidebar = () => {
       options: {
         admin: [
           { name: "Profile", href: "/attendance/admin", icon: MdPortrait },
-          { name: "Manage Faculty", href: "/attendance/admin/faculty", icon: GiTeacher },
-          { name: "Manage Students", href: "/attendance/admin/students", icon: PiStudentBold },
           { name: "Manage Class", href: "/attendance/admin/classes", icon: SiGoogleclassroom },
           { name: "Manage Subjects", href: "/attendance/admin/subjects", icon: SiGoogleclassroom },
           { name: "View Reports", href: "/attendance/admin/reports", icon: AiOutlineSchedule },
@@ -78,11 +113,8 @@ const Sidebar = () => {
         ],
         superadmin: [
           { name: "Profile", href: "/attendance/admin", icon: MdPortrait },
-          { name: "Manage Department", href: "/attendance/admin/department", icon: FaChalkboardTeacher },
-          { name: "Manage Faculty", href: "/attendance/admin/faculty", icon: GiTeacher },
-          { name: "Manage Class", href: "/attendance/admin/classes", icon: SiGoogleclassroom },
-          { name: "Manage Students", href: "/attendance/admin/students", icon: PiStudentBold },
-          { name: "View Reports", href: "/attendance/admin/reports", icon: AiOutlineSchedule },
+           { name: "Manage Class", href: "/attendance/admin/classes", icon: SiGoogleclassroom },
+            { name: "View Reports", href: "/attendance/admin/reports", icon: AiOutlineSchedule },
         ],
         faculty: [
           { name: "Profile", href: "/attendance/faculty", icon: MdPortrait },
@@ -102,8 +134,11 @@ const Sidebar = () => {
   // Function to determine current module from pathname
   const getCurrentModule = (path) => {
     if (path.includes('feedback')) return 'feedback';
-    if (path.includes('attendance')) return 'attendance';
-    if (path.includes('teaching')) return 'teaching';
+    if (path.includes('student_management')) return 'student_management';
+    if (path.includes('course_management')) return 'course_management';
+    if (path.includes('faculty_management')) return 'faculty_management';
+    if (path.includes('department_management')) return 'department_management';
+    if (path.includes('attendance')) return 'attendance'; 
     return null;
   };
 
