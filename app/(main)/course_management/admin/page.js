@@ -49,7 +49,7 @@ const Dashboard = () => {
     if (user) {
       if (user.role !== "superadmin") {
         // For regular admin, lock to their assigned department
-        setSelectedDepartment(user.department || user.id);
+        setSelectedDepartment( user.id|| user.department);
       } else {
         // Super admin can view all by default
         setSelectedDepartment('all');

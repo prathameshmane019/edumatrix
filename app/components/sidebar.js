@@ -84,7 +84,6 @@ const Sidebar = () => {
           { name: "Profile", href: "/feedback/admin", icon: MdPortrait },
           { name: "Feedback Evaluation", href: "/feedback/admin/evaluation", icon: TbReportAnalytics },
           { name: "Manage Feedback", href: "/feedback/admin/feedback", icon: MdFeedback },
-          { name: "Manage Department", href: "/attendance/admin/department", icon: FaChalkboardTeacher },
         ],
         superadmin: [
           { name: "Profile", href: "/feedback/admin", icon: MdPortrait },
