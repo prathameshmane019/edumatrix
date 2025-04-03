@@ -53,7 +53,8 @@ const Sidebar = () => {
         ],
         superadmin: [
           { name: "Dashboard", href: "/faculty_management/admin", icon: MdPortrait },
- 
+
+          { name: "Faculty Management", href: "/faculty_management/admin/manage", icon: MdPortrait },
         ],
          
       }
