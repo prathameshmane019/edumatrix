@@ -12,7 +12,30 @@ export async function POST(req) {
         const data = await req.json();
         await connectMongoDB();
 
-        const { _id, rollNumber, name, year, email, phoneNo, password, department, institute, class: classRef } = data;
+        const { 
+            _id, 
+            rollNumber, 
+            name, 
+            year, 
+            email, 
+            phoneNo, 
+            password, 
+            department, 
+            institute, 
+            class: classRef,
+            // New fields
+            dateOfBirth,
+            gender,
+            status,
+            parentName,
+            parentContact,
+            parentEmail,
+            parentOccupation,
+            relationWithStudent,
+            admissionDate,
+            categoryType,
+            admissionNumber
+        } = data;
 
         console.log(data);
         
@@ -20,7 +43,7 @@ export async function POST(req) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
-        // Create new student
+        // Create new student with all fields
         const newStudent = new Student({
             _id,
             rollNumber,
@@ -31,7 +54,19 @@ export async function POST(req) {
             password: password || "1234",
             department,
             institute,
-            class: classRef
+            class: classRef,
+            // New fields
+            dateOfBirth,
+            gender,
+            status: status || "active",
+            parentName,
+            parentContact,
+            parentEmail,
+            parentOccupation,
+            relationWithStudent,
+            admissionDate,
+            categoryType,
+            admissionNumber
         });
 
         // Save student
@@ -71,7 +106,30 @@ export async function PUT(req) {
     try {
         await connectMongoDB();
         const data = await req.json();
-        const { _id, rollNumber, name, year, email, phoneNo, password, department, institute ,class:classRef} = data;
+        const { 
+            _id, 
+            rollNumber, 
+            name, 
+            year, 
+            email, 
+            phoneNo, 
+            password, 
+            department, 
+            institute, 
+            class: classRef,
+            // New fields
+            dateOfBirth,
+            gender,
+            status,
+            parentName,
+            parentContact,
+            parentEmail,
+            parentOccupation,
+            relationWithStudent,
+            admissionDate,
+            categoryType,
+            admissionNumber
+        } = data;
 
         if (!_id) {
             return NextResponse.json({ error: "Missing required field: _id" }, { status: 400 });
@@ -88,7 +146,19 @@ export async function PUT(req) {
                 password,
                 department,
                 institute,
-                class:classRef
+                class: classRef,
+                // New fields
+                dateOfBirth,
+                gender,
+                status,
+                parentName,
+                parentContact,
+                parentEmail,
+                parentOccupation,
+                relationWithStudent,
+                admissionDate,
+                categoryType,
+                admissionNumber
             },
             { new: true }
         );
@@ -113,6 +183,9 @@ export async function GET(req) {
         const id = searchParams.get("_id");
         const department = searchParams.get("department");
         const className = searchParams.get("class");
+        const status = searchParams.get("status");
+        const gender = searchParams.get("gender");
+        const categoryType = searchParams.get("categoryType");
         const page = parseInt(searchParams.get("page")) || 1;
         const limit = parseInt(searchParams.get("limit")) || 15;
         const filterValue = searchParams.get("filterValue");
@@ -120,7 +193,7 @@ export async function GET(req) {
         let filter = {};
 
         if (id) {
-            const student = await Student.findById(id).populate("institute","name address");
+            const student = await Student.findById(id).populate("institute", "name address");
             if (!student) {
                 return NextResponse.json({ error: "Student not found" }, { status: 404 });
             }
@@ -128,8 +201,11 @@ export async function GET(req) {
         }
 
         if (department) filter.department = department;
+        if (status) filter.status = status;
+        if (gender) filter.gender = gender;
+        if (categoryType) filter.categoryType = categoryType;
 
-        // Add institute to query if provided and is a valid ObjectId
+        // Add class to query if provided and is a valid ObjectId
         if (className && mongoose.Types.ObjectId.isValid(className)) {
             filter.class = new mongoose.Types.ObjectId(className);
         }
@@ -139,11 +215,14 @@ export async function GET(req) {
         if (filterValue) {
             filter.$or = [
                 { name: { $regex: filterValue, $options: "i" } },
-                { rollNumber: { $regex: filterValue, $options: "i" } }
+                { rollNumber: { $regex: filterValue, $options: "i" } },
+                { admissionNumber: { $regex: filterValue, $options: "i" } }
             ];
         }
 
         const students = await Student.find(filter)
+            .populate("institute", "name address")
+            .populate("class", "name")
             .skip((page - 1) * limit)
             .limit(limit);
 
@@ -162,20 +241,40 @@ export async function GET(req) {
 
 // DELETE operation - Delete Student
 export async function DELETE(req) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
 
-        const deletedStudent = await Student.findByIdAndDelete(_id);
-
-        if (!deletedStudent) {
+        // Find student to get class information before deletion
+        const student = await Student.findById(_id);
+        
+        if (!student) {
             return NextResponse.json({ error: "Student not found" }, { status: 404 });
         }
 
+        // Remove student from class
+        if (student.class) {
+            await Classes.findByIdAndUpdate(
+                student.class,
+                { $pull: { students: _id } },
+                { session }
+            );
+        }
+
+        // Delete the student
+        await Student.findByIdAndDelete(_id, { session });
+
+        await session.commitTransaction();
         return NextResponse.json({ message: "Student Deleted Successfully" }, { status: 200 });
     } catch (error) {
+        await session.abortTransaction();
         console.error("Error deleting student:", error);
         return NextResponse.json({ error: "Failed to Delete Student" }, { status: 500 });
+    } finally {
+        session.endSession();
     }
 }

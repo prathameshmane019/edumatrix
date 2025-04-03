@@ -26,7 +26,8 @@ import {
   ModalContent,
   ModalHeader,
   ModalBody,
-  ModalFooter
+  ModalFooter,
+  Chip
 } from "@nextui-org/react";
 import { capitalize } from "@/app/utils/utils";
 import { PlusIcon } from "@/public/PlusIcon";
@@ -47,6 +48,17 @@ const columns = [
   { uid: "email", name: "Email ID", sortable: true },
   { uid: "year", name: "Admission Year", sortable: true },
   { uid: "password", name: "Password", sortable: true },
+  { uid: "dateOfBirth", name: "Date of Birth", sortable: true },
+  { uid: "gender", name: "Gender", sortable: true },
+  { uid: "status", name: "Status", sortable: true },
+  { uid: "parentName", name: "Parent Name", sortable: true },
+  { uid: "parentContact", name: "Parent Contact", sortable: true },
+  { uid: "parentEmail", name: "Parent Email", sortable: true },
+  { uid: "parentOccupation", name: "Parent Occupation", sortable: true },
+  { uid: "relationWithStudent", name: "Relation", sortable: true },
+  { uid: "admissionDate", name: "Admission Date", sortable: true },
+  { uid: "categoryType", name: "Category", sortable: true },
+  { uid: "admissionNumber", name: "Admission No", sortable: true },
   { uid: "actions", name: "Actions" },
 ];
 import { getCurrentAcademicYear, getAcademicYears } from '@/app/utils/acadmicYears';
@@ -54,7 +66,7 @@ import { Calendar } from 'lucide-react';
 import { DepartmentDropdown } from "./department/DepartmentDropDowns";
 import { ClassDropdown } from "./Class/ClassDropdown";
 
-const INITIAL_VISIBLE_COLUMNS = ["_id", "rollNumber", "name", "year", "department", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["_id", "rollNumber", "name", "year", "department", "status", "admissionNumber", "actions"];
 
 export default function StudentTable() {
   const [filterValue, setFilterValue] = useState("");
@@ -84,6 +96,7 @@ export default function StudentTable() {
   const [errorMessages, setErrorMessages] = useState([]);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
@@ -91,7 +104,6 @@ export default function StudentTable() {
       setProfile(JSON.parse(storedProfile));
     }
   }, []);
-
 
   useEffect(() => {
     if (profile?.role !== "superadmin") {
@@ -105,7 +117,7 @@ export default function StudentTable() {
       setStudents([])
       fetchStudents();
     }
-  }, [selectedDepartment, selectedClass, academicYear]);
+  }, [selectedDepartment, selectedClass, academicYear, statusFilter]);
 
   useEffect(() => {
     if ((profile?.role === "admin" || profile?.role === "superadmin") && selectedDepartment) {
@@ -117,14 +129,12 @@ export default function StudentTable() {
       setInstitute(instituteId)
       console.log(instituteId);
     }
-
   }, [profile, selectedDepartment, academicYear]);
 
   useEffect(() => {
     setSelectedClass('')
     setStudents([])
   }, [selectedDepartment]);
-
 
   const fetchStudents = async () => {
     try {
@@ -136,7 +146,8 @@ export default function StudentTable() {
         params: {
           department: selectedDepartment,
           class: selectedClass,
-          academicYear: academicYear
+          academicYear: academicYear,
+          status: statusFilter !== "all" ? statusFilter : undefined
         }
       });
 
@@ -151,7 +162,6 @@ export default function StudentTable() {
       else if (response.status == 404) {
         toast.warning('No students found')
       }
-
     } catch (error) {
       console.error('Error fetching students:', error);
       toast.warning('No students found');
@@ -246,7 +256,6 @@ export default function StudentTable() {
         setErrorMessages(errors);
         setErrorModalOpen(true);
       } else {
-
         toast.success('All students uploaded successfully');
       }
       fetchStudents();
@@ -267,7 +276,7 @@ export default function StudentTable() {
         return;
       }
       setIsLoading(true);
-      const response = await axios.get(`/api/student/download?department=${selectedDepartment}&class=${selectedClass}`);
+      const response = await axios.get(`/api/student/download?department=${selectedDepartment}&class=${selectedClass}&status=${statusFilter !== "all" ? statusFilter : ""}`);
 
       const studentsByYear = response.data.reduce((acc, student) => {
         const year = student.year || 'Unknown';
@@ -276,11 +285,9 @@ export default function StudentTable() {
         return acc;
       }, {});
 
-
       const workbook = XLSX.utils.book_new();
 
       Object.entries(studentsByYear).forEach(([year, students]) => {
-
         const worksheet = XLSX.utils.json_to_sheet(students);
         XLSX.utils.book_append_sheet(workbook, worksheet, `Year ${year}`);
       });
@@ -294,6 +301,7 @@ export default function StudentTable() {
       setIsLoading(false);
     }
   };
+
   const deleteStudent = async (_id) => {
     setStudentToDelete(_id);
     setShowDeleteConfirmModal(true);
@@ -302,8 +310,7 @@ export default function StudentTable() {
   const confirmDeleteStudent = async () => {
     try {
       await axios.delete(`/api/v2/students?_id=${studentToDelete}`);
-      // fetchStudents();
-      setAllStudents(prev=>  prev.filter(student => student._id !== studentToDelete ))
+      setAllStudents(prev => prev.filter(student => student._id !== studentToDelete))
       toast.success('Student deleted successfully');
     } catch (error) {
       console.error("Error deleting student:", error);
@@ -325,8 +332,8 @@ export default function StudentTable() {
       const second = b[sortDescriptor.column];
 
       if (sortDescriptor.column === "_id" || sortDescriptor.column === "rollNumber") {
-        const [, numA, alphaA] = first.match(/(\d+)(.*)/) || [null, '', ''];
-        const [, numB, alphaB] = second.match(/(\d+)(.*)/) || [null, '', ''];
+        const [, numA, alphaA] = first?.match(/(\d+)(.*)/) || [null, '', ''];
+        const [, numB, alphaB] = second?.match(/(\d+)(.*)/) || [null, '', ''];
 
         const numComparison = parseInt(numA) - parseInt(numB);
 
@@ -339,6 +346,16 @@ export default function StudentTable() {
           : alphaB.localeCompare(alphaA);
       }
 
+      if (!first && !second) return 0;
+      if (!first) return sortDescriptor.direction === "ascending" ? 1 : -1;
+      if (!second) return sortDescriptor.direction === "ascending" ? -1 : 1;
+
+      if (sortDescriptor.column === "dateOfBirth" || sortDescriptor.column === "admissionDate") {
+        const dateA = new Date(first);
+        const dateB = new Date(second);
+        return sortDescriptor.direction === "ascending" ? dateA - dateB : dateB - dateA;
+      }
+
       const cmp = first < second ? -1 : first > second ? 1 : 0;
       return sortDescriptor.direction === "ascending" ? cmp : -cmp;
     });
@@ -346,8 +363,10 @@ export default function StudentTable() {
 
   const filteredItems = useMemo(() => {
     return sortedItems.filter((item) =>
-      item.name.toLowerCase().includes(filterValue.toLowerCase()) ||
-      item.rollNumber.toLowerCase().includes(filterValue.toLowerCase())
+      item.name?.toLowerCase().includes(filterValue.toLowerCase()) ||
+      item.rollNumber?.toLowerCase().includes(filterValue.toLowerCase()) ||
+      item.admissionNumber?.toLowerCase().includes(filterValue.toLowerCase()) ||
+      item.parentName?.toLowerCase().includes(filterValue.toLowerCase())
     );
   }, [sortedItems, filterValue]);
 
@@ -360,8 +379,24 @@ export default function StudentTable() {
     return filteredItems.slice(start, end);
   }, [page, filteredItems, rowsPerPage]);
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active': return 'success';
+      case 'suspended': return 'warning';
+      case 'alumni': return 'primary';
+      default: return 'default';
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+  };
+
   const renderCell = useCallback((student, columnKey) => {
     const cellValue = student[columnKey];
+    
     switch (columnKey) {
       case "actions":
         return (
@@ -388,8 +423,23 @@ export default function StudentTable() {
             </Tooltip>
           </div>
         );
+      case "status":
+        return (
+          <Chip color={getStatusColor(cellValue)} size="sm" variant="flat">
+            {cellValue || 'active'}
+          </Chip>
+        );
+      case "dateOfBirth":
+      case "admissionDate":
+        return formatDate(cellValue);
+      case "gender":
+        return cellValue || '-';
+      case "categoryType":
+        return cellValue ? capitalize(cellValue) : '-';
+      case "relationWithStudent":
+        return cellValue || '-';
       default:
-        return cellValue;
+        return cellValue || '-';
     }
   }, []);
 
@@ -401,7 +451,6 @@ export default function StudentTable() {
     console.log(departmentId.target.value);
     setSelectedDepartment(departmentId.target.value)
   }
-
 
   const onRowsPerPageChange = useCallback((e) => {
     setRowsPerPage(Number(e.target.value));
@@ -424,15 +473,12 @@ export default function StudentTable() {
   };
 
   const openFileDialog = useCallback(() => {
-
     if (!selectedClass) {
       toast.warning("Please Select class before uploading file")
-
     }
     const fileInput = document.getElementById('upload-input');
     fileInput.click();
-
-  }, []);
+  }, [selectedClass]);
 
   const bottomContent = (
     <div className="flex justify-between items-center">
@@ -468,7 +514,7 @@ export default function StudentTable() {
 
   return (
     <div>
-      <div className="flex flex-row gap-2">
+      <div className="flex flex-row gap-2 flex-wrap">
         <Select
           placeholder="Select Year"
           variant="bordered"
@@ -502,6 +548,19 @@ export default function StudentTable() {
           selectedDepartment={selectedDepartment}
           className="my-4"
         />
+        <Select
+          placeholder="Status"
+          variant="bordered"
+          size="sm"
+          selectedKeys={[statusFilter]}
+          onSelectionChange={(keys) => setStatusFilter(Array.from(keys)[0])}
+          className="max-w-72 my-4"
+        >
+          <SelectItem key="all" value="all">All</SelectItem>
+          <SelectItem key="active" value="active">Active</SelectItem>
+          <SelectItem key="suspended" value="suspended">Suspended</SelectItem>
+          <SelectItem key="alumni" value="alumni">Alumni</SelectItem>
+        </Select>
       </div>
       <div className="flex justify-between gap-3 items-end">
         <Input
@@ -510,7 +569,7 @@ export default function StudentTable() {
             base: "w-full sm:max-w-[44%]",
             inputWrapper: "border-1",
           }}
-          placeholder="Search by name or roll number..."
+          placeholder="Search by name, roll number, or admission number..."
           size="sm"
           startContent={<SearchIcon className="text-default-300" />}
           value={filterValue}
@@ -518,7 +577,7 @@ export default function StudentTable() {
           onClear={() => setFilterValue("")}
           onValueChange={onSearchChange}
         />
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
           <Dropdown>
             <DropdownTrigger className="hidden sm:flex">
               <Button
@@ -704,4 +763,3 @@ export default function StudentTable() {
     </div>
   );
 }
-
