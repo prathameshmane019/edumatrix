@@ -81,12 +81,12 @@ const Sidebar = () => {
     feedback: {
       options: {
         admin: [
-          { name: "Profile", href: "/feedback/admin", icon: MdPortrait },
+          { name: "Dashboard", href: "/feedback/admin", icon: MdPortrait },
           { name: "Feedback Evaluation", href: "/feedback/admin/evaluation", icon: TbReportAnalytics },
           { name: "Manage Feedback", href: "/feedback/admin/feedback", icon: MdFeedback },
         ],
         superadmin: [
-          { name: "Profile", href: "/feedback/admin", icon: MdPortrait },
+          { name: "Dashboard", href: "/feedback/admin", icon: MdPortrait },
           { name: "Feedback Evaluation", href: "/feedback/admin/evaluation", icon: TbReportAnalytics },
           { name: "Manage Questions", href: "/feedback/admin/questions", icon: GiTeacher },
           { name: "Manage Feedback", href: "/feedback/admin/feedback", icon: MdFeedback },
@@ -94,7 +94,7 @@ const Sidebar = () => {
           
         ],
         faculty: [
-          { name: "Profile", href: "/feedback/faculty", icon: MdPortrait },
+          { name: "Dashboard", href: "/feedback/faculty", icon: MdPortrait },
           { name: "View Feedback", href: "/feedback/faculty/view", icon: MdFeedback },
           { name: "Feedback History", href: "/feedback/faculty/history", icon: TbReportAnalytics }
         ],

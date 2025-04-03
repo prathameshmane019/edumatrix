@@ -17,6 +17,11 @@ export async function POST(req) {
             return NextResponse.json({ message: "Institute missing" }, { status: 400 });
         }
 
+        if (data.subjects && Array.isArray(data.subjects)) {
+            data.subjects = data.subjects.filter(subject => subject && subject._id!=='');
+        }
+
+
         const newFeedback = new Feedback(data);
         await newFeedback.save();
 

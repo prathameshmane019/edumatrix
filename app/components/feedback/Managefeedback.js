@@ -481,7 +481,7 @@ const FeedbackManagement = () => {
     try {
       const response = await axios.get("/api/feedback", {
         params: {
-          department: user?.department || user?.id  || selectedDepartment,
+          department:   user?.id  || selectedDepartment,
           institute: user._id || user?.institute?._id,
         },
       })
@@ -696,7 +696,9 @@ const FeedbackManagement = () => {
 
       <DynamicFieldSelector
         formData={formData} 
+        
         handleSelectChange={handleSelectChange} 
+        user={user}
       />
 
       <Input
@@ -759,15 +761,20 @@ const FeedbackManagement = () => {
 
   // Main render
   return (
-    <div className="container mx-auto px-4 py-8">
-      <DepartmentDropdown
-      instituteId={user?._id}
-      includeCentral={true}
-      selectedDepartment={selectedDepartment}
-      onSelect={handleDepartmentChange}
-      className="my-0"
 
-      />
+   
+    <div className="container mx-auto px-4 py-8">
+       {user?.role === "superadmin" &&
+      (
+        <DepartmentDropdown
+        instituteId={user?._id}
+        includeCentral={true}
+        selectedDepartment={selectedDepartment}
+        onSelect={handleDepartmentChange}
+        className="my-0"
+  
+        />)
+    }
       {!showFeedbackForm && (
         <div className="flex justify-end mb-8">
           <Button color="primary" onClick={() => setShowFeedbackForm(true)}>
