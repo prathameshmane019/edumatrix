@@ -1,23 +1,28 @@
 "use client"
  
 import { ClassDropdown } from "../Class/ClassDropdown"
-import { DepartmentDropdown } from "../department/DepartmentDropDowns"
-import { useUser } from "@/app/context/UserContext"
-
+import { DepartmentDropdown } from "../department/DepartmentDropDowns" 
   
-export const DynamicFieldSelector = ({ formData, handleSelectChange }) => {
-  const { user, loading } = useUser()
-
-  if (loading) return <div>Loading user data...</div>
+export const DynamicFieldSelector = ({ formData, handleSelectChange, user }) => {
   if (!user) return <div>User not authenticated</div>
 
   const handleChange = (field) => (value) => {
     handleSelectChange(field, value)
+    
+    // Reset subjects when class changes
+    if (field === "className") {
+      handleSelectChange("subjects", [{ subject: "", faculty: "", _id: "" }])
+    }
   }
-const handleDepartmentChange = (field) => (value) => {
+
+  const handleDepartmentChange = (field) => (value) => {
     handleSelectChange(field, value.target.value)
-    handleChange("className")(null)
+    // Reset className when department changes
+    handleSelectChange("className", null)
+    // Also reset subjects
+    handleSelectChange("subjects", [{ subject: "", faculty: "", _id: "" }])
   }
+  
   if (user?.role === "superadmin") {
     return (
       <>
@@ -26,14 +31,14 @@ const handleDepartmentChange = (field) => (value) => {
           instituteId={user?._id}
           onSelect={handleDepartmentChange("department")}
           className="w-full"
-          selectedDepartment={formData?.department}
+          selectedDepartment={formData?.department || user?.id}
         />
         <ClassDropdown
-          instituteId={user?._id || formData?.institute}
+          instituteId={user?._id}
           onSelect={handleChange("className")}
           selectedClass={formData?.className}
-          selectedDepartment={formData?.department}
-          acadmicYear={formData?.academicYear}
+          selectedDepartment={formData?.department || user?.id}
+          acadmicYear={formData?.academicYear} // Fix typo in prop name
         />
       </>
     )
@@ -41,12 +46,11 @@ const handleDepartmentChange = (field) => (value) => {
 
   return (
     <ClassDropdown
-      instituteId={formData?.institute}
+      instituteId={formData?.institute || user?.institute?._id}
       onSelect={handleChange("className")}
       selectedClass={formData?.className}
-      selectedDepartment={formData?.department}
-      academicYear={formData?.academicYear}
+      selectedDepartment={formData?.department || user?.id}
+      acadmicYear={formData?.academicYear} // Fix typo in prop name
     />
   )
 }
-
