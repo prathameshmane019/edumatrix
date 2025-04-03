@@ -35,18 +35,29 @@ import FacultyModal from "./facultyModal";
 import * as XLSX from "xlsx";
 import { DepartmentDropdown } from "./department/DepartmentDropDowns";
 
+import { useRouter } from "next/navigation";
+
+// Updated columns to match the new schema
 const columns = [
   { uid: "id", name: "Faculty ID", sortable: true },
   { uid: "name", name: "Name", sortable: true },
   { uid: "department", name: "Department", sortable: true },
   { uid: "email", name: "Email", sortable: true },
-  { uid: "password", name: "Password", sortable: true },
+  { uid: "contact", name: "Contact", sortable: true },
+  { uid: "designation", name: "Designation", sortable: true },
+  { uid: "employmentType", name: "Employment Type", sortable: true },
+  { uid: "dateOfJoining", name: "Date of Joining", sortable: true },
+  { uid: "currentYear", name: "Current Year", sortable: true },
+  { uid: "sem", name: "Semester", sortable: true },
+  { uid: "education", name: "Education", sortable: false },
   { uid: "actions", name: "Actions" },
 ];
 
-const INITIAL_VISIBLE_COLUMNS = ["id", "name", "department", "email", "actions"];
+// Updated initial visible columns
+const INITIAL_VISIBLE_COLUMNS = ["id", "name", "department", "email", "designation", "employmentType", "actions"];
 
 export default function FacultyTable() {
+  const router = useRouter();
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState(new Set());
   const [visibleColumns, setVisibleColumns] = useState(new Set(INITIAL_VISIBLE_COLUMNS));
@@ -113,9 +124,36 @@ export default function FacultyTable() {
       setIsLoading(false)
     }
   };
+  const handleRowClick = (facultyMember) => {
+    router.push(`/faculty/${facultyMember.id}`);
+  };
+  
 
   const downloadExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(faculty);
+    // Create a formatted data set for download with proper structure
+    const downloadData = faculty.map(member => {
+      return {
+        "Faculty ID": member.id,
+        "Name": member.name,
+        "Department": member.department,
+        "Email": member.email,
+        "Contact": member.contact,
+        "Designation": member.designation,
+        "Employment Type": member.employmentType,
+        "Date of Joining": member.dateOfJoining ? new Date(member.dateOfJoining).toLocaleDateString() : '',
+        "Date of Birth": member.dateOfBirth ? new Date(member.dateOfBirth).toLocaleDateString() : '',
+        "Gender": member.gender,
+        "Address": member.address,
+        "Current Year": member.currentYear,
+        "Semester": member.sem,
+        "Highest Degree": member.education?.highestDegree || '',
+        "Specialization": member.education?.specialization || '',
+        "University": member.education?.university || '',
+        "Year of Passing": member.education?.yearOfPassing || '',
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(downloadData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Faculty");
     XLSX.writeFile(workbook, "faculty_data.xlsx");
@@ -143,7 +181,36 @@ export default function FacultyTable() {
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
-        uploadFaculty(jsonData);
+        
+        // Format the data to match the schema
+        const formattedData = jsonData.map(item => {
+          // Try to map Excel columns to schema fields
+          return {
+            id: item["Faculty ID"] || item.id,
+            name: item.Name || item.name,
+            department: item.Department || item.department,
+            email: item.Email || item.email,
+            password: item.Password || item.password,
+            contact: item.Contact || item.contact,
+            dateOfBirth: item["Date of Birth"] ? new Date(item["Date of Birth"]) : null,
+            address: item.Address || item.address,
+            gender: item.Gender || item.gender,
+            designation: item.Designation || item.designation,
+            employmentType: item["Employment Type"] || item.employmentType,
+            dateOfJoining: item["Date of Joining"] ? new Date(item["Date of Joining"]) : null,
+            currentYear: item["Current Year"] || item.currentYear,
+            sem: item.Semester || item.sem,
+            education: {
+              highestDegree: item["Highest Degree"] || (item.education?.highestDegree || ''),
+              specialization: item.Specialization || (item.education?.specialization || ''),
+              university: item.University || (item.education?.university || ''),
+              yearOfPassing: item["Year of Passing"] || (item.education?.yearOfPassing || '')
+            },
+            institute: profile?.institute || profile?._id
+          };
+        });
+        
+        uploadFaculty(formattedData);
       };
       reader.readAsArrayBuffer(file);
     }
@@ -159,8 +226,6 @@ export default function FacultyTable() {
       toast.error('Error uploading faculty');
     }
   };
-
-
 
   const pages = Math.ceil(faculty.length / rowsPerPage);
 
@@ -182,7 +247,9 @@ export default function FacultyTable() {
         return (
           (member.name && member.name.toLowerCase().includes(filterValue.toLowerCase())) ||
           (member.email && member.email.toLowerCase().includes(filterValue.toLowerCase())) ||
-          (member.facultyId && member.facultyId.toLowerCase().includes(filterValue.toLowerCase()))
+          (member.id && member.id.toLowerCase().includes(filterValue.toLowerCase())) ||
+          (member.contact && member.contact.toLowerCase().includes(filterValue.toLowerCase())) ||
+          (member.designation && member.designation.toLowerCase().includes(filterValue.toLowerCase()))
         );
       });
     }
@@ -207,6 +274,7 @@ export default function FacultyTable() {
 
   const renderCell = useCallback((facultyMember, columnKey) => {
     const cellValue = facultyMember[columnKey];
+    
     switch (columnKey) {
       case "actions":
         return (
@@ -233,6 +301,18 @@ export default function FacultyTable() {
             </Tooltip>
           </div>
         );
+      case "dateOfJoining":
+      case "dateOfBirth":
+        return cellValue ? new Date(cellValue).toLocaleDateString() : "";
+      case "education":
+        if (facultyMember.education) {
+          return facultyMember.education.highestDegree ? 
+            `${facultyMember.education.highestDegree}${facultyMember.education.specialization ? ` in ${facultyMember.education.specialization}` : ''}` : 
+            "";
+        }
+        return "";
+      case "employmentType":
+        return cellValue ? capitalize(cellValue) : "";
       default:
         return cellValue;
     }
@@ -270,7 +350,6 @@ export default function FacultyTable() {
   const topContent = useMemo(() => {
     return (
       <div className="flex flex-col gap-4">
-
         <div className="flex justify-between gap-3 items-end">
           <Input
             isClearable
@@ -278,7 +357,7 @@ export default function FacultyTable() {
               base: "w-full sm:max-w-[44%]",
               inputWrapper: "border-1",
             }}
-            placeholder="Search by name, email, or faculty ID..."
+            placeholder="Search by name, email, faculty ID, contact, or designation..."
             size="sm"
             startContent={<SearchIcon className="text-default-300" />}
             value={filterValue}
@@ -352,7 +431,7 @@ export default function FacultyTable() {
           </div>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-default-400 text-small">Total {faculty.length} users</span>
+          <span className="text-default-400 text-small">Total {faculty.length} faculty members</span>
           <label className="flex items-center text-default-400 text-small">
             Rows per page:
             <select
@@ -412,6 +491,7 @@ export default function FacultyTable() {
       "group-data-[last=true]:last:before:rounded-none",
     ],
   };
+  
   return (
     <>
       <div className="flex flex-col gap-4">
@@ -466,8 +546,21 @@ export default function FacultyTable() {
           items={sortedItems}
         >
           {(facultyMember) => (
-            <TableRow key={facultyMember?._id}>
-              {(columnKey) => <TableCell>{renderCell(facultyMember, columnKey)}</TableCell>}
+            <TableRow 
+              key={facultyMember?._id}
+              className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              onClick={() => handleRowClick(facultyMember)}
+            >
+              {(columnKey) => 
+                columnKey === "actions" ? (
+                  // Don't trigger navigation when clicking on actions column
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    {renderCell(facultyMember, columnKey)}
+                  </TableCell>
+                ) : (
+                  <TableCell>{renderCell(facultyMember, columnKey)}</TableCell>
+                )
+              }
             </TableRow>
           )}
         </TableBody>

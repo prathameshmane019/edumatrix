@@ -18,7 +18,16 @@ export async function POST(req) {
             password, 
             institute,
             currentYear,
-            sem
+            sem,
+            // New fields
+            contact,
+            dateOfBirth,
+            address,
+            gender,
+            designation,
+            employmentType,
+            dateOfJoining,
+            education
         } = data;
 
         console.log(data);
@@ -39,16 +48,37 @@ export async function POST(req) {
         // Retrieve the logged-in user's institute or use a default
         const instituteId = institute || (await Institute.findOne()).id;
 
-        const newFaculty = new Faculty({
+        // Create faculty object with only provided data
+        const facultyData = {
             id,
             name,
             department,
             email,
             password,
-            institute: instituteId,
-            currentYear,
-            sem
-        });
+            institute: instituteId
+        };
+
+        // Add optional fields only if they have values
+        if (currentYear) facultyData.currentYear = currentYear;
+        if (sem) facultyData.sem = sem;
+        if (contact) facultyData.contact = contact;
+        if (dateOfBirth) facultyData.dateOfBirth = dateOfBirth;
+        if (address) facultyData.address = address;
+        if (gender) facultyData.gender = gender;
+        if (designation) facultyData.designation = designation;
+        if (employmentType) facultyData.employmentType = employmentType;
+        if (dateOfJoining) facultyData.dateOfJoining = dateOfJoining;
+        
+        // Handle education nested object
+        if (education) {
+            facultyData.education = {};
+            if (education.highestDegree) facultyData.education.highestDegree = education.highestDegree;
+            if (education.specialization) facultyData.education.specialization = education.specialization;
+            if (education.university) facultyData.education.university = education.university;
+            if (education.yearOfPassing) facultyData.education.yearOfPassing = education.yearOfPassing;
+        }
+
+        const newFaculty = new Faculty(facultyData);
 
         await newFaculty.save();
         console.log("Faculty Registered Successfully", newFaculty);
@@ -83,21 +113,43 @@ export async function PUT(req) {
             password, 
             institute,
             currentYear,
-            sem 
+            sem,
+            // New fields
+            contact,
+            dateOfBirth,
+            address,
+            gender,
+            designation,
+            employmentType,
+            dateOfJoining,
+            education
         } = data;
 
-        const updateData = {
-            name,
-            department,
-            email,
-            password,
-            currentYear,
-            sem
-        };
-
-        // Only include institute if provided
-        if (institute) {
-            updateData.institute = institute;
+        // Initialize update data with only fields that have values
+        const updateData = {};
+        
+        if (name) updateData.name = name;
+        if (department) updateData.department = department;
+        if (email) updateData.email = email;
+        if (password) updateData.password = password;
+        if (institute) updateData.institute = institute;
+        if (currentYear) updateData.currentYear = currentYear;
+        if (sem) updateData.sem = sem;
+        if (contact) updateData.contact = contact;
+        if (dateOfBirth) updateData.dateOfBirth = dateOfBirth;
+        if (address) updateData.address = address;
+        if (gender) updateData.gender = gender;
+        if (designation) updateData.designation = designation;
+        if (employmentType) updateData.employmentType = employmentType;
+        if (dateOfJoining) updateData.dateOfJoining = dateOfJoining;
+        
+        // Handle education nested object
+        if (education) {
+            updateData.education = {};
+            if (education.highestDegree) updateData.education.highestDegree = education.highestDegree;
+            if (education.specialization) updateData.education.specialization = education.specialization;
+            if (education.university) updateData.education.university = education.university;
+            if (education.yearOfPassing) updateData.education.yearOfPassing = education.yearOfPassing;
         }
 
         const existingFaculty = await Faculty.findOneAndUpdate(
@@ -121,6 +173,7 @@ export async function PUT(req) {
         return NextResponse.json({ error: "Failed to Update" }, { status: 500 });
     }
 }
+
 export async function GET(req) {
     try {
         await connectMongoDB();
@@ -164,17 +217,16 @@ export async function DELETE(req) {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
         const id = searchParams.get("_id");
-            const deletedFaculty = await Faculty.deleteOne({_id:id} )
+        const deletedFaculty = await Faculty.deleteOne({_id:id})
 
-            if (!deletedFaculty) {
-                return NextResponse.json({ error: "Faculty not found" }, { status: 404 });
-            }
-            console.log("Faculty deleted successfully");
-            return NextResponse.json({ 
-                message: "Faculty deleted successfully" 
-            }, { status: 200 });
+        if (!deletedFaculty) {
+            return NextResponse.json({ error: "Faculty not found" }, { status: 404 });
         }
-     catch (error) {
+        console.log("Faculty deleted successfully");
+        return NextResponse.json({ 
+            message: "Faculty deleted successfully" 
+        }, { status: 200 });
+    } catch (error) {
         console.error("Error deleting faculty:", error);
         return NextResponse.json({ error: "Failed to delete faculty" }, { status: 500 });
     }
