@@ -37,12 +37,15 @@ const Sidebar = () => {
     student_management: {
       options: {
         admin: [
-          { name: "Student Management", href: "/student_management/admin", icon: MdPortrait },
+          { name: "Dashboard", href: "/student_management/admin", icon: MdPortrait },
+          { name: "Student Management", href: "/student_management/admin/manage", icon: MdPortrait },
         ],
         superadmin: [
-          { name: "Student Management", href: "/student_management/admin", icon: MdPortrait },
+          { name: "Dashboard", href: "/student_management/admin", icon: MdPortrait },
+
+          { name: "Student Management", href: "/student_management/admin/manage", icon: MdPortrait },
         ],
-         
+
       }
     },
     faculty_management: {
@@ -56,7 +59,7 @@ const Sidebar = () => {
 
           { name: "Faculty Management", href: "/faculty_management/admin/manage", icon: MdPortrait },
         ],
-         
+
       }
     },
     department_management: {
@@ -64,7 +67,7 @@ const Sidebar = () => {
         superadmin: [
           { name: "Department Manage", href: "/department_management/admin", icon: MdPortrait },
         ],
-         
+
       }
     },
     course_management: {
@@ -77,8 +80,8 @@ const Sidebar = () => {
         superadmin: [
           { name: "Dashboard", href: "/course_management/admin", icon: MdPortrait },
           { name: "Manage Classes", href: "/course_management/admin/class", icon: MdPortrait },
-      
-        ],  
+
+        ],
       }
     },
     feedback: {
@@ -94,7 +97,7 @@ const Sidebar = () => {
           { name: "Manage Questions", href: "/feedback/admin/questions", icon: GiTeacher },
           { name: "Manage Feedback", href: "/feedback/admin/feedback", icon: MdFeedback },
           { name: "Give Feedback", href: "/feedback/admin/response", icon: FaChalkboardTeacher },
-          
+
         ],
         faculty: [
           { name: "Dashboard", href: "/feedback/faculty", icon: MdPortrait },
@@ -119,8 +122,8 @@ const Sidebar = () => {
         ],
         superadmin: [
           { name: "Profile", href: "/attendance/admin", icon: MdPortrait },
-           { name: "Manage Class", href: "/attendance/admin/classes", icon: SiGoogleclassroom },
-            { name: "View Reports", href: "/attendance/admin/reports", icon: AiOutlineSchedule },
+          { name: "Manage Class", href: "/attendance/admin/classes", icon: SiGoogleclassroom },
+          { name: "View Reports", href: "/attendance/admin/reports", icon: AiOutlineSchedule },
         ],
         faculty: [
           { name: "Profile", href: "/attendance/faculty", icon: MdPortrait },
@@ -144,7 +147,7 @@ const Sidebar = () => {
     if (path.includes('course_management')) return 'course_management';
     if (path.includes('faculty_management')) return 'faculty_management';
     if (path.includes('department_management')) return 'department_management';
-    if (path.includes('attendance')) return 'attendance'; 
+    if (path.includes('attendance')) return 'attendance';
     return null;
   };
 
