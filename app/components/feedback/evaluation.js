@@ -39,7 +39,7 @@ const EvaluationPage = ({ role }) => {
       setEvaluationDetails((prev) => ({
         ...prev,
         department: user?.id,
-        institute: user?.institute,
+        institute: user?.institute._id,
       }));
     }
   }, [user]);
