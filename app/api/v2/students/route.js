@@ -304,8 +304,7 @@ export async function POST(req) {
             password, 
             department, 
             institute, 
-            class: classRef,
-            // New fields
+            class: classRef, 
             dateOfBirth,
             gender,
             status,

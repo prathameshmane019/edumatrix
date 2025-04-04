@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Student from "@/models/student";
 import mongoose from "mongoose";
+import Classes from "@/models/className";
 
 export async function GET(req) {
   try {
