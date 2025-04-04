@@ -142,7 +142,7 @@ export default function ModuleSelectionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen mx-10 bg-gradient-to-b from-gray-50 to-white">
       {/* Institute Header */}
       <header className="bg-white/70 backdrop-blur-md border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">

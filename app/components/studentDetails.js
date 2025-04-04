@@ -235,7 +235,7 @@ export default function StudentDetail({ params }) {
               </div>
               <div className="flex items-center gap-2">
                 <FaCalendarAlt className="text-violet-500" />
-                <span>Admission: {formatDate(student.academicDetails?.admissionDate)}</span>
+                <span>Admission: {formatDate(student.admission?.admissionDate)}</span>
               </div>
             </div>
 
@@ -245,7 +245,7 @@ export default function StudentDetail({ params }) {
               <h3 className="text-sm font-medium text-violet-500 mb-2">Enrollment Duration</h3>
               <div className="flex items-center gap-2">
                 <PiChartLineUp className="text-primary text-lg" />
-                <span>{getEnrollmentDuration(student.academicDetails?.admissionDate)}</span>
+                <span>{getEnrollmentDuration(student.admission?.admissionDate)}</span>
               </div>
             </div>
             
@@ -335,13 +335,13 @@ export default function StudentDetail({ params }) {
                   icon={<FaSchool className="text-primary" />}
                 />
                 <InfoCard 
-                  title="Admission Date" 
-                  value={formatDate(student.academicDetails?.admissionDate)} 
+                  title="Academic Year" 
+                  value={student.academicDetails?.academicYear} 
                   icon={<FaCalendarAlt className="text-primary" />}
                 />
                 <InfoCard 
                   title="Duration" 
-                  value={getEnrollmentDuration(student.academicDetails?.admissionDate)} 
+                  value={getEnrollmentDuration(student.academicDetails?.academicYear)} 
                   icon={<FaUserGraduate className="text-primary" />}
                 />
               </div>

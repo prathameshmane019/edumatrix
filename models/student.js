@@ -63,13 +63,9 @@ const StudentSchema = new mongoose.Schema({
             index: true
         },
 
-        admissionDate: {
-            type: Date,
-            default: Date.now,
-            validate: {
-                validator: (value) => value <= new Date(),
-                message: 'Admission date cannot be in the future'
-            }
+        academicYear: {
+            type: String,
+          
         },
         department: {
             type: String,

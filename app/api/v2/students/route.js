@@ -339,6 +339,7 @@ export async function POST(req) {
                 rollNumber,
                 department,
                 class: classRef,
+                academicYear: year,
                 institute
             },
             admission: {
@@ -436,6 +437,7 @@ export async function PUT(req) {
                 academicDetails: {
                     rollNumber,
                     department,
+                    academicYear: year,
                     class: classRef,
                     institute
                 },
