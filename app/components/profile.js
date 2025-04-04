@@ -20,6 +20,7 @@ import {
   SelectItem,
   Textarea
 } from '@nextui-org/react'
+
 import { toast } from 'sonner'
 import { 
   PencilIcon, 
@@ -40,6 +41,7 @@ import {
   UserPlusIcon
 } from 'lucide-react'
 import axios from 'axios'
+import { FaEnvelope } from 'react-icons/fa'
 
 const getCurrentAcademicYear = () => {
   const currentDate = new Date()
@@ -801,7 +803,7 @@ export default function ProfilePage() {
     
             <div className="flex items-center space-x-4">
               <div className="rounded-full p-3 bg-blue-50">
-                <EnvelopeIcon className="h-5 w-5 text-blue-600" />
+                <FaEnvelope className="h-5 w-5 text-blue-600" />
               </div>
               <div>
                 <h4 className="text-lg font-medium">Email</h4>

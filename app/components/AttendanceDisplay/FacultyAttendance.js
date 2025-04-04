@@ -158,6 +158,8 @@ export default function FacultyAttendance({ facultyId = '', institute = '', sele
 
       const response = await axios.get(url);
       setAttendanceData(response.data);
+
+      console.log(response.data)
       setIsFilterDirty(false);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to fetch attendance data. Please try again.");

@@ -10,9 +10,7 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const instituteId = searchParams.get("instituteId");
     const department = searchParams.get("department");
-    const userRole = searchParams.get("userRole");
-    const academicYear = searchParams.get("academicYear");
-
+    const userRole = searchParams.get("userRole"); 
     if (!instituteId) {
       return NextResponse.json({ error: "Institute ID is required" }, { status: 400 });
     }

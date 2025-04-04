@@ -23,202 +23,201 @@ import { BatchDropdown } from "../subject/BatchDropdown";
 import Loader from "../loader";
 
 const MemoizedPointInput = React.memo(({ value, onChange, onRemove, canRemove, index }) => (
-    <div className="flex gap-2 items-center">
-      <Input
-        key={`point-input-${index}`}
-        value={value}
-        onChange={(e) => onChange(index, e.target.value)}
-        variant="bordered"
-        className="flex-grow"
-        placeholder={`Point ${index + 1}`}
-        aria-label={`Discussion point ${index + 1}`}
-      />
-      {canRemove && (
-        <Button
-          isIconOnly
-          variant="light"
-          color="danger"
-          onClick={() => onRemove(index)}
-          aria-label="Remove point"
-        >
-          <Trash2 size={20} />
-        </Button>
-      )}
-    </div>
-  ));
-  
-  MemoizedPointInput.displayName = 'MemoizedPointInput';
-  
-  const TGSessionContent = React.memo(({
-    selectedDate,
-    setSelectedDate,
-    pointInputs,
-    setPointInputs,
-    tgSessions
-  }) => {
-    const handleAddPoint = useCallback(() => {
-      setPointInputs(current => [...current, { id: Date.now(), value: '' }]);
-    }, [setPointInputs]);
-  
-    const handleRemovePoint = useCallback((index) => {
-      setPointInputs(current => current.filter((_, i) => i !== index));
-    }, [setPointInputs]);
-  
-    const handlePointChange = useCallback((index, newValue) => {
-      setPointInputs(current =>
-        current.map((point, i) =>
-          i === index ? { ...point, value: newValue } : point
-        )
-      );
-    }, [setPointInputs]);
-  
-    const sortedTGSessions = useMemo(() => {
-      return [...tgSessions].sort((a, b) => new Date(b.date) - new Date(a.date));
-    }, [tgSessions]);
-  
-    return (
-      <Card>
-        <CardHeader>
-          <h2 className="text-xl font-bold">TG Session Details</h2>
-        </CardHeader>
-        <CardBody className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Calendar size={20} />
-            <Input
-              type="date"
-              label="Session Date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              variant="bordered"
-              className="max-w-xs"
-            />
-          </div>
-  
-          <Divider />
-  
+  <div className="flex gap-2 items-center">
+    <Input
+      key={`point-input-${index}`}
+      value={value}
+      onChange={(e) => onChange(index, e.target.value)}
+      variant="bordered"
+      className="flex-grow"
+      placeholder={`Point ${index + 1}`}
+      aria-label={`Discussion point ${index + 1}`}
+    />
+    {canRemove && (
+      <Button
+        isIconOnly
+        variant="light"
+        color="danger"
+        onClick={() => onRemove(index)}
+        aria-label="Remove point"
+      >
+        <Trash2 size={20} />
+      </Button>
+    )}
+  </div>
+));
+
+MemoizedPointInput.displayName = 'MemoizedPointInput';
+
+const TGSessionContent = React.memo(({
+  selectedDate,
+  setSelectedDate,
+  pointInputs,
+  setPointInputs,
+  tgSessions
+}) => {
+  const handleAddPoint = useCallback(() => {
+    setPointInputs(current => [...current, { id: Date.now(), value: '' }]);
+  }, [setPointInputs]);
+
+  const handleRemovePoint = useCallback((index) => {
+    setPointInputs(current => current.filter((_, i) => i !== index));
+  }, [setPointInputs]);
+
+  const handlePointChange = useCallback((index, newValue) => {
+    setPointInputs(current =>
+      current.map((point, i) =>
+        i === index ? { ...point, value: newValue } : point
+      )
+    );
+  }, [setPointInputs]);
+
+  const sortedTGSessions = useMemo(() => {
+    return [...tgSessions].sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [tgSessions]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <h2 className="text-xl font-bold">TG Session Details</h2>
+      </CardHeader>
+      <CardBody className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Calendar size={20} />
+          <Input
+            type="date"
+            label="Session Date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            variant="bordered"
+            className="max-w-xs"
+          />
+        </div>
+
+        <Divider />
+
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold">Points Discussed</h3>
           <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Points Discussed</h3>
-            <div className="space-y-2">
-              {pointInputs.map((point, index) => (
-                <MemoizedPointInput
-                  key={point.id}
-                  value={point.value}
-                  onChange={handlePointChange}
-                  onRemove={handleRemovePoint}
-                  canRemove={pointInputs.length > 1}
-                  index={index}
-                />
-              ))}
-            </div>
-            <Button
-              color="primary"
-              onClick={handleAddPoint}
-              className="mt-2"
-              startContent={<PlusCircle size={20} />}
-            >
-              Add Point
-            </Button>
+            {pointInputs.map((point, index) => (
+              <MemoizedPointInput
+                key={point.id}
+                value={point.value}
+                onChange={handlePointChange}
+                onRemove={handleRemovePoint}
+                canRemove={pointInputs.length > 1}
+                index={index}
+              />
+            ))}
           </div>
-  
-          <Divider />
-  
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Previous TG Sessions</h3>
-            <div className="space-y-4 max-h-[300px] overflow-y-auto">
-              {sortedTGSessions.length > 0 ? (
-                sortedTGSessions.map((session) => (
-                  <Card key={session.date} className="bg-content2">
-                    <CardBody>
-                      <h4 className="font-medium mb-2">
-                        Date: {new Date(session.date).toLocaleDateString()}
-                      </h4>
-                      <ul className="list-disc pl-5 space-y-1">
-                        {session.pointsDiscussed.map((point, pointIndex) => (
-                          <li key={`${session.date}-point-${pointIndex}`} className="text-sm">
-                            {point}
-                          </li>
-                        ))}
-                      </ul>
-                    </CardBody>
-                  </Card>
-                ))
-              ) : (
-                <p className="text-gray-500">No previous sessions recorded</p>
-              )}
-            </div>
+          <Button
+            color="primary"
+            onClick={handleAddPoint}
+            className="mt-2"
+            startContent={<PlusCircle size={20} />}
+          >
+            Add Point
+          </Button>
+        </div>
+
+        <Divider />
+
+        <div>
+          <h3 className="text-lg font-semibold mb-4">Previous TG Sessions</h3>
+          <div className="space-y-4 max-h-[300px] overflow-y-auto">
+            {sortedTGSessions.length > 0 ? (
+              sortedTGSessions.map((session) => (
+                <Card key={session.date} className="bg-content2">
+                  <CardBody>
+                    <h4 className="font-medium mb-2">
+                      Date: {new Date(session.date).toLocaleDateString()}
+                    </h4>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {session.pointsDiscussed.map((point, pointIndex) => (
+                        <li key={`${session.date}-point-${pointIndex}`} className="text-sm">
+                          {point}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardBody>
+                </Card>
+              ))
+            ) : (
+              <p className="text-gray-500">No previous sessions recorded</p>
+            )}
           </div>
-        </CardBody>
-      </Card>
+        </div>
+      </CardBody>
+    </Card>
+  );
+});
+
+TGSessionContent.displayName = 'TGSessionContent';
+
+const CourseContent = React.memo(({
+  subjectDetails,
+  selectedBatch,
+  selectedContentIds,
+  setSelectedContentIds
+}) => {
+  const handleContentSelection = useCallback((contentId) => {
+    setSelectedContentIds(prev =>
+      prev.includes(contentId)
+        ? prev.filter(id => id !== contentId)
+        : [...prev, contentId]
     );
-  });
-  
-  TGSessionContent.displayName = 'TGSessionContent';
-  
-  const CourseContent = React.memo(({
-    subjectDetails,
-    selectedBatch,
-    selectedContentIds,
-    setSelectedContentIds
-  }) => {
-    const handleContentSelection = useCallback((contentId) => {
-      setSelectedContentIds(prev =>
-        prev.includes(contentId)
-          ? prev.filter(id => id !== contentId)
-          : [...prev, contentId]
-      );
-    }, [setSelectedContentIds]);
-  
-    return (
-      <Card>
-        <CardHeader>
-          <h2 className="text-xl font-bold">Course Content</h2>
-        </CardHeader>
-        <CardBody>
-          <Table aria-label="Course Content Table">
-            <TableHeader>
-              <TableColumn>Select</TableColumn>
-              <TableColumn>Title</TableColumn>
-              <TableColumn>Description</TableColumn>
-              <TableColumn>Status</TableColumn>
-            </TableHeader>
-            <TableBody>
-              {subjectDetails.content.map((content) => {
-                const batchStatus = subjectDetails.subType === 'practical'
-                  ? content.batchStatus?.find(b => b.batchId === selectedBatch)
-                  : null;
-                const isCovered = subjectDetails.subType === 'practical'
-                  ? batchStatus?.status === 'covered'
-                  : content.status === 'covered';
-  
-                return (
-                  <TableRow key={content._id}>
-                    <TableCell>
-                      <Checkbox
-                        isSelected={selectedContentIds.includes(content._id)}
-                        onChange={() => handleContentSelection(content._id)}
-                        isDisabled={isCovered}
-                      />
-                    </TableCell>
-                    <TableCell>{content.title}</TableCell>
-                    <TableCell>{content.description}</TableCell>
-                    <TableCell>
-                      {subjectDetails.subType === 'practical'
-                        ? batchStatus?.status || 'not_covered'
-                        : content.status}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardBody>
-      </Card>
-    );
-  });
-  
-  CourseContent.displayName = 'CourseContent';
-  
-  
+  }, [setSelectedContentIds]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <h2 className="text-xl font-bold">Course Content</h2>
+      </CardHeader>
+      <CardBody>
+        <Table aria-label="Course Content Table">
+          <TableHeader>
+            <TableColumn>Select</TableColumn>
+            <TableColumn>Title</TableColumn>
+            <TableColumn>Description</TableColumn>
+            <TableColumn>Status</TableColumn>
+          </TableHeader>
+          <TableBody>
+            {subjectDetails.content.map((content) => {
+              const batchStatus = subjectDetails.subType === 'practical'
+                ? content.batchStatus?.find(b => b.batchId === selectedBatch)
+                : null;
+              const isCovered = subjectDetails.subType === 'practical'
+                ? batchStatus?.status === 'covered'
+                : content.status === 'covered';
+
+              return (
+                <TableRow key={content._id}>
+                  <TableCell>
+                    <Checkbox
+                      isSelected={selectedContentIds.includes(content._id)}
+                      onChange={() => handleContentSelection(content._id)}
+                      isDisabled={isCovered}
+                    />
+                  </TableCell>
+                  <TableCell>{content.title}</TableCell>
+                  <TableCell>{content.description}</TableCell>
+                  <TableCell>
+                    {subjectDetails.subType === 'practical'
+                      ? batchStatus?.status || 'not_covered'
+                      : content.status}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </CardBody>
+    </Card>
+  );
+});
+
+CourseContent.displayName = 'CourseContent';
+
 export default function AttendanceSystem() {
   const [selectedSubject, setSelectedSubject] = useState("");
   const [isTableVisible, setIsTableVisible] = useState(false);
@@ -235,15 +234,12 @@ export default function AttendanceSystem() {
   const [tgSessions, setTgSessions] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
   const [subjectType, setSubjectType] = useState(null);
- const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
 
- 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
     if (storedProfile) {
       setProfile(JSON.parse(storedProfile));
-      console.log(profile);
-      
     }
   }, []);
 
@@ -261,51 +257,53 @@ export default function AttendanceSystem() {
   }, []);
 
   const fetchAvailableSessions = useCallback(async (subjectId, batchId, date) => {
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
       const response = await axios.get(`/api/utils/available-sessions?subjectId=${subjectId}&batchId=${batchId || ''}&date=${date}`);
       setAvailableSessions(response.data.availableSessions);
     } catch (error) {
       console.error('Error fetching available sessions:', error);
-    }
-    finally {
-      setIsLoading(false)
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
   const fetchSubjectDetails = useCallback(async (subjectId, batchId) => {
-    setIsLoading(true)
+    setIsLoading(true);
     
     try {
       const response = await axios.get(`/api/v2/utils/attendance-data?_id=${subjectId}&batchId=${batchId || ''}`);
       const { subject, batches, students } = response.data;
-      console.log(response.data);
       
       setSubjectDetails(subject);
       setBatches(batches || []);
-      setStudents(students || []);
+      
+      // Map student objects to match the expected structure
+      const mappedStudents = students.map(student => ({
+        _id: student._id,
+        name: student.personalDetails?.name || student.name,
+        rollNumber: student.academicDetails?.rollNumber || student.rollNumber
+      }));
+      
+      setStudents(mappedStudents);
+      
       if (subject.subType === 'tg') {
         setTgSessions(subject.tgSessions || []);
         setPointInputs([{ id: Date.now(), value: '' }]);
       }
     } catch (error) {
       console.error('Error fetching subject details:', error);
-    }
-    finally {
-      setIsLoading(false)
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
-  const handleSubjectSelection =(value) => {
+  const handleSubjectSelection = (value) => {
     setSelectedSubject(value);
-    console.log(selectedSubject);
-    
-    console.log(value);
     setSelectedBatch(null);
-    console.log("Subject:",subjectType);
     setIsTableVisible(false);
-  }
+  };
 
   const handleBatchSelection = useCallback((value) => {
     setSelectedBatch(value);
@@ -347,65 +345,72 @@ export default function AttendanceSystem() {
   }, [selectedDate, tgSessions, pointInputs]);
 
   const submitAttendance = useCallback(async () => {
-    setIsLoading(true)
+    setIsLoading(true);
 
     if (!selectedSubject) {
       alert("Please select a subject");
+      setIsLoading(false);
       return;
     }
 
     if (selectedSession.length === 0) {
       alert("Please select at least one session");
+      setIsLoading(false);
       return;
     }
 
     if (subjectDetails?.subType === 'tg' && !validateTGSession()) {
+      setIsLoading(false);
       return;
     }
 
     const presentStudentIds = Array.from(selectedKeys).filter(key => key !== "all");
 
+    // Prepare attendance records with proper structure
+    const attendanceRecords = students.map(student => ({
+      student: student._id,
+      status: presentStudentIds.includes(student._id) ? 'present' : 'absent'
+    }));
+
+    // Prepare points discussed array from pointInputs
+    const pointsDiscussedArray = subjectDetails?.subType === 'tg' 
+      ? pointInputs.filter(point => point.value.trim()).map(point => point.value.trim())
+      : undefined;
+
+    // Create attendance data object
     const attendanceData = {
       subject: selectedSubject,
       session: selectedSession,
-      attendanceRecords: students.map(student => ({
-        student: student._id,
-        status: presentStudentIds.includes(student._id) ? 'present' : 'absent'
-      })),
-      batchId: selectedBatch,
+      attendanceRecords: attendanceRecords,
       date: selectedDate,
-      institute:profile?.institute._id,
-      ...(subjectDetails.subType === 'tg'
-        ? {
-          pointsDiscussed: pointInputs
-            .filter(point => point.value.trim())
-            .map(point => point.value.trim())
-        }
-        : { contents: selectedContentIds })
+      institute: profile?.institute._id,
+      ...(selectedBatch && { batchId: selectedBatch }),
+      ...(subjectDetails?.subType === 'tg' && { pointsDiscussed: pointsDiscussedArray }),
+      ...(subjectDetails?.subType !== 'tg' && { contents: selectedContentIds })
     };
 
     try {
-        console.log(attendanceData);
+      console.log("Sending attendance data:", attendanceData);
       const response = await axios.post('/api/v2/attendance', attendanceData);
       alert("Attendance submitted successfully");
-      if (subjectDetails.subType === 'tg') {
+      
+      if (subjectDetails?.subType === 'tg') {
         await fetchSubjectDetails(selectedSubject, selectedBatch);
       }
+      
       resetForm();
     } catch (error) {
       console.error('Failed to submit attendance:', error);
-      alert("Failed to submit attendance");
+      alert("Failed to submit attendance" + (error.response?.data?.details ? `: ${error.response.data.details}` : ""));
+    } finally {
+      setIsLoading(false);
     }
-    finally {
-      setIsLoading(false)
-    }
-
-  }, [selectedSubject, selectedSession, subjectDetails, validateTGSession, students, selectedKeys, selectedBatch, selectedDate, pointInputs, selectedContentIds, fetchSubjectDetails, resetForm]);
+  }, [selectedSubject, selectedSession, subjectDetails, validateTGSession, students, selectedKeys, selectedBatch, selectedDate, pointInputs, selectedContentIds, fetchSubjectDetails, resetForm, profile]);
 
   const StudentListTable = useMemo(() => {
     const sortedStudents = [...students].sort((a, b) => {
-      const aNum = parseInt(a.rollNumber.replace(/\D/g, ''), 10);
-      const bNum = parseInt(b.rollNumber.replace(/\D/g, ''), 10);
+      const aNum = parseInt(a.rollNumber?.replace(/\D/g, '') || '0', 10);
+      const bNum = parseInt(b.rollNumber?.replace(/\D/g, '') || '0', 10);
       return aNum - bNum;
     });
 
@@ -445,14 +450,14 @@ export default function AttendanceSystem() {
     );
   }, [students, selectedKeys]);
 
-  {isLoading && (
-    <div className="flex justify-center items-center">
-     <Loader/>
-    </div>
-  )}
   return (
-    
     <div className="flex flex-col gap-4 p-4 max-w-7xl mx-auto">
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/20 flex justify-center items-center z-50">
+          <Loader />
+        </div>
+      )}
+      
       <Card>
         <CardBody>
           <div className="flex flex-wrap gap-4 items-center">
@@ -463,7 +468,7 @@ export default function AttendanceSystem() {
               selectedSubject={selectedSubject}
               onSubjectTypeChange={setSubjectType}
             />
-            {subjectType!== "theory"  && (
+            {subjectType !== "theory" && (
               <BatchDropdown
                 facultyId={profile?._id}
                 instituteId={profile?.institute._id}
@@ -545,4 +550,3 @@ export default function AttendanceSystem() {
     </div>
   );
 }
-

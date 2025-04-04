@@ -6,9 +6,10 @@ import { CardBody, Card, CardHeader } from "@nextui-org/react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { signOut } from "next-auth/react"
-import { UserCircle, Building2, Mail, GraduationCap } from "lucide-react"
+import { UserCircle, Building2, Mail, GraduationCap, User2 } from "lucide-react"
 import { RxExit } from "react-icons/rx"
 import { useUser } from "../context/UserContext"
+import Link from "next/link"
 
 
 // Module configurations
@@ -188,13 +189,13 @@ export default function ModuleSelectionPage() {
                   Role: {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1)}
                 </p>
               </div>
-
+              <Link href={"/profile"} className="text-violet-900 text-sm flex gap-1"><User2 className="h-4 w-4"/><span> <p> Profile</p></span></Link>
               <button
-                className="flex items-center gap-2 text-violet-900 hover:text-violet-700 transition-colors"
+                className="flex items-center gap-2 text-violet-900 text-sm hover:text-violet-700 transition-colors"
                 onClick={handleSignOut}
               >
-                <RxExit className="w-5 h-5" />
-                <span>Sign Out</span>
+                <RxExit className="w-4 h-4" />
+                <span >Sign Out</span>
               </button>
             </div>
           </div>

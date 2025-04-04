@@ -14,7 +14,7 @@ export async function GET(req) {
         const semester = searchParams.get("semester");
         const subjectId = searchParams.get("subjectId");
 
-        console.log(department,classId,semester,subjectId);
+        console.log(department, classId, semester, subjectId);
         
         if (!classId || !semester) {
             return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
@@ -23,7 +23,6 @@ export async function GET(req) {
         // Fetch class data with students
         const classData = await Classes.findOne({ 
             _id: classId,
-            // Assuming there's an active status field or we'll remove this filter
             ...(department && { department })
         }).populate({
             path: 'students',
@@ -87,11 +86,15 @@ export async function GET(req) {
                     a._id.subject === subjectId
                 ) || { totalLectures: 0, presentCount: 0 };
 
+                // Safely extract student info with fallbacks
+                const name = student?.personalDetails?.name || "Unknown";
+                const rollNumber = student?.academicDetails?.rollNumber || "0";
+
                 return {
                     _id: student._id,
                     student: {
-                        name: student.name,
-                        rollNumber: student.rollNumber
+                        name,
+                        rollNumber
                     },
                     totalLectures: attendance.totalLectures,
                     presentCount: attendance.presentCount,
@@ -103,11 +106,15 @@ export async function GET(req) {
         } else {
             // Cumulative view
             processedData = classData.students.map(student => {
+                // Safely extract student info with fallbacks
+                const name = student?.personalDetails?.name || "Unknown";
+                const rollNumber = student?.academicDetails?.rollNumber || "0";
+
                 const studentAttendance = {
                     _id: student._id,
                     student: {
-                        name: student.name,
-                        rollNumber: student.rollNumber
+                        name,
+                        rollNumber
                     },
                     theorySubjects: [],
                     practicalSubjects: [],
@@ -148,6 +155,13 @@ export async function GET(req) {
             });
         }
 
+        // Safe sorting function that handles potential undefined values
+        const safeSort = (a, b) => {
+            const rollA = a.student?.rollNumber || "";
+            const rollB = b.student?.rollNumber || "";
+            return rollA.localeCompare(rollB);
+        };
+
         const response = {
             classInfo: {
                 class: classId,
@@ -160,17 +174,16 @@ export async function GET(req) {
                 name: s.name,
                 subType: s.subType
             })),
-            attendance: processedData.sort((a, b) => 
-                a.student.rollNumber.localeCompare(b.student.rollNumber)
-            )
+            attendance: processedData.sort(safeSort)
         };
 
         // Add summary for cumulative view
         if (!subjectId) {
             response.summary = {
                 totalStudents: processedData.length,
-                averageAttendance: (processedData.reduce((sum, student) => 
-                    sum + student.overallPercentage, 0) / processedData.length).toFixed(2),
+                averageAttendance: processedData.length > 0 ? 
+                    (processedData.reduce((sum, student) => 
+                        sum + student.overallPercentage, 0) / processedData.length).toFixed(2) : "0.00",
                 belowThreshold: processedData.filter(student => 
                     student.overallPercentage < 75).length
             };

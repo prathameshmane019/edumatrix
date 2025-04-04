@@ -559,13 +559,15 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 items-center md:grid-cols-3 lg:grid-cols-4 gap-4">
           {role === "superadmin" && (
             <DepartmentDropdown
               instituteId={institute}
               onSelect={handleDepartmentSelect}
               className="w-full"
+              size='md'
               selectedDepartment={department}
+              // label='Department'
             />
           )}
           <Dropdown>
@@ -611,8 +613,9 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
             onSelect={handleClassSelect}
             selectedClass={selectedClass}
             acadmicYear={year}
+
             size="md"
-            // className='my-8'
+            className='my-4'
             selectedDepartment={selectedDepartment}
           />
           <Dropdown>

@@ -16,6 +16,7 @@ import { useState, useEffect, useMemo } from "react";
 import { signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { Tooltip, Skeleton } from "@nextui-org/react";
+import { User2 } from "lucide-react";
 
 const Sidebar = () => {
   const router = useRouter();
@@ -257,13 +258,26 @@ const Sidebar = () => {
           )}
         </ul>
 
-        <div className="absolute bottom-4 left-0 right-0 px-4 flex">
-          <Tooltip content="Log Out">
-            <button onClick={handleSignOut} color="se" width="30">
-              <RxExit className="w-5 h-5 ml-3 my-2 text-violet-900" />
-            </button>
-          </Tooltip>
-          {!isCollapsed && <span className="text-violet-900 ml-3 my-2">Log Out</span>}
+        <div className="absolute bottom-4 left-0 right-0 px-4">
+          <div className="flex items-center mb-3">
+            <Tooltip content="Profile" placement="right">
+              <Link href={"/profile"} className="text-violet-900   items-center">
+                <User2 className="sidebar__icon" />
+                {!isCollapsed && <span className="ml-3">Profile</span>}
+              </Link>
+            </Tooltip>
+          </div>
+          <div className="flex items-center">
+            <Tooltip content="Log Out" placement="right">
+              <button
+                className="text-violet-900 text-sm flex items-center"
+                onClick={handleSignOut}
+              >
+                <RxExit className="sidebar__icon  " />
+                {!isCollapsed && <span className="ml-3">Log Out</span>}
+              </button>
+            </Tooltip>
+          </div>
         </div>
       </aside>
     </div>
