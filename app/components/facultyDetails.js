@@ -106,21 +106,21 @@ export default function FacultyDetailPage({ params }) {
             >
               {faculty.department}
             </Chip>
-            <p className="text-gray-500 mt-1">ID: {faculty.id}</p>
+            <p className="text-violet-500 mt-1">ID: {faculty.id}</p>
             
             <Divider className="my-4" />
             
             <div className="flex flex-col w-full gap-2">
               <div className="flex items-center gap-2">
-                <FaPhone className="text-gray-500" />
+                <FaPhone className="text-violet-500" />
                 <span>{faculty.contact || "N/A"}</span>
               </div>
               <div className="flex items-center gap-2">
-                <FaEnvelope className="text-gray-500" />
+                <FaEnvelope className="text-violet-500" />
                 <span className="truncate">{faculty.email}</span>
               </div>
               <div className="flex items-center gap-2 mt-2">
-                <FaUserTie className="text-gray-500" />
+                <FaUserTie className="text-violet-500" />
                 <span>{capitalize(faculty.employmentType) || "N/A"}</span>
               </div>
             </div>
@@ -172,7 +172,7 @@ export default function FacultyDetailPage({ params }) {
             {activeTab === "education" && (
               <div className="space-y-4">
                 {faculty.education ? (
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                  <div className="bg-violet-50 dark:bg-violet-100 rounded-lg p-4 border border-violet-200 dark:border-violet-700">
                     <div className="flex items-center gap-2 mb-4">
                       <FaGraduationCap className="text-2xl text-primary" />
                       <h3 className="text-xl font-semibold">Highest Qualification</h3>
@@ -201,7 +201,7 @@ export default function FacultyDetailPage({ params }) {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <p className="text-gray-500">No education information available</p>
+                    <p className="text-violet-500">No education information available</p>
                   </div>
                 )}
               </div>
@@ -232,10 +232,10 @@ export default function FacultyDetailPage({ params }) {
 // Helper component for displaying information in a consistent format
 function InfoCard({ title, value, icon, fullWidth = false }) {
   return (
-    <div className={`bg-gray-50 dark:bg-gray-800 rounded-lg p-4 ${fullWidth ? "col-span-full" : ""}`}>
+    <div className={`bg-violet-50 dark:bg-violet-200 rounded-lg p-4 ${fullWidth ? "col-span-full" : ""}`}>
       <div className="flex items-center gap-2 mb-1">
         {icon}
-        <h3 className="text-sm font-medium text-gray-500">{title}</h3>
+        <h3 className="text-sm font-medium text-violet-500">{title}</h3>
       </div>
       <p className="text-lg">{value}</p>
     </div>
