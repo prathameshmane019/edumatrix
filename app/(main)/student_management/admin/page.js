@@ -520,19 +520,6 @@ const StudentDashboard = () => {
                 </CardBody>
               </Card>
             )}
-
-            {/* Age Info Card */}
-            <Card className="shadow-sm mb-6 bg-blue-50">
-              <CardBody className="py-4">
-                <div className="flex items-center">
-                  <Clock size={24} className="text-blue-600 mr-4" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Average Student Age</p>
-                    <p className="text-2xl font-bold text-gray-800">{dashboardData.avgAge} years</p>
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
           </>
         )}
       </div>

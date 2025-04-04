@@ -136,22 +136,9 @@ async function getStudentDashboardMetrics(filter, userRole) {
       return (aYear - bYear) || (aMonth - bMonth);
     });
 
-  // Average Age
-  const currentYear = new Date().getFullYear();
-  const ageData = students
-    .filter((s) => s.personalDetails?.dateOfBirth)
-    .map((s) => {
-      const birthDate = new Date(s.personalDetails.dateOfBirth);
-      const age = currentYear - birthDate.getFullYear();
-      return {
-        name: s.personalDetails.name,
-        age,
-      };
-    });
+
     
-  const avgAge = ageData.length > 0 
-    ? Math.round(ageData.reduce((sum, s) => sum + s.age, 0) / ageData.length) 
-    : 0;
+   
 
   return {
     totalStudents,
@@ -164,6 +151,6 @@ async function getStudentDashboardMetrics(filter, userRole) {
     genderDistribution,
     categoryDistribution,
     monthlyAdmissions,      // New: Monthly admission trend
-    avgAge,
+    
   };
 }
