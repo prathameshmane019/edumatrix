@@ -62,8 +62,8 @@ export async function GET(req) {
                         student: {
                             $first: {
                                 _id: '$studentInfo._id',
-                                name: '$studentInfo.name',
-                                rollNumber: '$studentInfo.rollNumber'
+                                name: '$studentInfo.personalDetails.name',
+                                rollNumber: '$studentInfo.academicDetails.rollNumber'
                             }
                         },
                         status: { $first: '$records.status' },
@@ -151,8 +151,8 @@ export async function GET(req) {
                         _id: 0,
                         student: {
                             _id: '$studentInfo._id',
-                            name: '$studentInfo.name',
-                            rollNumber: '$studentInfo.rollNumber'
+                            name: '$studentInfo.personalDetails.name',
+                            rollNumber: '$studentInfo.academicDetails.rollNumber'
                         },
                         totalLectures: 1,
                         presentCount: 1,

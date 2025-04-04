@@ -547,7 +547,7 @@ export default function StudentTable() {
           selectedKeys={academicYear ? [academicYear] : []}
           onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
           startContent={<Calendar className="w-4 h-4 text-default-400" />}
-          className="max-w-64 my-4"
+          className="max-w-60 my-4"
         >
           {getAcademicYears(10).map((year) => (
             <SelectItem key={year.value} value={year.value}>{year.label}</SelectItem>
@@ -557,7 +557,7 @@ export default function StudentTable() {
           <DepartmentDropdown
             instituteId={institute}
             onSelect={handleDepartmentSelect}
-            className="max-w-64"
+            className="max-w-60"
             selectedDepartment={selectedDepartment}
           />
         )}
@@ -568,7 +568,7 @@ export default function StudentTable() {
           selectedClass={selectedClass}
           acadmicYear={academicYear}
           selectedDepartment={selectedDepartment}
-          className="my-4 max-w-64"
+          className="my-4 max-w-60"
         />
         <Select
           placeholder="Status"
@@ -576,7 +576,7 @@ export default function StudentTable() {
           size="sm"
           selectedKeys={[statusFilter]}
           onSelectionChange={(keys) => setStatusFilter(Array.from(keys)[0])}
-          className="max-w-64 my-4"
+          className="max-w-60 my-4"
         >
           <SelectItem key="all" value="all">All</SelectItem>
           <SelectItem key="active" value="active">Active</SelectItem>

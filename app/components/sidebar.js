@@ -76,7 +76,7 @@ const Sidebar = () => {
         admin: [
           { name: "Dashboard", href: "/course_management/admin", icon: MdPortrait },
           { name: "Manage Classes", href: "/course_management/admin/class", icon: MdPortrait },
-          { name: "Manage Subject", href: "/course_management/admin/subect", icon: MdPortrait },
+          { name: "Manage Subject", href: "/course_management/admin/subject", icon: MdPortrait },
         ],
         superadmin: [
           { name: "Dashboard", href: "/course_management/admin", icon: MdPortrait },
