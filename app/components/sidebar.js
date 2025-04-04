@@ -169,6 +169,21 @@ const Sidebar = () => {
     setIsCollapsed(prev => !prev);
   };
 
+  const bestMatch = useMemo(() => {
+    let best = null;
+    let maxLength = 0;
+  
+    getNavigationItems.forEach((item) => {
+      if (pathname.startsWith(item.href) && item.href.length > maxLength) {
+        best = item.href;
+        maxLength = item.href.length;
+      }
+    });
+  
+    return best;
+  }, [pathname, getNavigationItems]);
+
+  
   const handleSignOut = async () => {
     await signOut({ redirect: false });
     sessionStorage.clear();
@@ -226,9 +241,10 @@ const Sidebar = () => {
             getNavigationItems.map(({ name, href, icon: Icon }) => (
               <li className="sidebar__item" key={name}>
                 <Link
-                  className={`sidebar__link ${pathname === href ? "sidebar__link--active" : ""}`}
-                  href={href}
-                >
+  className={`sidebar__link ${href === bestMatch ? "sidebar__link--active" : ""}`}
+  href={href}
+>
+
                   <Tooltip content={name} placement="right">
                     <span className="sidebar__icon">
                       <Icon className="text-2xl" />

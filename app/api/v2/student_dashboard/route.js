@@ -24,17 +24,17 @@ export async function GET(req) {
       filter["academicDetails.department"] = department;
     }
 
-    // Apply academic year filter if provided
-    if (academicYear) {
-      const [startYear] = academicYear.split("-");
-      const startDate = new Date(`${startYear}-04-01`);
-      const endDate = new Date(`${parseInt(startYear) + 1}-03-31`);
+    // // Apply academic year filter if provided
+    // if (academicYear) {
+    //   const [startYear] = academicYear.split("-");
+    //   const startDate = new Date(`${startYear}-04-01`);
+    //   const endDate = new Date(`${parseInt(startYear) + 1}-03-31`);
       
-      filter["admission.admissionDate"] = {
-        $gte: startDate,
-        $lte: endDate,
-      };
-    }
+    //   filter["admission.admissionDate"] = {
+    //     $gte: startDate,
+    //     $lte: endDate,
+    //   };
+    // }
 
     // Get metrics based on filter and role
     const dashboardData = await getStudentDashboardMetrics(filter, userRole);

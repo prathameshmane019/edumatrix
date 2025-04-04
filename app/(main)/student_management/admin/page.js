@@ -31,26 +31,26 @@ import { Select, SelectItem, Spinner, Card, CardBody, CardHeader, Button } from 
 import { DepartmentDropdown } from "@/app/components/department/DepartmentDropDowns";
 import { useUser } from "@/app/context/UserContext";
 
-// Academic Year Utilities
-const getCurrentAcademicYear = () => {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  return month < 3 ? `${year - 1}-${year}` : `${year}-${year + 1}`;
-};
+// // Academic Year Utilities
+// const getCurrentAcademicYear = () => {
+//   const today = new Date();
+//   const year = today.getFullYear();
+//   const month = today.getMonth();
+//   return month < 3 ? `${year - 1}-${year}` : `${year}-${year + 1}`;
+// };
 
-const getAcademicYears = (yearsBack) => {
-  const currentYear = new Date().getFullYear();
-  const academicYears = [];
-  for (let i = 0; i < yearsBack; i++) {
-    const startYear = currentYear - i;
-    academicYears.push({
-      label: `${startYear}-${startYear + 1}`,
-      value: `${startYear}-${startYear + 1}`,
-    });
-  }
-  return academicYears;
-};
+// const getAcademicYears = (yearsBack) => {
+//   const currentYear = new Date().getFullYear();
+//   const academicYears = [];
+//   for (let i = 0; i < yearsBack; i++) {
+//     const startYear = currentYear - i;
+//     academicYears.push({
+//       label: `${startYear}-${startYear + 1}`,
+//       value: `${startYear}-${startYear + 1}`,
+//     });
+//   }
+//   return academicYears;
+// };
 
 // Custom colors for charts
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d", "#ffc658", "#a4de6c"];
@@ -66,7 +66,7 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
-  const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
+  // const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
   const [showFilters, setShowFilters] = useState(false);
 
   // Determine institute ID and default department based on user role
@@ -104,17 +104,17 @@ const StudentDashboard = () => {
   // Fetch dashboard data
   useEffect(() => {
     const fetchStudentDashboardData = async () => {
-      if (!instituteId || !selectedDepartment || !academicYear) {
-        if (!userLoading) setError("Missing required parameters");
-        return;
-      }
+      // if (!instituteId || !selectedDepartment || !academicYear) {
+      //   if (!userLoading) setError("Missing required parameters");
+      //   return;
+      // }
 
       setLoading(true);
       try {
         const params = {
           instituteId,
           userRole: user.role,
-          academicYear,
+          // academicYear,
         };
         
         if (selectedDepartment !== "all") {
@@ -133,10 +133,10 @@ const StudentDashboard = () => {
       }
     };
 
-    if (instituteId && selectedDepartment && academicYear) {
+    if (instituteId && selectedDepartment ) {
       fetchStudentDashboardData();
     }
-  }, [instituteId, selectedDepartment, academicYear, userLoading, user?.role]);
+  }, [instituteId, selectedDepartment, userLoading, user?.role]);
 
   // Loading states
   if (userLoading) {
@@ -170,9 +170,9 @@ const StudentDashboard = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Student Dashboard</h1>
           <div className="flex items-center gap-2 mt-2 md:mt-0">
-            <div className="text-sm text-gray-600">
+            {/* <div className="text-sm text-gray-600">
               {academicYear ? `Academic Year: ${academicYear}` : ""}
-            </div>
+            </div> */}
             <Button 
               size="sm" 
               variant="flat" 
@@ -189,7 +189,7 @@ const StudentDashboard = () => {
           <Card className="mb-6">
             <CardBody className="py-4">
               <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
+                {/* <div className="flex-1">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
                   <Select
                     placeholder="Select Year"
@@ -206,7 +206,7 @@ const StudentDashboard = () => {
                       </SelectItem>
                     ))}
                   </Select>
-                </div>
+                </div> */}
                 {(userRole === "superadmin" || userRole === "admin") && (
                   <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
