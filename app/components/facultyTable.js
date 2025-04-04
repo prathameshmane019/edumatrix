@@ -548,7 +548,7 @@ export default function FacultyTable() {
           {(facultyMember) => (
             <TableRow 
               key={facultyMember?._id}
-              className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="cursor-pointer hover:bg-gray-100 dark:hover:bg-violet-200 transition-colors"
               onClick={() => handleRowClick(facultyMember)}
             >
               {(columnKey) => 
