@@ -18,9 +18,8 @@ import {
   Chip,
   Select,
   SelectItem,
-  Textarea
+  Divider
 } from '@nextui-org/react'
-
 import { toast } from 'sonner'
 import { 
   PencilIcon, 
@@ -30,18 +29,15 @@ import {
   BriefcaseIcon, 
   MailIcon, 
   KeyIcon, 
-  Settings, 
   BookOpenIcon, 
   CalendarIcon, 
   GraduationCapIcon, 
   PhoneIcon,
-  HomeIcon,
-  BookmarkIcon,
-  BuildingIcon,
-  UserPlusIcon
+  MapPinIcon,
+  BookIcon,
+  BuildingIcon
 } from 'lucide-react'
 import axios from 'axios'
-import { FaEnvelope } from 'react-icons/fa'
 
 const getCurrentAcademicYear = () => {
   const currentDate = new Date()
@@ -78,12 +74,6 @@ const formatDate = (dateString) => {
   })
 }
 
-const formatSimpleDate = (dateString) => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  return date.toISOString().split('T')[0]
-}
-
 export default function ProfilePage() {
   const [userProfile, setUserProfile] = useState(null)
   const [isEditing, setIsEditing] = useState(false)
@@ -97,152 +87,125 @@ export default function ProfilePage() {
       const profile = JSON.parse(storedProfile)
       const currentYear = profile.currentYear || getCurrentAcademicYear()
       const sem = profile.sem || 'sem1'
-
-      // Initialize the profile based on the role
-      let initialProfile
       
-      if (profile.role === 'student') {
-        initialProfile = {
-          _id: profile._id || profile.id,
-          'personalDetails.name': profile.personalDetails?.name || profile.name || '',
-          'personalDetails.email': profile.personalDetails?.email || profile.email || '',
-          'personalDetails.phoneNo': profile.personalDetails?.phoneNo || profile.contact || '',
-          'personalDetails.gender': profile.personalDetails?.gender || profile.gender || '',
-          'personalDetails.dateOfBirth': profile.personalDetails?.dateOfBirth || profile.dateOfBirth || '',
-          'academicDetails.department': profile.academicDetails?.department || profile.department || '',
-          'academicDetails.rollNumber': profile.academicDetails?.rollNumber || '',
-          'parents.name': profile.parents?.name || '',
-          'parents.contact': profile.parents?.contact || '',
-          'parents.email': profile.parents?.email || '',
-          'parents.occupation': profile.parents?.occupation || '',
-          'parents.relation': profile.parents?.relation || '',
-          role: profile.role
-        }
-      } else {
-        // Faculty, admin, superadmin
-        initialProfile = {
-          id: profile.id || profile._id,
-          name: profile.name || '',
-          department: profile.department || '',
-          email: profile.email || '',
-          contact: profile.contact || '',
-          gender: profile.gender || '',
-          dateOfBirth: profile.dateOfBirth ? formatSimpleDate(profile.dateOfBirth) : '',
-          address: profile.address || '',
-          designation: profile.designation || '',
-          employmentType: profile.employmentType || '',
-          dateOfJoining: profile.dateOfJoining ? formatSimpleDate(profile.dateOfJoining) : '',
-          'education.highestDegree': profile.education?.highestDegree || '',
-          'education.specialization': profile.education?.specialization || '',
-          'education.university': profile.education?.university || '',
-          'education.yearOfPassing': profile.education?.yearOfPassing || '',
-          currentYear: currentYear,
-          sem: sem,
-          role: profile.role,
-          instituteCode: profile.instituteCode
-        }
-      }
+      // Normalize profile structure based on role
+      const normalizedProfile = profile.role === 'student' 
+        ? normalizeStudentProfile(profile)
+        : normalizeFacultyProfile(profile)
 
       setUserProfile({
-        ...profile,
+        ...normalizedProfile,
         currentYear,
         sem
       })
 
-      setUpdatedProfile(initialProfile)
+      setUpdatedProfile({
+        ...normalizedProfile,
+        currentYear,
+        sem
+      })
     }
-    
     // Simulate loading delay
-    setTimeout(() => setIsLoading(false), 1000)
+    setTimeout(() => setIsLoading(false), 800)
   }, [])
+
+  // Normalize student profile to handle nested structure
+  const normalizeStudentProfile = (profile) => {
+    return {
+      _id: profile._id,
+      id: profile._id,
+      name: profile.personalDetails?.name || profile.name || '',
+      email: profile.personalDetails?.email || profile.email || '',
+      department: profile.academicDetails?.department || profile.department || '',
+      role: 'student',
+      gender: profile.personalDetails?.gender || profile.gender || '',
+      phoneNo: profile.personalDetails?.phoneNo || profile.contact || '',
+      dateOfBirth: profile.personalDetails?.dateOfBirth || profile.dateOfBirth,
+      rollNumber: profile.academicDetails?.rollNumber || '',
+      academicYear: profile.academicDetails?.academicYear || profile.currentYear || '',
+      admissionDate: profile.admission?.admissionDate || '',
+      status: profile.admission?.status || 'active',
+      parentName: profile.parents?.name || '',
+      parentContact: profile.parents?.contact || '',
+      parentEmail: profile.parents?.email || '',
+      parentOccupation: profile.parents?.occupation || '',
+      parentRelation: profile.parents?.relation || '',
+      ...profile
+    }
+  }
+
+  // Normalize faculty profile
+  const normalizeFacultyProfile = (profile) => {
+    return {
+      _id: profile._id,
+      id: profile.id || profile._id || '',
+      name: profile.name || '',
+      email: profile.email || '',
+      department: profile.department || '',
+      contact: profile.contact || '',
+      gender: profile.gender || '',
+      dateOfBirth: profile.dateOfBirth,
+      address: profile.address || '', 
+      designation: profile.designation || '',
+      employmentType: profile.employmentType || 'teaching',
+      dateOfJoining: profile.dateOfJoining,
+      highestDegree: profile.education?.highestDegree || '',
+      specialization: profile.education?.specialization || '',
+      university: profile.education?.university || '',
+      yearOfPassing: profile.education?.yearOfPassing || '',
+      ...profile
+    }
+  }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    setUpdatedProfile({
-      ...updatedProfile,
+    setUpdatedProfile(prev => ({
+      ...prev,
       [name]: value,
-    })
+    }))
   }
 
-  const handleNestedInputChange = (field, value) => {
-    setUpdatedProfile({
-      ...updatedProfile,
-      [field]: value,
-    })
+  const handleNestedInputChange = (section, field, value) => {
+    setUpdatedProfile(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: value
+      }
+    }))
   }
 
   const handleSettingChange = (setting, value) => {
-    setUpdatedProfile({
-      ...updatedProfile,
+    setUpdatedProfile(prev => ({
+      ...prev,
       [setting]: value,
-    })
-  }
-
-  const prepareDataForSubmission = () => {
-    // Different preparation based on role
-    if (userProfile.role === 'student') {
-      // Transform flat structure back to nested for student
-      return {
-        _id: updatedProfile._id,
-        personalDetails: {
-          name: updatedProfile['personalDetails.name'],
-          email: updatedProfile['personalDetails.email'],
-          phoneNo: updatedProfile['personalDetails.phoneNo'],
-          gender: updatedProfile['personalDetails.gender'],
-          dateOfBirth: updatedProfile['personalDetails.dateOfBirth']
-        },
-        academicDetails: {
-          department: updatedProfile['academicDetails.department'],
-          rollNumber: updatedProfile['academicDetails.rollNumber']
-        },
-        parents: {
-          name: updatedProfile['parents.name'],
-          contact: updatedProfile['parents.contact'],
-          email: updatedProfile['parents.email'],
-          occupation: updatedProfile['parents.occupation'],
-          relation: updatedProfile['parents.relation']
-        }
-      }
-    } else {
-      // Faculty, admin, superadmin
-      return {
-        id: updatedProfile.id,
-        name: updatedProfile.name,
-        department: updatedProfile.department,
-        email: updatedProfile.email,
-        contact: updatedProfile.contact,
-        gender: updatedProfile.gender,
-        dateOfBirth: updatedProfile.dateOfBirth,
-        address: updatedProfile.address,
-        designation: updatedProfile.designation,
-        employmentType: updatedProfile.employmentType,
-        dateOfJoining: updatedProfile.dateOfJoining,
-        education: {
-          highestDegree: updatedProfile['education.highestDegree'],
-          specialization: updatedProfile['education.specialization'],
-          university: updatedProfile['education.university'],
-          yearOfPassing: updatedProfile['education.yearOfPassing']
-        },
-        currentYear: updatedProfile.currentYear || getCurrentAcademicYear(),
-        sem: updatedProfile.sem || 'sem1'
-      }
-    }
+    }))
   }
 
   const handleSave = async () => {
     if (userProfile) {
       const role = userProfile.role === "admin" ? "department" : 
                   userProfile.role === "superadmin" ? "institute" : 
-                  userProfile.role === "student" ? "student" : "faculty"
+                  userProfile.role
       try {
-        const dataToSubmit = prepareDataForSubmission()
+        let profileToUpdate = {
+          ...updatedProfile,
+          currentYear: updatedProfile.currentYear || getCurrentAcademicYear(),
+          sem: updatedProfile.sem || 'sem1'
+        }
 
-        await axios.put(`/api/v2/${role}?_id=${userProfile?._id || userProfile?.id}`, dataToSubmit)
+        // Transform data back to schema format if student or faculty
+        if (role === 'student') {
+          profileToUpdate = transformToStudentSchema(profileToUpdate)
+        } else if (role === 'faculty') {
+          profileToUpdate = transformToFacultySchema(profileToUpdate)
+        }
 
-        // Create an updated profile merging original data with updates
+        await axios.put(`/api/v2/${role}?_id=${userProfile?._id}`, profileToUpdate)
+
         const updatedFullProfile = {
           ...userProfile,
-          ...dataToSubmit
+          ...updatedProfile
         }
 
         setUserProfile(updatedFullProfile)
@@ -261,6 +224,66 @@ export default function ProfilePage() {
     }
   }
 
+  // Transform flat structure back to student schema
+  const transformToStudentSchema = (profile) => {
+    return {
+      _id: profile._id,
+      personalDetails: {
+        name: profile.name,
+        email: profile.email,
+        gender: profile.gender,
+        phoneNo: profile.phoneNo,
+        dateOfBirth: profile.dateOfBirth
+      },
+      academicDetails: {
+        rollNumber: profile.rollNumber,
+        department: profile.department,
+        academicYear: profile.academicYear || profile.currentYear,
+        institute: profile.institute
+      },
+      admission: {
+        admissionDate: profile.admissionDate,
+        status: profile.status
+      },
+      parents: {
+        name: profile.parentName,
+        contact: profile.parentContact,
+        email: profile.parentEmail,
+        occupation: profile.parentOccupation,
+        relation: profile.parentRelation
+      },
+      currentYear: profile.currentYear,
+      sem: profile.sem
+    }
+  }
+
+  // Transform flat structure back to faculty schema
+  const transformToFacultySchema = (profile) => {
+    return {
+      _id: profile._id,
+      id: profile.id,
+      name: profile.name,
+      email: profile.email,
+      department: profile.department,
+      contact: profile.contact,
+      gender: profile.gender,
+      dateOfBirth: profile.dateOfBirth,
+      address: profile.address,
+      designation: profile.designation,
+      employmentType: profile.employmentType,
+      dateOfJoining: profile.dateOfJoining,
+      education: {
+        highestDegree: profile.highestDegree,
+        specialization: profile.specialization,
+        university: profile.university,
+        yearOfPassing: profile.yearOfPassing
+      },
+      currentYear: profile.currentYear,
+      sem: profile.sem,
+      institute: profile.institute
+    }
+  }
+
   const roleColor = {
     admin: "text-purple-600",
     faculty: "text-blue-600",
@@ -275,206 +298,35 @@ export default function ProfilePage() {
     student: "bg-green-50",
   }
 
-  const renderStudentProfileContent = () => {
-    if (isEditing) {
-      return (
-        <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-6">
-          <div className="grid grid-cols-2 gap-6">
-            <Input
-              label="Student ID"
-              name="_id"
-              value={updatedProfile._id}
-              isDisabled
-              variant="bordered"
-            />
-            <Input
-              label="Name"
-              name="personalDetails.name"
-              value={updatedProfile['personalDetails.name']}
-              onChange={handleInputChange}
-              variant="bordered"
-            />
-            <Input
-              label="Email"
-              name="personalDetails.email"
-              type="email"
-              value={updatedProfile['personalDetails.email']}
-              onChange={handleInputChange}
-              variant="bordered"
-            />
-            <Input
-              label="Phone Number"
-              name="personalDetails.phoneNo"
-              value={updatedProfile['personalDetails.phoneNo']}
-              onChange={handleInputChange}
-              variant="bordered"
-            />
-            <Input
-              label="Date of Birth"
-              name="personalDetails.dateOfBirth"
-              type="date"
-              value={formatSimpleDate(updatedProfile['personalDetails.dateOfBirth'])}
-              onChange={handleInputChange}
-              variant="bordered"
-            />
-            <Select
-              label="Gender"
-              name="personalDetails.gender"
-              selectedKeys={updatedProfile['personalDetails.gender'] ? [updatedProfile['personalDetails.gender']] : []}
-              onChange={(e) => handleNestedInputChange('personalDetails.gender', e.target.value)}
-              variant="bordered"
-            >
-              <SelectItem key="Male">Male</SelectItem>
-              <SelectItem key="Female">Female</SelectItem>
-              <SelectItem key="Other">Other</SelectItem>
-            </Select>
-            <Input
-              label="Department"
-              name="academicDetails.department"
-              value={updatedProfile['academicDetails.department']}
-              onChange={handleInputChange}
-              variant="bordered"
-            />
-            <Input
-              label="Roll Number"
-              name="academicDetails.rollNumber"
-              value={updatedProfile['academicDetails.rollNumber']}
-              onChange={handleInputChange}
-              variant="bordered"
-            />
-          </div>
+  const roleChipColor = {
+    admin: "secondary",
+    faculty: "primary",
+    superadmin: "danger",
+    student: "success",
+  }
 
-          <div className="mt-6">
-            <h4 className="text-lg font-medium mb-3">Parent/Guardian Information</h4>
-            <div className="grid grid-cols-2 gap-6">
-              <Input
-                label="Parent/Guardian Name"
-                name="parents.name"
-                value={updatedProfile['parents.name']}
-                onChange={handleInputChange}
-                variant="bordered"
-              />
-              <Select
-                label="Relation"
-                name="parents.relation"
-                selectedKeys={updatedProfile['parents.relation'] ? [updatedProfile['parents.relation']] : []}
-                onChange={(e) => handleNestedInputChange('parents.relation', e.target.value)}
-                variant="bordered"
-              >
-                <SelectItem key="Father">Father</SelectItem>
-                <SelectItem key="Mother">Mother</SelectItem>
-                <SelectItem key="Guardian">Guardian</SelectItem>
-                <SelectItem key="Other">Other</SelectItem>
-              </Select>
-              <Input
-                label="Parent/Guardian Contact"
-                name="parents.contact"
-                value={updatedProfile['parents.contact']}
-                onChange={handleInputChange}
-                variant="bordered"
-              />
-              <Input
-                label="Parent/Guardian Email"
-                name="parents.email"
-                type="email"
-                value={updatedProfile['parents.email']}
-                onChange={handleInputChange}
-                variant="bordered"
-              />
-              <Input
-                label="Occupation"
-                name="parents.occupation"
-                value={updatedProfile['parents.occupation']}
-                onChange={handleInputChange}
-                variant="bordered"
-              />
+  const renderProfileBasicDetails = () => {
+    if (isLoading) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Array(6).fill(null).map((_, index) => (
+            <div key={index} className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-8 w-full" />
             </div>
-          </div>
-          
-          <Button 
-            color="primary" 
-            type="submit" 
-            startContent={<SaveIcon className="h-4 w-4" />}
-          >
-            Save Changes
-          </Button>
-        </form>
+          ))}
+        </div>
       )
     }
 
-    return (
-      <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <p className="text-sm text-gray-500">Student ID</p>
-          <p className="text-sm font-medium">{userProfile?._id}</p>
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm text-gray-500">Name</p>
-          <p className="text-sm font-medium">{userProfile?.personalDetails?.name}</p>
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm text-gray-500">Email</p>
-          <p className="text-sm font-medium">{userProfile?.personalDetails?.email}</p>
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm text-gray-500">Phone Number</p>
-          <p className="text-sm font-medium">{userProfile?.personalDetails?.phoneNo || 'Not provided'}</p>
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm text-gray-500">Date of Birth</p>
-          <p className="text-sm font-medium">{userProfile?.personalDetails?.dateOfBirth ? new Date(userProfile.personalDetails.dateOfBirth).toLocaleDateString() : 'Not provided'}</p>
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm text-gray-500">Gender</p>
-          <p className="text-sm font-medium">{userProfile?.personalDetails?.gender || 'Not provided'}</p>
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm text-gray-500">Department</p>
-          <p className="text-sm font-medium">{userProfile?.academicDetails?.department}</p>
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm text-gray-500">Roll Number</p>
-          <p className="text-sm font-medium">{userProfile?.academicDetails?.rollNumber}</p>
-        </div>
-        
-        <div className="col-span-2 mt-4 pt-4 border-t border-gray-200">
-          <h4 className="text-lg font-medium mb-3">Parent/Guardian Information</h4>
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <p className="text-sm text-gray-500">Name</p>
-              <p className="text-sm font-medium">{userProfile?.parents?.name || 'Not provided'}</p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm text-gray-500">Relation</p>
-              <p className="text-sm font-medium">{userProfile?.parents?.relation || 'Not provided'}</p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm text-gray-500">Contact</p>
-              <p className="text-sm font-medium">{userProfile?.parents?.contact || 'Not provided'}</p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm text-gray-500">Email</p>
-              <p className="text-sm font-medium">{userProfile?.parents?.email || 'Not provided'}</p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm text-gray-500">Occupation</p>
-              <p className="text-sm font-medium">{userProfile?.parents?.occupation || 'Not provided'}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  const renderFacultyProfileContent = () => {
     if (isEditing) {
       return (
         <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-6">
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Input
-              label={userProfile?.role === "superadmin" ? "Institute Code" : "Faculty/Staff ID"}
+              label={userProfile?.role === "student" ? "Student ID" : userProfile?.role === "superadmin" ? "Institute Code" : "Faculty/Staff ID"}
               name="id"
-              value={updatedProfile.id || updatedProfile.instituteCode}
+              value={updatedProfile.id}
               isDisabled
               variant="bordered"
             />
@@ -485,15 +337,6 @@ export default function ProfilePage() {
               onChange={handleInputChange}
               variant="bordered"
             />
-            {userProfile?.role !== "superadmin" && (
-              <Input
-                label="Department"
-                name="department"
-                value={updatedProfile.department}
-                onChange={handleInputChange}
-                variant="bordered"
-              />
-            )}
             <Input
               label="Email"
               name="email"
@@ -502,26 +345,35 @@ export default function ProfilePage() {
               onChange={handleInputChange}
               variant="bordered"
             />
+            {userProfile?.role !== "superadmin" || "admin" && (
+              <Input
+                label="Department"
+                name="department"
+                value={updatedProfile.department }
+                onChange={handleInputChange}
+                variant="bordered"
+              />
+            )}
             <Input
-              label="Contact"
-              name="contact"
-              value={updatedProfile.contact}
-              onChange={handleInputChange}
+              label="Phone Number"
+              name="phoneNo"
+              value={updatedProfile.phoneNo || updatedProfile.contact}
+              onChange={(e) => {
+                if (userProfile?.role === "student") {
+                  handleInputChange({target: {name: "phoneNo", value: e.target.value}})
+                } else {
+                  handleInputChange({target: {name: "contact", value: e.target.value}})
+                }
+              }}
               variant="bordered"
             />
-            <Input
-              label="Date of Birth"
-              name="dateOfBirth"
-              type="date"
-              value={updatedProfile.dateOfBirth}
-              onChange={handleInputChange}
-              variant="bordered"
-            />
+            {userProfile?.role !== "superadmin" || userProfile?.role !=="admin" && (
+              <>
             <Select
               label="Gender"
               name="gender"
-              selectedKeys={updatedProfile.gender ? [updatedProfile.gender] : []}
-              onChange={(e) => handleSettingChange('gender', e.target.value)}
+              selectedKeys={[updatedProfile.gender]}
+              onChange={(e) => handleInputChange({target: {name: "gender", value: e.target.value}})}
               variant="bordered"
             >
               <SelectItem key="Male">Male</SelectItem>
@@ -529,81 +381,18 @@ export default function ProfilePage() {
               <SelectItem key="Other">Other</SelectItem>
             </Select>
             <Input
-              label="Designation"
-              name="designation"
-              value={updatedProfile.designation}
-              onChange={handleInputChange}
-              variant="bordered"
-            />
-            <Select
-              label="Employment Type"
-              name="employmentType"
-              selectedKeys={updatedProfile.employmentType ? [updatedProfile.employmentType] : []}
-              onChange={(e) => handleSettingChange('employmentType', e.target.value)}
-              variant="bordered"
-            >
-              <SelectItem key="teaching">Teaching</SelectItem>
-              <SelectItem key="non-teaching">Non-Teaching</SelectItem>
-            </Select>
-            <Input
-              label="Date of Joining"
-              name="dateOfJoining"
+              label="Date of Birth"
+              name="dateOfBirth"
               type="date"
-              value={updatedProfile.dateOfJoining}
+              value={updatedProfile.dateOfBirth ? new Date(updatedProfile.dateOfBirth).toISOString().split('T')[0] : ''}
               onChange={handleInputChange}
               variant="bordered"
             />
-            <Textarea
-              label="Address"
-              name="address"
-              value={updatedProfile.address}
-              onChange={handleInputChange}
-              variant="bordered"
-              className="col-span-2"
-            />
-          </div>
+            </>
+            )}
 
-          {(userProfile?.role === 'faculty' || userProfile?.role === 'admin') && (
-            <div className="mt-6">
-              <h4 className="text-lg font-medium mb-3">Education</h4>
-              <div className="grid grid-cols-2 gap-6">
-                <Input
-                  label="Highest Degree"
-                  name="education.highestDegree"
-                  value={updatedProfile['education.highestDegree']}
-                  onChange={handleInputChange}
-                  variant="bordered"
-                />
-                <Input
-                  label="Specialization"
-                  name="education.specialization"
-                  value={updatedProfile['education.specialization']}
-                  onChange={handleInputChange}
-                  variant="bordered"
-                />
-                <Input
-                  label="University"
-                  name="education.university"
-                  value={updatedProfile['education.university']}
-                  onChange={handleInputChange}
-                  variant="bordered"
-                />
-                <Input
-                  label="Year of Passing"
-                  name="education.yearOfPassing"
-                  type="number"
-                  value={updatedProfile['education.yearOfPassing']}
-                  onChange={handleInputChange}
-                  variant="bordered"
-                />
-              </div>
-            </div>
-          )}
-
-          {(userProfile?.role === 'faculty' || userProfile?.role === 'admin' || userProfile?.role === 'superadmin') && (
-            <div className="mt-6">
-              <h4 className="text-lg font-medium mb-3">Settings</h4>
-              <div className="grid grid-cols-2 gap-6">
+            {(userProfile?.role === 'faculty' || userProfile?.role === 'admin' || userProfile?.role === 'superadmin') && (
+              <>
                 <Dropdown>
                   <DropdownTrigger>
                     <Button
@@ -643,119 +432,89 @@ export default function ProfilePage() {
                     <DropdownItem key="sem2">Semester 2</DropdownItem>
                   </DropdownMenu>
                 </Dropdown>
-              </div>
-            </div>
-          )}
-          <Button 
-            color="primary" 
-            type="submit" 
-            startContent={<SaveIcon className="h-4 w-4" />}
-          >
-            Save Changes
-          </Button>
+              </>
+            )}
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button 
+              color="danger" 
+              variant="light"
+              startContent={<XIcon className="h-4 w-4" />}
+              onPress={() => setIsEditing(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              color="primary" 
+              type="submit" 
+              startContent={<SaveIcon className="h-4 w-4" />}
+            >
+              Save Changes
+            </Button>
+          </div>
         </form>
       )
     }
 
     return (
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <p className="text-sm text-gray-500">{userProfile?.role === "superadmin" ? "Institute Code" : "Faculty/Staff ID"}</p>
-          <p className="text-sm font-medium">{userProfile?.role === "superadmin" ? userProfile?.instituteCode : userProfile?.id}</p>
+          <p className="text-sm text-gray-500">{userProfile?.role === "student" ? "Student ID" : userProfile?.role === "superadmin" ? "Institute Code" : "Faculty/Staff ID"}</p>
+          <p className="text-sm font-medium">{userProfile?.role === "student" ? userProfile?._id : userProfile?.role === "superadmin" ? userProfile?.instituteCode : userProfile?.id}</p>
         </div>
         <div className="space-y-2">
           <p className="text-sm text-gray-500">Name</p>
           <p className="text-sm font-medium">{userProfile?.name}</p>
         </div>
-        {userProfile?.role !== "superadmin" && (
-          <div className="space-y-2">
-            <p className="text-sm text-gray-500">Department</p>
-            <p className="text-sm font-medium">{userProfile?.role === "admin" ? userProfile?.name : userProfile?.department}</p>
-          </div>
-        )}
         <div className="space-y-2">
           <p className="text-sm text-gray-500">Email</p>
           <p className="text-sm font-medium">{userProfile?.email}</p>
         </div>
+        {userProfile?.role !== "superadmin" || userProfile?.role !=="admin" && (
+          <div className="space-y-2">
+            <p className="text-sm text-gray-500">Department</p>
+            <p className="text-sm font-medium">{userProfile?.department}</p>
+          </div>
+        )}
         <div className="space-y-2">
-          <p className="text-sm text-gray-500">Contact</p>
-          <p className="text-sm font-medium">{userProfile?.contact || 'Not provided'}</p>
+          <p className="text-sm text-gray-500">Phone Number</p>
+          <p className="text-sm font-medium">{userProfile?.phoneNo || userProfile?.contact || 'Not provided'}</p>
         </div>
-        <div className="space-y-2">
-          <p className="text-sm text-gray-500">Date of Birth</p>
-          <p className="text-sm font-medium">{userProfile?.dateOfBirth ? new Date(userProfile.dateOfBirth).toLocaleDateString() : 'Not provided'}</p>
-        </div>
+        {userProfile?.role !== "superadmin" || userProfile?.role !=="admin" && (
         <div className="space-y-2">
           <p className="text-sm text-gray-500">Gender</p>
           <p className="text-sm font-medium">{userProfile?.gender || 'Not provided'}</p>
         </div>
-        <div className="space-y-2">
-          <p className="text-sm text-gray-500">Designation</p>
-          <p className="text-sm font-medium">{userProfile?.designation || 'Not provided'}</p>
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm text-gray-500">Employment Type</p>
-          <p className="text-sm font-medium">{userProfile?.employmentType ? 
-            (userProfile.employmentType === 'teaching' ? 'Teaching' : 'Non-Teaching') : 
-            'Not provided'}</p>
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm text-gray-500">Date of Joining</p>
-          <p className="text-sm font-medium">{userProfile?.dateOfJoining ? new Date(userProfile.dateOfJoining).toLocaleDateString() : 'Not provided'}</p>
-        </div>
-        <div className="space-y-2 col-span-2">
-          <p className="text-sm text-gray-500">Address</p>
-          <p className="text-sm font-medium">{userProfile?.address || 'Not provided'}</p>
-        </div>
-
-        {(userProfile?.role === 'faculty' || userProfile?.role === 'admin') && userProfile?.education && (
-          <div className="col-span-2 mt-4 pt-4 border-t border-gray-200">
-            <h4 className="text-lg font-medium mb-3">Education</h4>
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <p className="text-sm text-gray-500">Highest Degree</p>
-                <p className="text-sm font-medium">{userProfile.education.highestDegree || 'Not provided'}</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm text-gray-500">Specialization</p>
-                <p className="text-sm font-medium">{userProfile.education.specialization || 'Not provided'}</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm text-gray-500">University</p>
-                <p className="text-sm font-medium">{userProfile.education.university || 'Not provided'}</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm text-gray-500">Year of Passing</p>
-                <p className="text-sm font-medium">{userProfile.education.yearOfPassing || 'Not provided'}</p>
-              </div>
-            </div>
-          </div>
         )}
-
+        {userProfile?.role !== "superadmin" || userProfile?.role !=="admin" && (
+        <div className="space-y-2">
+          <p className="text-sm text-gray-500">Date of Birth</p>
+          <p className="text-sm font-medium">
+            {userProfile?.dateOfBirth ? new Date(userProfile.dateOfBirth).toLocaleDateString() : 'Not provided'}
+          </p>
+        </div>
+        )}
         {(userProfile?.role === 'faculty' || userProfile?.role === 'admin' || userProfile?.role === 'superadmin') && (
-          <div className="col-span-2 mt-4 pt-4 border-t border-gray-200">
-            <h4 className="text-lg font-medium mb-3">Settings</h4>
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <p className="text-sm text-gray-500">Default Academic Year</p>
-                <p className="text-sm font-medium">{userProfile?.currentYear}</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm text-gray-500">Default Semester</p>
-                <p className="text-sm font-medium">{userProfile?.sem?.toUpperCase()}</p>
-              </div>
+          <>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-500">Default Academic Year</p>
+              <p className="text-sm font-medium">{userProfile?.currentYear}</p>
             </div>
-          </div>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-500">Default Semester</p>
+              <p className="text-sm font-medium">{userProfile?.sem?.toUpperCase()}</p>
+            </div>
+          </>
         )}
       </div>
     )
   }
 
-  const renderProfileContent = () => {
+  const renderRoleSpecificDetails = () => {
     if (isLoading) {
       return (
-        <div className="grid grid-cols-2 gap-4">
-          {Array(6).fill(null).map((_, index) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Array(4).fill(null).map((_, index) => (
             <div key={index} className="space-y-2">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-8 w-full" />
@@ -765,8 +524,324 @@ export default function ProfilePage() {
       )
     }
 
-    return userProfile?.role === 'student' ? renderStudentProfileContent() : renderFacultyProfileContent()
-  }
+    if (userProfile?.role === "student") {
+      if (isEditing) {
+        return (
+          <div className="space-y-6">
+            <h4 className="text-lg font-semibold">Academic Information</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                label="Roll Number"
+                name="rollNumber"
+                value={updatedProfile.rollNumber || ''}
+                onChange={handleInputChange}
+                variant="bordered"
+              />
+              <Input
+                label="Academic Year"
+                name="academicYear"
+                value={updatedProfile.academicYear || updatedProfile.currentYear || ''}
+                onChange={handleInputChange}
+                variant="bordered"
+              />
+              <Input
+                label="Admission Date"
+                name="admissionDate"
+                type="date"
+                value={updatedProfile.admissionDate ? new Date(updatedProfile.admissionDate).toISOString().split('T')[0] : ''}
+                onChange={handleInputChange}
+                variant="bordered"
+              />
+              <Select
+                label="Status"
+                name="status"
+                selectedKeys={[updatedProfile.status || 'active']}
+                onChange={(e) => handleInputChange({target: {name: "status", value: e.target.value}})}
+                variant="bordered"
+              >
+                <SelectItem key="active">Active</SelectItem>
+                <SelectItem key="suspended">Suspended</SelectItem>
+                <SelectItem key="alumni">Alumni</SelectItem>
+              </Select>
+            </div>
+            
+            <Divider className="my-6" />
+            
+            <h4 className="text-lg font-semibold">Parent/Guardian Information</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                label="Parent/Guardian Name"
+                name="parentName"
+                value={updatedProfile.parentName || ''}
+                onChange={handleInputChange}
+                variant="bordered"
+              />
+              <Input
+                label="Contact Number"
+                name="parentContact"
+                value={updatedProfile.parentContact || ''}
+                onChange={handleInputChange}
+                variant="bordered"
+              />
+              <Input
+                label="Email"
+                name="parentEmail"
+                type="email"
+                value={updatedProfile.parentEmail || ''}
+                onChange={handleInputChange}
+                variant="bordered"
+              />
+              <Input
+                label="Occupation"
+                name="parentOccupation"
+                value={updatedProfile.parentOccupation || ''}
+                onChange={handleInputChange}
+                variant="bordered"
+              />
+              <Select
+                label="Relation"
+                name="parentRelation"
+                selectedKeys={[updatedProfile.parentRelation || '']}
+                onChange={(e) => handleInputChange({target: {name: "parentRelation", value: e.target.value}})}
+                variant="bordered"
+              >
+                <SelectItem key="Father">Father</SelectItem>
+                <SelectItem key="Mother">Mother</SelectItem>
+                <SelectItem key="Guardian">Guardian</SelectItem>
+                <SelectItem key="Other">Other</SelectItem>
+              </Select>
+            </div>
+          </div>
+        )
+      }
+
+      return (
+        <div className="space-y-6">
+          <div>
+            <h4 className="text-lg font-semibold text-gray-700 mb-4">Academic Information</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-lg">
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">Roll Number</p>
+                <p className="text-sm font-medium">{userProfile.rollNumber || userProfile.academicDetails?.rollNumber || 'Not available'}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">Academic Year</p>
+                <p className="text-sm font-medium">{userProfile.academicYear || userProfile.academicDetails?.academicYear || userProfile.currentYear || 'Not available'}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">Admission Date</p>
+                <p className="text-sm font-medium">
+                  {userProfile.admissionDate || userProfile.admission?.admissionDate ? 
+                    new Date(userProfile.admissionDate || userProfile.admission?.admissionDate).toLocaleDateString() : 
+                    'Not available'}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">Status</p>
+                <Chip 
+                  color={userProfile.status === 'active' || userProfile.admission?.status === 'active' ? 'success' : 
+                        userProfile.status === 'suspended' || userProfile.admission?.status === 'suspended' ? 'warning' : 'default'} 
+                  variant="flat"
+                  size="sm"
+                >
+                  {(userProfile.status || userProfile.admission?.status || 'Active').charAt(0).toUpperCase() + 
+                   (userProfile.status || userProfile.admission?.status || 'Active').slice(1)}
+                </Chip>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <h4 className="text-lg font-semibold text-gray-700 mb-4">Parent/Guardian Information</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-lg">
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">Name</p>
+                <p className="text-sm font-medium">{userProfile.parentName || userProfile.parents?.name || 'Not provided'}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">Relation</p>
+                <p className="text-sm font-medium">{userProfile.parentRelation || userProfile.parents?.relation || 'Not specified'}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">Contact</p>
+                <p className="text-sm font-medium">{userProfile.parentContact || userProfile.parents?.contact || 'Not provided'}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">Email</p>
+                <p className="text-sm font-medium">{userProfile.parentEmail || userProfile.parents?.email || 'Not provided'}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">Occupation</p>
+                <p className="text-sm font-medium">{userProfile.parentOccupation || userProfile.parents?.occupation || 'Not provided'}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    } else if (userProfile?.role === "faculty") {
+      if (isEditing) {
+        return (
+          <div className="space-y-6">
+            <h4 className="text-lg font-semibold">Professional Information</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                label="Address"
+                name="address"
+                value={updatedProfile.address || ''}
+                onChange={handleInputChange}
+                variant="bordered"
+                startContent={<MapPinIcon className="h-4 w-4 text-gray-500" />}
+              />
+              <Input
+                label="Designation"
+                name="designation"
+                value={updatedProfile.designation || ''}
+                onChange={handleInputChange}
+                variant="bordered"
+                startContent={<BriefcaseIcon className="h-4 w-4 text-gray-500" />}
+              />
+              <Select
+                label="Employment Type"
+                name="employmentType"
+                selectedKeys={[updatedProfile.employmentType || 'teaching']}
+                onChange={(e) => handleInputChange({target: {name: "employmentType", value: e.target.value}})}
+                variant="bordered"
+                startContent={<BuildingIcon className="h-4 w-4 text-gray-500" />}
+              >
+                <SelectItem key="teaching">Teaching</SelectItem>
+                <SelectItem key="non-teaching">Non-Teaching</SelectItem>
+              </Select>
+              <Input
+                label="Date of Joining"
+                name="dateOfJoining"
+                type="date"
+                value={updatedProfile.dateOfJoining ? new Date(updatedProfile.dateOfJoining).toISOString().split('T')[0] : ''}
+                onChange={handleInputChange}
+                variant="bordered"
+                startContent={<CalendarIcon className="h-4 w-4 text-gray-500" />}
+              />
+            </div>
+            
+            <Divider className="my-6" />
+            
+            <h4 className="text-lg font-semibold">Educational Background</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                label="Highest Degree"
+                name="highestDegree"
+                value={updatedProfile.highestDegree || ''}
+                onChange={handleInputChange}
+                variant="bordered"
+                startContent={<GraduationCapIcon className="h-4 w-4 text-gray-500" />}
+              />
+              <Input
+                label="Specialization"
+                name="specialization"
+                value={updatedProfile.specialization || ''}
+                onChange={handleInputChange}
+                variant="bordered"
+                startContent={<BookIcon className="h-4 w-4 text-gray-500" />}
+              />
+              <Input
+                label="University"
+                name="university"
+                value={updatedProfile.university || ''}
+                onChange={handleInputChange}
+                variant="bordered"
+                startContent={<BuildingIcon className="h-4 w-4 text-gray-500" />}
+              />
+              <Input
+                label="Year of Passing"
+                name="yearOfPassing"
+                type="number"
+                value={updatedProfile.yearOfPassing || ''}
+                onChange={handleInputChange}
+                variant="bordered"
+                startContent={<CalendarIcon className="h-4 w-4 text-gray-500" />}
+              />
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="space-y-6">
+          <div>
+            <h4 className="text-lg font-semibold text-gray-700 mb-4">Professional Information</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-lg">
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500 flex items-center">
+                  <BriefcaseIcon className="h-4 w-4 mr-2" /> Designation
+                </p>
+                <p className="text-sm font-medium">{userProfile.designation || 'Not specified'}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500 flex items-center">
+                  <BuildingIcon className="h-4 w-4 mr-2" /> Employment Type
+                </p>
+                <Chip 
+                  color={userProfile.employmentType === 'teaching' ? 'primary' : 'secondary'} 
+                  variant="flat"
+                  size="sm"
+                >
+                  {userProfile.employmentType ? 
+                    (userProfile.employmentType.charAt(0).toUpperCase() + userProfile.employmentType.slice(1)) : 
+                    'Teaching'}
+                </Chip>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500 flex items-center">
+                  <CalendarIcon className="h-4 w-4 mr-2" /> Date of Joining
+                </p>
+                <p className="text-sm font-medium">
+                  {userProfile.dateOfJoining ? 
+                    new Date(userProfile.dateOfJoining).toLocaleDateString() : 
+                    'Not available'}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500 flex items-center">
+                  <MapPinIcon className="h-4 w-4 mr-2" /> Address
+                </p>
+                <p className="text-sm font-medium">{userProfile.address || 'Not provided'}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <h4 className="text-lg font-semibold text-gray-700 mb-4">Educational Background</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-lg">
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500 flex items-center">
+                  <GraduationCapIcon className="h-4 w-4 mr-2" /> Highest Degree
+                </p>
+                <p className="text-sm font-medium">{userProfile.highestDegree || 'Not provided'}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500 flex items-center">
+                  <BookIcon className="h-4 w-4 mr-2" /> Specialization
+                </p>
+                <p className="text-sm font-medium">{userProfile.specialization || 'Not specified'}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500 flex items-center">
+                  <BuildingIcon className="h-4 w-4 mr-2" /> University
+                </p>
+                <p className="text-sm font-medium">{userProfile.university || 'Not provided'}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500 flex items-center">
+                  <CalendarIcon className="h-4 w-4 mr-2" /> Year of Passing
+                </p>
+                <p className="text-sm font-medium">{userProfile.yearOfPassing || 'Not provided'}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   const renderAdditionalInfo = () => {
     if (isLoading) {
@@ -780,133 +855,129 @@ export default function ProfilePage() {
                 <Skeleton className="h-3 w-24" />
               </div>
             </div>
-            ))}
-            </div>
-          )
-        }
-    
-        if (!userProfile) return null
-    
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center space-x-4">
-              <div className={`rounded-full p-3 ${roleBackgroundColor[userProfile.role]}`}>
-                <UserIcon className="h-5 w-5" />
-              </div>
-              <div>
-                <h4 className="text-lg font-medium">{userProfile.role === 'student' ? userProfile.personalDetails?.name : userProfile.name}</h4>
-                <p className={`text-sm ${roleColor[userProfile.role]}`}>
-                  {userProfile.role.charAt(0).toUpperCase() + userProfile.role.slice(1)}
-                </p>
-              </div>
-            </div>
-    
-            <div className="flex items-center space-x-4">
-              <div className="rounded-full p-3 bg-blue-50">
-                <FaEnvelope className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <h4 className="text-lg font-medium">Email</h4>
-                <p className="text-sm text-gray-600">
-                  {userProfile.role === 'student' ? userProfile.personalDetails?.email : userProfile.email}
-                </p>
-              </div>
-            </div>
-    
-            <div className="flex items-center space-x-4">
-              <div className="rounded-full p-3 bg-green-50">
-                <PhoneIcon className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <h4 className="text-lg font-medium">Phone</h4>
-                <p className="text-sm text-gray-600">
-                  {userProfile.role === 'student' ? userProfile.personalDetails?.phoneNo : userProfile.contact}
-                </p>
-              </div>
-            </div>
-          </div>
-        )
-      }
-    
-      const renderTabContent = () => {
-        switch (activeTab) {
-          case 'details':
-            return renderProfileContent()
-          case 'info':
-            return renderAdditionalInfo()
-          default:
-            return renderProfileContent()
-        }
-      }
-    
-      return (
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white shadow rounded-lg overflow-hidden">
-            <div className="md:flex">
-              {/* Left Side - Avatar and Quick Info */}
-              <div className="bg-gray-50 p-6 md:w-1/3">
-                <div className="flex flex-col items-center text-center">
-                  <div className="relative mb-4">
-                    <Avatar 
-                      className="w-32 h-32 text-large"
-                      showFallback
-                      name={userProfile?.role === 'student' ? userProfile?.personalDetails?.name?.charAt(0) : userProfile?.name?.charAt(0)} 
-                    />
-                  </div>
-                  
-                  {userProfile && (
-                    <div className="mt-2 space-y-1">
-                      <h3 className="text-xl font-semibold">
-                        {userProfile.role === 'student' 
-                          ? userProfile.personalDetails?.name 
-                          : userProfile.name}
-                      </h3>
-                      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${roleBackgroundColor[userProfile.role]} ${roleColor[userProfile.role]}`}>
-                        {userProfile.role.charAt(0).toUpperCase() + userProfile.role.slice(1)}
-                      </div>
-                      <p className="text-sm text-gray-500">
-                        {userProfile.role === 'student' 
-                          ? userProfile.academicDetails?.department 
-                          : userProfile.role === 'superadmin' 
-                            ? 'Institute Administrator' 
-                            : userProfile.department}
-                      </p>
-                    </div>
-                  )}
-    
-                  <div className="mt-6 w-full">
-                    <Tabs 
-                      selectedKey={activeTab}
-                      onSelectionChange={setActiveTab}
-                      className="w-full"
-                      variant="underlined"
-                    >
-                      <Tab key="details" title="Details" />
-                      <Tab key="info" title="Info" />
-                    </Tabs>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Right Side - Profile Details */}
-              <div className="p-6 md:w-2/3">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold">Profile</h2>
-                  <Button
-                    color={isEditing ? "danger" : "primary"}
-                    variant="flat"
-                    onClick={() => setIsEditing(!isEditing)}
-                    startContent={isEditing ? <XIcon className="h-4 w-4" /> : <PencilIcon className="h-4 w-4" />}
-                  >
-                    {isEditing ? "Cancel" : "Edit Profile"}
-                  </Button>
-                </div>
-                
-                {renderTabContent()}
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
-      )
+      );
     }
-    
+
+    return (
+      <div className="space-y-6">
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">Account Details</h3>
+          <ul className="space-y-3">
+            <li className="flex items-center space-x-3">
+              <UserIcon className="h-5 w-5 text-gray-500" />
+              <div>
+                <p className="text-sm text-gray-600">Last Profile Updated</p>
+                <p className="text-xs text-gray-500">{formatDate(userProfile?.updatedAt)}</p>
+              </div>
+            </li>
+            <li className="flex items-center space-x-3">
+              <CalendarIcon className="h-5 w-5 text-gray-500" />
+              <div>
+                <p className="text-sm text-gray-600">Profile Created</p>
+                <p className="text-xs text-gray-500">{formatDate(userProfile?.createdAt)}</p>
+              </div>
+            </li>
+            <li className="flex items-center space-x-3">
+              <MailIcon className="h-5 w-5 text-gray-500" />
+              <div>
+                <p className="text-sm text-gray-600">Email Status</p>
+                <Chip 
+                  color="success" 
+                  size="sm" 
+                  variant="dot"
+                >
+                  Verified
+                </Chip>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className={`flex justify-center items-center min-h-screen ${roleBackgroundColor[userProfile?.role]}`}>
+      <Card className="w-[70vw] h-[60]">
+        <CardHeader className="flex justify-between items-center p-6">
+          <div className="flex items-center space-x-4">
+            {isLoading ? (
+              <Skeleton className="rounded-full w-16 h-16" />
+            ) : (
+              <Avatar 
+                src="/avatar.svg" 
+                name={userProfile?.name} 
+                className="w-16 h-16 text-large"
+              />
+            )}
+            <div className="space-y-2">
+              {isLoading ? (
+                <>
+                  <Skeleton className="h-6 w-[250px]" />
+                  <Skeleton className="h-4 w-[200px]" />
+                </>
+              ) : (
+                <>
+                  <h4 className="text-2xl font-bold">{userProfile?.name}</h4>
+                  <div className="flex items-center space-x-2">
+                    <Chip 
+                      color={roleChipColor[userProfile?.role]}
+                      variant="flat"
+                      size="sm"
+                    >
+                      {userProfile?.role.charAt(0).toUpperCase() + userProfile?.role.slice(1)}
+                    </Chip>
+                    {userProfile?.institute && (
+                      <span className="text-sm text-gray-500 flex items-center">
+                        <BookOpenIcon className="h-4 w-4 mr-1" />
+                        {userProfile.institute.name}
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+          {!isLoading && (
+            <Button 
+              isIconOnly 
+              variant="light" 
+              onPress={() => setIsEditing(!isEditing)}
+              className="hover:bg-gray-100 rounded-full"
+            >
+              {isEditing ? <XIcon className="h-5 w-5 text-gray-600" /> : <PencilIcon className="h-5 w-5 text-gray-600" />}
+            </Button>
+          )}
+        </CardHeader>
+        <CardBody>
+          <Tabs 
+            aria-label="Profile tabs" 
+            variant="underlined"
+            selectedKey={activeTab}
+            onSelectionChange={setActiveTab}
+          >
+            <Tab key="details" title="Basic Details">
+              <div className="mt-4 space-y-6">
+                {renderProfileBasicDetails()}
+              </div>
+            </Tab>
+            {(userProfile?.role === 'student' || userProfile?.role === 'faculty') && (
+              <Tab key="role-specific" title={userProfile?.role === 'student' ? 'Academic Details' : 'Professional Details'}>
+                <div className="mt-4">
+                  {renderRoleSpecificDetails()}
+                </div>
+              </Tab>
+            )}
+            <Tab key="info" title="Additional Information">
+              <div className="mt-4">
+                {renderAdditionalInfo()}
+              </div>
+            </Tab>
+          </Tabs>
+        </CardBody>
+      </Card>
+    </div>
+  );
+}

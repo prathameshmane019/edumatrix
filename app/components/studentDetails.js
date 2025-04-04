@@ -231,7 +231,7 @@ export default function StudentDetail({ params }) {
               </div>
               <div className="flex items-center gap-2">
                 <FaGraduationCap className="text-violet-500" />
-                <span>{student.academicDetails?.class?.name || 'N/A'}</span>
+                <span>{student.academicDetails?.class?.id || 'N/A'}</span>
               </div>
               <div className="flex items-center gap-2">
                 <FaCalendarAlt className="text-violet-500" />
@@ -326,7 +326,7 @@ export default function StudentDetail({ params }) {
                 />
                 <InfoCard 
                   title="Class" 
-                  value={student.academicDetails?.class?.name} 
+                  value={student.academicDetails?.class?.id} 
                   icon={<FaUsers className="text-primary" />}
                 />
                 <InfoCard 
@@ -341,7 +341,7 @@ export default function StudentDetail({ params }) {
                 />
                 <InfoCard 
                   title="Duration" 
-                  value={getEnrollmentDuration(student.academicDetails?.academicYear)} 
+                  value={getEnrollmentDuration(student.admission?.admissionDate)} 
                   icon={<FaUserGraduate className="text-primary" />}
                 />
               </div>
@@ -361,7 +361,7 @@ export default function StudentDetail({ params }) {
                   icon={<FaCalendarAlt className="text-primary" />}
                 />
                 <div className="col-span-1">
-                  <div className="bg-violet-50 dark:bg-violet-200 rounded-lg p-4">
+                  <div className="bg-violet-50 dark:bg-violet-50 rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-1">
                       <FaUserCheck className="text-primary" />
                       <h3 className="text-sm font-medium text-gray-500">Status</h3>
