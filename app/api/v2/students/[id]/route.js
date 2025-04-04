@@ -5,23 +5,23 @@ import mongoose from "mongoose";
 
 export async function GET(request, { params }) {
   try {
-    await connectMongoDB();
-    
+    await connectMongoDB(); 
     const id = params.id;
     
+    console.log("Fetching Student with ID:", id);
     // First try to find by custom id field
-    let student = await Student.findOne({ id: id })
-      .populate('department', 'name')
-      .populate('class', 'name')
-      .populate('institute', 'name address university')
+    let student = await Student.findOne({ _id: id })
+      .populate('academicDetails.department')
+      .populate('academicDetails.class')
+      .populate('academicDetails.institute', 'name address university')
       .lean();
     
     // If not found, try to find by MongoDB _id (if valid ObjectId format)
     if (!student && mongoose.Types.ObjectId.isValid(id)) {
       student = await Student.findById(id)
-        .populate('department', 'name')
-        .populate('class', 'name')
-        .populate('institute', 'name address university')
+        .populate('academicDetails.department')
+        .populate('academicDetails.class')
+        .populate('academicDetails.institute', 'name address university')
         .lean();
     }
     
@@ -33,7 +33,7 @@ export async function GET(request, { params }) {
     }
     
     console.log("Fetched Student Successfully", student);
-    return NextResponse.json(student, { status: 200 });
+    return NextResponse.json({ student }, { status: 200 });
   } catch (error) {
     console.error('Error fetching student:', error);
     return NextResponse.json(

@@ -125,7 +125,7 @@ export default function FacultyTable() {
     }
   };
   const handleRowClick = (facultyMember) => {
-    router.push(`/faculty_management/admin/${facultyMember._id}`);
+    router.push(`/faculty_management/admin/manage/${facultyMember._id}`);
   };
   
 

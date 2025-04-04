@@ -432,7 +432,7 @@ export default function StudentTable() {
                 className="text-lg text-default-400 cursor-pointer active:opacity-50"
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent row click event
-                  router.push(`/dashboard/students/${student._id}`);
+                  router.push(`/student_management/admin/manage/${student._id}`);
                 }}
               >
                 <Button size="sm" variant="light">View</Button>
@@ -701,7 +701,7 @@ export default function StudentTable() {
     <TableRow 
       key={item._id}
       className="cursor-pointer hover:bg-gray-50"
-      onClick={() => router.push(`/dashboard/students/${item._id}`)}
+      onClick={() => router.push(`/student_management/admin/manage/${item._id}`)}
     >
       {headerColumns.map((column) => (
         <TableCell key={column.uid}>
