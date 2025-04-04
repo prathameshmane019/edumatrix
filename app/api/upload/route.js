@@ -13,51 +13,79 @@ export async function POST(req) {
         const { students, class: classRef, department, institute } = data;
         console.log("Original data:", data);
 
-        // Validate that department is provided
+        // Validate required fields
+        if (!classRef) {
+            return NextResponse.json({
+                error: "Class reference is required"
+            }, { status: 400 });
+        }
         if (!department) {
             return NextResponse.json({
                 error: "Department is required for student registration"
             }, { status: 400 });
         }
-
-        // Validate that all students have the same department
-        const uniqueDepartments = new Set(students.map(student => student.department));
-        if (uniqueDepartments.size > 1) {
+        if (!institute) {
             return NextResponse.json({
-                error: "All students must belong to the same department"
+                error: "Institute is required for student registration"
+            }, { status: 400 });
+        }
+        if (!students || !Array.isArray(students) || students.length === 0) {
+            return NextResponse.json({
+                error: "No student data provided or invalid format"
             }, { status: 400 });
         }
 
-        if (!students || students.length === 0) {
-            throw new Error("No student data provided");
-        }
-
-        // Ensure each student has the correct department
-        const processedStudents = students.map(student => ({
-            ...student,
-            name: student.name.trim(),
-            email: student.email.trim().toLowerCase(),
-            class: classRef,
-            institute: institute,
-            department: department, // Override with the provided department
-            ...Object.fromEntries(
-                Object.entries(student)
-                    .filter(([key]) => key !== 'name' && key !== 'email' && key !== 'class' && key !== 'department')
-                    .map(([key, value]) => [key, typeof value === 'string' ? value.trim() : value])
-            )
-        }));
-
-        console.log("Processed data:", processedStudents);
-
+        // Start a transaction
         session = await mongoose.startSession();
         session.startTransaction();
 
+        // Process students to match StudentSchema
+        const processedStudents = students.map(student => ({
+            _id: student._id || undefined, // Allow custom _id or auto-generate
+            personalDetails: {
+                name: student.personalDetails?.name?.trim(),
+                email: student.personalDetails?.email?.trim().toLowerCase(),
+                phoneNo: student.personalDetails?.phoneNo?.trim(),
+                dateOfBirth: student.personalDetails?.dateOfBirth ? new Date(student.personalDetails.dateOfBirth) : undefined,
+                gender: student.personalDetails?.gender
+            },
+            academicDetails: {
+                rollNumber: student.academicDetails?.rollNumber?.trim(),
+                admissionDate: student.academicDetails?.admissionDate ? new Date(student.academicDetails.admissionDate) : new Date(),
+                department: department, // Use provided department
+                class: classRef, // Use provided class reference
+                institute: institute // Use provided institute
+            },
+            admission: {
+                admissionNumber: student.admission?.admissionNumber?.trim(),
+                admissionDate: student.admission?.admissionDate ? new Date(student.admission.admissionDate) : new Date(),
+                categoryType: student.admission?.categoryType || 'merit',
+                status: student.admission?.status || 'active'
+            },
+            parents: {
+                name: student.parents?.name?.trim(),
+                contact: student.parents?.contact?.trim(),
+                email: student.parents?.email?.trim().toLowerCase(),
+                occupation: student.parents?.occupation?.trim(),
+                relation: student.parents?.relation
+            }
+        }));
+
+        // Validate required fields for each student
+        for (const student of processedStudents) {
+            if (!student.personalDetails.name) throw new Error("Name is required for all students");
+            if (!student.academicDetails.rollNumber) throw new Error("Roll number is required for all students");
+        }
+
+        console.log("Processed students:", processedStudents);
+
+        // Insert students
         const createdStudents = await Student.insertMany(processedStudents, { session });
 
-        // Get the created student MongoDB _id
+        // Get student IDs
         const studentObjectIds = createdStudents.map(student => student._id);
 
-        // Update the class to add student references
+        // Update class with student references
         const updatedClass = await Classes.findOneAndUpdate(
             { _id: classRef },
             { $addToSet: { students: { $each: studentObjectIds } } },
@@ -72,13 +100,11 @@ export async function POST(req) {
         session.endSession();
 
         console.log("Students Registered Successfully");
-        console.log(createdStudents);
         return NextResponse.json({
             message: "Students Registered Successfully",
             students: createdStudents
         }, { status: 201 });
     } catch (error) {
-
         console.error("Error creating students:", error);
 
         if (session) {
@@ -86,23 +112,19 @@ export async function POST(req) {
             session.endSession();
         }
 
-
         if (error.code === 11000) {
-            console.log("Duplicate field occured");
-            // const duplicateField = Object.keys(error.keyPattern)[0];
-            // const duplicateValue = error.keyValue[duplicateField];
+            const duplicateField = Object.keys(error.keyPattern)[0];
+            const duplicateValue = error.keyValue[duplicateField];
             return NextResponse.json({
-                error: `Duplicate students`
+                error: `Duplicate ${duplicateField}: ${duplicateValue}`
             }, { status: 400 });
-        } else if (error.validationErrors) {
-            // Validation error
+        } else if (error.name === "ValidationError") {
             const validationErrors = Object.values(error.errors).map(err => err.message);
             return NextResponse.json({
                 error: "Validation failed",
                 details: validationErrors
             }, { status: 400 });
         } else {
-            // Generic error
             return NextResponse.json({
                 error: "Failed to Register Students",
                 details: error.message

@@ -44,7 +44,7 @@ import { toast } from "sonner";
 // Helper component for displaying information in a consistent format
 function InfoCard({ title, value, icon, fullWidth = false }) {
   return (
-    <div className={`bg-violet-50 dark:bg-violet-200 rounded-lg p-4 ${fullWidth ? "col-span-full" : ""}`}>
+    <div className={`bg-violet-50 dark:bg-violet-50 rounded-lg p-4 ${fullWidth ? "col-span-full" : ""}`}>
       <div className="flex items-center gap-2 mb-1">
         {icon}
         <h3 className="text-sm font-medium text-violet-500">{title}</h3>
