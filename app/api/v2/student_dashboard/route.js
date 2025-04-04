@@ -16,22 +16,27 @@ export async function GET(req) {
       return NextResponse.json({ error: "Institute ID is required" }, { status: 400 });
     }
 
+    // Base filter - always filter by institute
     const filter = { "academicDetails.institute": new mongoose.Types.ObjectId(instituteId) };
 
-    if (userRole !== "superadmin" && department && department !== "all") {
-      filter["academicDetails.department"] = department;
-    } else if (userRole === "superadmin" && department && department !== "all") {
+    // Handle department filtering based on role
+    if (department && department !== "all") {
       filter["academicDetails.department"] = department;
     }
 
+    // Apply academic year filter if provided
     if (academicYear) {
       const [startYear] = academicYear.split("-");
+      const startDate = new Date(`${startYear}-04-01`);
+      const endDate = new Date(`${parseInt(startYear) + 1}-03-31`);
+      
       filter["admission.admissionDate"] = {
-        $gte: new Date(`${startYear}-04-01`),
-        $lte: new Date(`${parseInt(startYear) + 1}-03-31`),
+        $gte: startDate,
+        $lte: endDate,
       };
     }
 
+    // Get metrics based on filter and role
     const dashboardData = await getStudentDashboardMetrics(filter, userRole);
 
     return NextResponse.json(dashboardData, { status: 200 });
@@ -42,15 +47,17 @@ export async function GET(req) {
 }
 
 async function getStudentDashboardMetrics(filter, userRole) {
+  // Get all student data based on filters
   const students = await Student.find(filter)
     .select("personalDetails academicDetails admission parents")
+    .populate("academicDetails.class", "name")
     .lean();
 
   // Key Metrics
   const totalStudents = students.length;
-  const activeStudents = students.filter((s) => s.admission.status === "active").length;
-  const suspendedStudents = students.filter((s) => s.admission.status === "suspended").length;
-  const alumniStudents = students.filter((s) => s.admission.status === "alumni").length;
+  const activeStudents = students.filter((s) => s.admission?.status === "active").length;
+  const suspendedStudents = students.filter((s) => s.admission?.status === "suspended").length;
+  const alumniStudents = students.filter((s) => s.admission?.status === "alumni").length;
 
   // Status Distribution
   const statusDist = {
@@ -63,23 +70,33 @@ async function getStudentDashboardMetrics(filter, userRole) {
     count,
   }));
 
-  // Department Distribution (superadmin only when no department filter)
+  // Department Distribution (only for superadmin)
   let departmentDistribution = [];
   if (userRole === "superadmin" && !filter["academicDetails.department"]) {
     const deptCounts = students.reduce((acc, s) => {
-      const dept = s.academicDetails.department || "Unknown";
+      const dept = s.academicDetails?.department || "Unknown";
       acc[dept] = (acc[dept] || 0) + 1;
       return acc;
     }, {});
-    departmentDistribution = Object.entries(deptCounts).map(([dept, count]) => ({
-      department: dept,
-      count,
-    }));
+    departmentDistribution = Object.entries(deptCounts)
+      .map(([dept, count]) => ({ department: dept, count }))
+      .sort((a, b) => b.count - a.count); // Sort by count in descending order
   }
+
+  // Class Distribution - New
+  const classCounts = students.reduce((acc, s) => {
+    const className = s.academicDetails?.class?.name || "Unassigned";
+    acc[className] = (acc[className] || 0) + 1;
+    return acc;
+  }, {});
+  
+  const classDistribution = Object.entries(classCounts)
+    .map(([className, count]) => ({ className, count }))
+    .sort((a, b) => b.count - a.count);
 
   // Gender Distribution
   const genderDist = students.reduce((acc, s) => {
-    const gender = s.personalDetails.gender || "Unknown";
+    const gender = s.personalDetails?.gender || "Unknown";
     acc[gender] = (acc[gender] || 0) + 1;
     return acc;
   }, {});
@@ -90,25 +107,51 @@ async function getStudentDashboardMetrics(filter, userRole) {
 
   // Admission Category Distribution
   const categoryDist = students.reduce((acc, s) => {
-    const category = s.admission.categoryType || "Unknown";
+    const category = s.admission?.categoryType || "Unknown";
     acc[category] = (acc[category] || 0) + 1;
     return acc;
   }, {});
-  const categoryDistribution = Object.entries(categoryDist).map(([category, count]) => ({
-    category,
-    count,
-  }));
+  const categoryDistribution = Object.entries(categoryDist)
+    .map(([category, count]) => ({
+      category: category.charAt(0).toUpperCase() + category.slice(1), // Capitalize
+      count,
+    }))
+    .sort((a, b) => b.count - a.count);
 
-  // Average Age (based on dateOfBirth)
+  // Monthly Admissions Trend (for current academic year)
+  const admissionTrend = students.reduce((acc, s) => {
+    if (s.admission?.admissionDate) {
+      const date = new Date(s.admission.admissionDate);
+      const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+      acc[monthYear] = (acc[monthYear] || 0) + 1;
+    }
+    return acc;
+  }, {});
+  
+  const monthlyAdmissions = Object.entries(admissionTrend)
+    .map(([month, count]) => ({ month, count }))
+    .sort((a, b) => {
+      const [aMonth, aYear] = a.month.split('/').map(Number);
+      const [bMonth, bYear] = b.month.split('/').map(Number);
+      return (aYear - bYear) || (aMonth - bMonth);
+    });
+
+  // Average Age
   const currentYear = new Date().getFullYear();
   const ageData = students
-    .filter((s) => s.personalDetails.dateOfBirth)
-    .map((s) => ({
-      name: s.personalDetails.name,
-      age: currentYear - new Date(s.personalDetails.dateOfBirth).getFullYear(),
-    }));
-  const avgAge =
-    ageData.length > 0 ? Math.round(ageData.reduce((sum, s) => sum + s.age, 0) / ageData.length) : 0;
+    .filter((s) => s.personalDetails?.dateOfBirth)
+    .map((s) => {
+      const birthDate = new Date(s.personalDetails.dateOfBirth);
+      const age = currentYear - birthDate.getFullYear();
+      return {
+        name: s.personalDetails.name,
+        age,
+      };
+    });
+    
+  const avgAge = ageData.length > 0 
+    ? Math.round(ageData.reduce((sum, s) => sum + s.age, 0) / ageData.length) 
+    : 0;
 
   return {
     totalStudents,
@@ -117,8 +160,10 @@ async function getStudentDashboardMetrics(filter, userRole) {
     alumniStudents,
     statusDistribution,
     departmentDistribution,
+    classDistribution,      // New: Class-wise distribution
     genderDistribution,
     categoryDistribution,
+    monthlyAdmissions,      // New: Monthly admission trend
     avgAge,
   };
 }

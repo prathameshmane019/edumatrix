@@ -114,15 +114,12 @@ const Sidebar = () => {
     attendance: {
       options: {
         admin: [
-          { name: "Profile", href: "/attendance/admin", icon: MdPortrait },
-          { name: "Manage Class", href: "/attendance/admin/classes", icon: SiGoogleclassroom },
-          { name: "Manage Subjects", href: "/attendance/admin/subjects", icon: SiGoogleclassroom },
+          { name: "Profile", href: "/attendance/admin", icon: MdPortrait },  
           { name: "View Reports", href: "/attendance/admin/reports", icon: AiOutlineSchedule },
           { name: "Daily Absents", href: "/attendance/admin/absent-students", icon: RiCalendarScheduleLine },
         ],
         superadmin: [
-          { name: "Profile", href: "/attendance/admin", icon: MdPortrait },
-          { name: "Manage Class", href: "/attendance/admin/classes", icon: SiGoogleclassroom },
+          { name: "Profile", href: "/attendance/admin", icon: MdPortrait }, 
           { name: "View Reports", href: "/attendance/admin/reports", icon: AiOutlineSchedule },
         ],
         faculty: [
