@@ -5,6 +5,7 @@ import { ChevronDownIcon } from "@/public/ChevronDownIcon";
 import { departmentOptions } from "../utils/department";
 import { toast } from 'sonner';
 import { FaFileDownload, FaFileUpload } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 
 import {
   Table,
@@ -69,6 +70,7 @@ import { ClassDropdown } from "./Class/ClassDropdown";
 const INITIAL_VISIBLE_COLUMNS = ["_id", "rollNumber", "name", "year", "department", "status", "admissionNumber", "actions"];
 
 export default function StudentTable() {
+  const router = useRouter();
   const [filterValue, setFilterValue] = useState("");
   const [visibleColumns, setVisibleColumns] = useState(new Set(INITIAL_VISIBLE_COLUMNS));
   const [rowsPerPage, setRowsPerPage] = useState(15);
@@ -404,7 +406,8 @@ export default function StudentTable() {
             <Tooltip content="Edit">
               <span
                 className="text-lg text-default-400 cursor-pointer active:opacity-50"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent row click event
                   setModalMode("edit");
                   setSelectedStudent(student);
                   setModalOpen(true);
@@ -416,9 +419,23 @@ export default function StudentTable() {
             <Tooltip color="danger" content="Delete">
               <span
                 className="text-lg text-default-400 cursor-pointer active:opacity-50"
-                onClick={() => deleteStudent(student._id)}
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent row click event
+                  deleteStudent(student._id);
+                }}
               >
                 <DeleteIcon />
+              </span>
+            </Tooltip>
+            <Tooltip content="View Details">
+              <span
+                className="text-lg text-default-400 cursor-pointer active:opacity-50"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent row click event
+                  router.push(`/dashboard/students/${student._id}`);
+                }}
+              >
+                <Button size="sm" variant="light">View</Button>
               </span>
             </Tooltip>
           </div>
@@ -665,31 +682,35 @@ export default function StudentTable() {
           )}
         </TableHeader>
         <TableBody
-          isLoading={isLoading}
-          loadingContent={<Spinner label="Please wait... fetching Data" />}
-          emptyContent={
-            <div className="flex flex-col items-center justify-center">
-              <Image
-                src="/student.svg"
-                alt="No students found"
-                width={850}
-                height={850}
-              />
-              <p>No students found</p>
-            </div>
-          }
-          items={items}
-        >
-          {(item) => (
-            <TableRow key={item._id}>
-              {headerColumns.map((column) => (
-                <TableCell key={column.uid}>
-                  {renderCell(item, column.uid)}
-                </TableCell>
-              ))}
-            </TableRow>
-          )}
-        </TableBody>
+  isLoading={isLoading}
+  loadingContent={<Spinner label="Please wait... fetching Data" />}
+  emptyContent={
+    <div className="flex flex-col items-center justify-center">
+      <Image
+        src="/student.svg"
+        alt="No students found"
+        width={850}
+        height={850}
+      />
+      <p>No students found</p>
+    </div>
+  }
+  items={items}
+>
+  {(item) => (
+    <TableRow 
+      key={item._id}
+      className="cursor-pointer hover:bg-gray-50"
+      onClick={() => router.push(`/dashboard/students/${item._id}`)}
+    >
+      {headerColumns.map((column) => (
+        <TableCell key={column.uid}>
+          {renderCell(item, column.uid)}
+        </TableCell>
+      ))}
+    </TableRow>
+  )}
+</TableBody>
       </Table>
       <div className="mt-4 flex justify-between items-center">
         <Pagination
