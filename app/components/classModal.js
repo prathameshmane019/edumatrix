@@ -78,7 +78,9 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, department, us
           academicYear: formData.academicYear
         }
       });
- 
+      
+      console.log("Fetched students:", response.data);
+      
       if (response.data) {
         const students = response.data;
         setAllStudents(students);

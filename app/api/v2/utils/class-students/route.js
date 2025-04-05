@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectMongoDB } from '@/lib/connectDb';
 import Student from '@/models/student';
-
 export async function GET(req) {
     try {
         await connectMongoDB();
@@ -14,25 +13,35 @@ export async function GET(req) {
         let query = {};
 
         if (classId) {
-            query.class = classId;
+            query['academicDetails.class'] = classId;
         }
 
         if (department) {
-            query.department = department;
+            query['academicDetails.department'] = department;
         }
 
         if (academicYear) {
-            query.year = academicYear;
+            query['academicDetails.academicYear'] = academicYear;
         }
         console.log(query);
 
-        const students = await Student.find(query).select('_id rollNumber name email department year');
-        console.log(students);
+        const students = await Student.find(query).lean().exec();
+        
+        // Map the nested structure to the expected flat structure
+        const formattedStudents = students.map(student => ({
+            _id: student._id,
+            rollNumber: student.academicDetails.rollNumber,
+            name: student.personalDetails.name,
+            email: student.personalDetails.email,
+            department: student.academicDetails.department,
+            year: student.academicDetails.academicYear
+        }));
+        
+        console.log(formattedStudents);
 
-        return NextResponse.json(students, { status: 200 });
+        return NextResponse.json(formattedStudents, { status: 200 });
     } catch (error) {
         console.error('Error fetching students:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
-
