@@ -16,9 +16,9 @@ export async function GET(req) {
             return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
         }
 
-        // Find student
+        // Find student with updated schema
         const student = await Student.findById(studentId)
-            .select('name rollNumber class institute')
+            .select('personalDetails.name academicDetails.rollNumber academicDetails.class academicDetails.institute')
             .lean();
 
         if (!student) {
@@ -27,10 +27,10 @@ export async function GET(req) {
 
         // Find all subjects for the student's class
         const subjects = await Subject.find({
-            class: student.class,
+            class: student.academicDetails.class,
             sem: semester,
             academicYear: academicYear,
-            institute: student.institute
+            institute: student.academicDetails.institute
         }).lean();
 
         if (!subjects.length) {
@@ -40,8 +40,8 @@ export async function GET(req) {
         const attendanceResults = await Promise.all(
             subjects.map(async (subject) => {
                 const matchQuery = {
-                    subject: subject._id.toString(), // Subject reference is stored as string
-                    institute: student.institute
+                    subject: subject._id.toString(),
+                    institute: student.academicDetails.institute
                 };
 
                 // For practical subjects, check the batch
@@ -58,7 +58,7 @@ export async function GET(req) {
                     },
                     {
                         $match: {
-                            'records.student': studentId // Student ID is stored as string like "24FYA01"
+                            'records.student': studentId
                         }
                     },
                     {
@@ -111,13 +111,12 @@ export async function GET(req) {
                 };
             })
         );
-        console.log(attendanceResults);
 
         return NextResponse.json({
             studentInfo: {
                 id: student._id,
-                name: student.name,
-                rollNumber: student.rollNumber
+                name: student.personalDetails.name,
+                rollNumber: student.academicDetails.rollNumber
             },
             semester,
             academicYear,

@@ -1,4 +1,4 @@
- 
+
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -64,7 +64,7 @@ const AbsentStudentsPage = () => {
 
       if (profile?.currentYear) {
         setAcademicYear(profile?.currentYear); // Set default year from profile
-      }      
+      }
     }
   }, []);
 
@@ -72,7 +72,7 @@ const AbsentStudentsPage = () => {
     if ((userProfile?.role === "admin" || userProfile?.role === "superadmin") && selectedDepartment) {
       fetchClasses();
     }
-  }, [userProfile, selectedDepartment,academicYear]);
+  }, [userProfile, selectedDepartment, academicYear]);
 
 
   const handleSubmit = async (e) => {
@@ -82,7 +82,7 @@ const AbsentStudentsPage = () => {
     try {
       const response = await axios.get(`/api/absent-students?date=${date}&classId=${selectedClass}`);
       setData(response.data);
-      
+
       toast.success("Absent students data fetched successfully.");
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -295,19 +295,19 @@ const AbsentStudentsPage = () => {
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required
-              className="max-w-60" 
+              className="max-w-60"
               variant="bordered"
               size="sm"
             />
             <ClassDropdown
-            id="class-select"
-            instituteId={userProfile?.institute?._id}
-            onSelect={handleClassSelect}
-            selectedClass={selectedClass}
-            acadmicYear={academicYear}
-            size="md"
-            selectedDepartment={selectedDepartment}
-          />
+              id="class-select"
+              instituteId={userProfile?.institute?._id}
+              onSelect={handleClassSelect}
+              selectedClass={selectedClass}
+              acadmicYear={academicYear}
+              size="md"
+              selectedDepartment={selectedDepartment}
+            />
             <Button type="submit" color="primary" isLoading={loading}>
               Generate Report
             </Button>
@@ -400,14 +400,38 @@ const AbsentStudentsPage = () => {
           <ModalHeader className="flex flex-col gap-1">Student Details</ModalHeader>
           <ModalBody>
             {selectedStudent && (
-              <>
-                <p><strong>Name:</strong> {selectedStudent.name}</p>
-                <p><strong>Roll Number:</strong> {selectedStudent.rollNumber}</p>
-                <p><strong>Student ID:</strong> {selectedStudent._id}</p>
-                <p><strong>Email:</strong> {selectedStudent.email || 'N/A'}</p>
-                <p><strong>Phone Number:</strong> {selectedStudent.phoneNo || 'N/A'}</p>
-                <p><strong>Total Absent Sessions:</strong> {selectedStudent.totalAbsentSessions}</p>
-              </>
+              <div className="space-y-3">
+                <div className="bg-gray-50 p-3 rounded-md">
+                  <h3 className="text-md font-semibold mb-2">Personal Information</h3>
+                  <p><strong>Name:</strong> {selectedStudent.name}</p>
+                  <p><strong>Email:</strong> {selectedStudent.email || 'N/A'}</p>
+                  <p><strong>Phone:</strong> {selectedStudent.phoneNo || 'N/A'}</p>
+                  <p><strong>Total Absent Sessions:</strong> {selectedStudent.totalAbsentSessions}</p>
+                </div>
+
+                <div className="bg-gray-50 p-3 rounded-md">
+                  <h3 className="text-md font-semibold mb-2">Academic Information</h3>
+                  <p><strong>Roll Number:</strong> {selectedStudent.rollNumber}</p>
+                  <p><strong>Department:</strong> {selectedStudent.department || 'N/A'}</p>
+                  <p><strong>Admission Status:</strong> {selectedStudent.admissionStatus || 'N/A'}</p>
+                </div>
+
+                <div className="bg-gray-50 p-3 rounded-md">
+                  <h3 className="text-md font-semibold mb-2">Parent/Guardian Contact</h3>
+                  <p><strong>Name:</strong> {selectedStudent.parentName || 'N/A'}</p>
+                  <p><strong>Phone:</strong> {selectedStudent.parentPhone || 'N/A'}</p>
+                  <p><strong>Email:</strong> {selectedStudent.parentEmail || 'N/A'}</p>
+                </div>
+
+                <div className="flex justify-between mt-2">
+                  <Button size="sm" color="primary">
+                    View Attendance History
+                  </Button>
+                  <Button size="sm" color="secondary">
+                    Send Individual Notification
+                  </Button>
+                </div>
+              </div>
             )}
           </ModalBody>
           <ModalFooter>

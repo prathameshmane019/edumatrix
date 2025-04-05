@@ -169,19 +169,19 @@ export const authOptions = {
               userType = 'faculty'
               instituteId = faculty.institute
             } else {
-              // Check Student
+              // Check Student - Updated for new schema
               const student = await Student.findOne({
                 $or: [
-                  { email: identifier },
-                  { phoneNo: identifier },
+                  { 'personalDetails.email': identifier },
+                  { 'personalDetails.phoneNo': identifier },
                   { _id: identifier }
                 ]
-              }).select('+password institute name email department')
+              }).select('+password personalDetails.name personalDetails.email academicDetails.department academicDetails.institute')
 
               if (student) {
                 user = student
                 userType = 'student'
-                instituteId = student.institute
+                instituteId = student.academicDetails.institute
               } else {
                 // Check Department
                 const department = await Department.findOne({
@@ -219,23 +219,22 @@ export const authOptions = {
             access: true
           }).select('serviceId')
 
-
           // Get service details
           const serviceIds = activeSubscriptions.map(sub => sub.serviceId)
           const services = await Service.find({
             _id: { $in: serviceIds }
           }).select('name _id')
 
-          // Create profile object with necessary information only
+          // Create profile object with necessary information only - Updated for new schema
           const profile = {
             _id: user._id,
             role: userType,
-            name: user.name,
-            email: user.email,
-            department: user.department,
+            name: userType === 'student' ? user.personalDetails.name : user.name,
+            email: userType === 'student' ? user.personalDetails.email : user.email,
+            department: userType === 'student' ? user.academicDetails.department : user.department,
             instituteId: instituteId,
             subscribedServices: services.map(service => (
-            service._id.toString())),
+              service._id.toString())),
             hasActiveSubscription: activeSubscriptions.length > 0
           }
 

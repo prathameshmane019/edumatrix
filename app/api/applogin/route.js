@@ -19,48 +19,65 @@ export async function POST(request) {
     await connectMongoDB();
 
     // Try to find user across different models without population
-    let user = null
-    let instituteId = null
+    let user = null;
+    let instituteId = null;
 
     if (role === 'faculty') {
       user = await Faculty.findOne({ id: _id })
         .populate('institute', "name address");
     } else if (role === 'student') {
+      // Explicitly select password field which is excluded by default
       user = await Student.findById(_id)
-        .populate('institute', "name address");
+        .select('+password')
+        .populate({
+          path: 'academicDetails.institute',
+          select: 'name address'
+        });
     } else {
       return NextResponse.json({ msg: 'Invalid role' }, { status: 400 });
     }
 
-    console.log(user);
+    console.log("Found user:", user);
 
     if (!user) {
       return NextResponse.json({ msg: 'Invalid credentials' }, { status: 401 });
     }
-    if (!user.password === password) { // In a real app, use proper password comparison
-      console.log("Invalid Password");
+    
+    // Check if password exists in the user object
+    if (!user.password) {
+      console.log("User has no password set");
+      return NextResponse.json({ msg: 'Invalid credentials' }, { status: 401 });
+    }
+    
+    // Fixed password comparison logic
+    if (user.password !== password) { // In a real app, use proper password comparison
+      console.log("Invalid Password - provided:", password, "stored:", user.password);
       return NextResponse.json({ msg: 'Invalid credentials' }, { status: 401 });
     }
 
+    // Get institute ID based on role
+    const instituteDoc = role === 'faculty' ? 
+      user.institute : 
+      user.academicDetails.institute;
+    
     // Get active subscriptions
-    const currentDate = new Date()
+    const currentDate = new Date();
     const activeSubscriptions = await Subscription.find({
-      userId: user.institute._id,
+      userId: instituteDoc._id,
       status: 'active',
       startDate: { $lte: currentDate },
       endDate: { $gte: currentDate },
       access: true
-    }).select('serviceId')
+    }).select('serviceId');
 
-    console.log(activeSubscriptions);
+    console.log("Active subscriptions:", activeSubscriptions);
 
     // Get service details
-    const serviceIds = activeSubscriptions.map(sub => sub.serviceId)
+    const serviceIds = activeSubscriptions.map(sub => sub.serviceId);
     const services = await Service.find({
       _id: { $in: serviceIds }
-    }).select('name _id')
-    console.log(serviceIds);
-
+    }).select('name _id');
+    console.log("Service IDs:", serviceIds);
 
     let subjects = [];
     // If faculty, fetch their subjects
@@ -114,25 +131,53 @@ export async function POST(request) {
       });
     }
 
-    const token = jwt.sign({ user: { id: user._id, role: role } }, SECRET_KEY, { expiresIn: '7h' });
+    // Create JWT token
+    const token = jwt.sign({ 
+      user: { 
+        id: user._id, 
+        role: role 
+      } 
+    }, SECRET_KEY, { expiresIn: '7h' });
 
-    // Convert user document to plain object and add role and subjects
-    const userObj = {
-      ...user.toObject(),
-      role: role,
-      subscribedServices: services.map(service => (
-        service._id.toString())),
-      hasActiveSubscription: activeSubscriptions.length > 0,
-      subjects: subjects.map(subject => ({
-        _id: subject._id,
-        id: subject.id,
-        name: subject.name,
-        subType: subject.subType,
-        class: subject.class,
-        assignedBatches: subject.assignedBatches
-      }))
-    };
-    console.log(userObj);
+    // Prepare user object based on role
+    let userObj;
+    
+    if (role === 'faculty') {
+      userObj = {
+        ...user.toObject(),
+        role: role,
+        subscribedServices: services.map(service => service._id.toString()),
+        hasActiveSubscription: activeSubscriptions.length > 0,
+        subjects: subjects.map(subject => ({
+          _id: subject._id,
+          id: subject.id,
+          name: subject.name,
+          subType: subject.subType,
+          class: subject.class,
+          assignedBatches: subject.assignedBatches
+        }))
+      };
+    } else if (role === 'student') {
+      // Structure for student - matching the new schema
+      userObj = {
+        ...user.toObject(),
+        role: role,
+        name: user.personalDetails.name,
+        institute: user.academicDetails.institute,
+        class: user.academicDetails.class,
+        department: user.academicDetails.department,
+        rollNumber: user.academicDetails.rollNumber,
+        academicYear: user.academicDetails.academicYear,
+        status: user.admission.status,
+        subscribedServices: services.map(service => service._id.toString()),
+        hasActiveSubscription: activeSubscriptions.length > 0
+      };
+      
+      // Remove password from the returned user object
+      delete userObj.password;
+    }
+
+    console.log("Returning user:", userObj);
     return NextResponse.json({
       token,
       user: userObj

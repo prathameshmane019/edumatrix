@@ -61,6 +61,9 @@ export default function StudentAttendance({ studentId }) {
       setTotalAttendanceSummary(calculateTotalAttendance(attendanceRecords))// Store student info separately
     } catch (err) {
       setError(err.response?.data?.error || "Failed to fetch attendance data")
+      setTotalAttendanceSummary(null)
+      
+      setAttendanceData(null)
       console.error(err)
     } finally {
       setLoading(false)

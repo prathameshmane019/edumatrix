@@ -13,7 +13,6 @@ export async function GET(req) {
     const date = new Date(searchParams.get("date"));
     const classId = searchParams.get("classId");
    
-    // Validate date and classId
     if (isNaN(date.getTime())) {
       return NextResponse.json({ error: "Invalid date" }, { status: 400 });
     }
@@ -21,16 +20,14 @@ export async function GET(req) {
       return NextResponse.json({ error: "Class ID is required" }, { status: 400 });
     }
 
-    const classDetails = await Classes.findById(classId).select("_id id")
+    const classDetails = await Classes.findById(classId).select("_id id");
     if (!classDetails) {
       return NextResponse.json({ error: "Class not found" }, { status: 404 });
     }
 
-    // Get all subjects for the class
     const subjects = await Subject.find({ class: classId });
     const subjectIds = subjects.map(subject => subject._id);
 
-    // Find all sessions for the given date and subjects
     const attendanceRecords = await Attendance.find({
       date: {
         $gte: new Date(date.setHours(0, 0, 0, 0)),
@@ -43,14 +40,11 @@ export async function GET(req) {
       return NextResponse.json({ message: "No attendance records found for the given date and class" }, { status: 404 });
     }
 
-    // Get all students in the class
-    const allStudents = await Student.find({ class: classId });
+    const allStudents = await Student.find({ 'academicDetails.class': classId });
 
-    // Create a map to store absent students for each session
     const absentStudentsBySession = new Map();
     const absentCountByStudent = new Map();
 
-    // Process each session
     attendanceRecords.forEach(record => {
       const presentStudents = new Set(record.records.filter(r => r.status === 'present').map(r => r.student));
       const absentStudents = allStudents.filter(student => !presentStudents.has(student._id));
@@ -60,16 +54,20 @@ export async function GET(req) {
         absentCountByStudent.set(studentId, (absentCountByStudent.get(studentId) || 0) + 1);
         return {
           _id: student._id,
-          name: student.name,
-          rollNumber: student.rollNumber,
-          email: student.email,
-          phoneNo: student.phoneNo,
+          name: student.personalDetails.name,
+          rollNumber: student.academicDetails.rollNumber,
+          email: student.personalDetails.email,
+          phoneNo: student.personalDetails.phoneNo,
+          department: student.academicDetails.department,
+          admissionStatus: student.admission?.status,
+          parentName: student.parents?.name,
+          parentPhone: student.parents?.contact,
+          parentEmail: student.parents?.email,
           totalAbsentSessions: absentCountByStudent.get(studentId)
         };
       }));
     });
 
-    // Prepare the response
     const response = {
       date: date,
       class: classDetails,
@@ -84,7 +82,6 @@ export async function GET(req) {
         };
       }))
     };
-console.log(response);
 
     return NextResponse.json(response, { status: 200 });
 
