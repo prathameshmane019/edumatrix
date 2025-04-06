@@ -209,18 +209,41 @@ export const authOptions = {
             throw new Error('Invalid credentials')
           }
 
-          // Get active subscriptions
+          // Get active subscriptions - Support both old and new schema
           const currentDate = new Date()
+          
+          // Find all active subscriptions
           const activeSubscriptions = await Subscription.find({
             userId: instituteId,
             status: 'active',
             startDate: { $lte: currentDate },
             endDate: { $gte: currentDate },
             access: true
-          }).select('serviceId')
+          })
+          
+          // Extract serviceIds (handle both schemas)
+          let serviceIds = []
+          
+          activeSubscriptions.forEach(sub => {
+            // Handle legacy schema (direct serviceId field)
+            if (sub.serviceId) {
+              serviceIds.push(sub.serviceId)
+            }
+            
+            // Handle new schema (services array)
+            if (sub.services && sub.services.length > 0) {
+              sub.services.forEach(service => {
+                if (service.serviceId) {
+                  serviceIds.push(service.serviceId)
+                }
+              })
+            }
+          })
+          
+          // Remove duplicates
+          serviceIds = [...new Set(serviceIds)]
 
           // Get service details
-          const serviceIds = activeSubscriptions.map(sub => sub.serviceId)
           const services = await Service.find({
             _id: { $in: serviceIds }
           }).select('name _id')

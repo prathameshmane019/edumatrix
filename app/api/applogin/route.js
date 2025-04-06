@@ -60,24 +60,48 @@ export async function POST(request) {
       user.institute : 
       user.academicDetails.institute;
     
-    // Get active subscriptions
+    // Get active subscriptions - Updated for new schema
     const currentDate = new Date();
+    
+    // Find all active subscriptions
     const activeSubscriptions = await Subscription.find({
       userId: instituteDoc._id,
       status: 'active',
       startDate: { $lte: currentDate },
       endDate: { $gte: currentDate },
       access: true
-    }).select('serviceId');
-
+    });
+    
     console.log("Active subscriptions:", activeSubscriptions);
 
+    // Extract serviceIds (handle both old and new schema)
+    let serviceIds = [];
+    
+    activeSubscriptions.forEach(sub => {
+      // Handle legacy schema (direct serviceId field)
+      if (sub.serviceId) {
+        serviceIds.push(sub.serviceId);
+      }
+      
+      // Handle new schema (services array)
+      if (sub.services && sub.services.length > 0) {
+        sub.services.forEach(service => {
+          if (service.serviceId) {
+            serviceIds.push(service.serviceId);
+          }
+        });
+      }
+    });
+    
+    // Remove duplicates
+    serviceIds = [...new Set(serviceIds)];
+    
+    console.log("Service IDs:", serviceIds);
+
     // Get service details
-    const serviceIds = activeSubscriptions.map(sub => sub.serviceId);
     const services = await Service.find({
       _id: { $in: serviceIds }
     }).select('name _id');
-    console.log("Service IDs:", serviceIds);
 
     let subjects = [];
     // If faculty, fetch their subjects
