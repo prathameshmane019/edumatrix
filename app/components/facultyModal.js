@@ -1,198 +1,3 @@
-// import React, { useState, useEffect } from "react";
-// import { Modal, Button, Input, ModalBody, ModalContent, ModalHeader, ModalFooter } from "@nextui-org/react";
-// import { Select, SelectItem } from "@nextui-org/react";
-// import { toast } from "sonner";
-// import axios from "axios";
-// import { departmentOptions } from "../utils/department";
-
-// const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
-//   const [formData, setFormData] = useState({
-//     facultyId: "",
-//     name: "",
-//     department: "",
-//     email: "",
-//     password: "",
-//     isAdmin: false,
-//   });
-//   const [profile, setProfile] = useState(null);
-
-//   useEffect(() => {
-//     const storedProfile = sessionStorage.getItem('userProfile');
-//     if (storedProfile) {
-//       setProfile(JSON.parse(storedProfile));
-//     }
-//   }, []);
-
-//   useEffect(() => {
-//     if (mode === "edit" && faculty) {
-//       setFormData({
-//         ...faculty,
-//         department: profile?.role === "superadmin" ? faculty.department : profile?.department,
-//       });
-//     } else {
-//       setFormData({
-//         facultyId: "",
-//         name: "",
-//         department: profile?.role === "superadmin" ? "" : profile?.department,
-//         email: "",
-//         password: "",
-//         isAdmin: false,
-//       });
-//     }
-//   }, [mode, faculty, profile]);
-
-//   const handleSelectChange = (key, value) => {
-//     setFormData({ ...formData, [key]: value });
-//   };
-
-//   const handleChange = (e) => {
-//     const { name, value } = e.target;
-//     const updatedFormData = { ...formData, [name]: value };
-//     if (profile?.role !== "superadmin" && name === "department") {
-//       updatedFormData.department = profile?.department;
-//     }
-//     setFormData(updatedFormData);
-//   };
-
-//   const handleClear = () => {
-//     setFormData({
-//       facultyId: "",
-//       name: "",
-//       department: profile?.role === "superadmin" ? "" : profile?.department,
-//       email: "",
-//       password: "",
-//       isAdmin: false,
-//     });
-//   };
-
-//   const handleSubmit = async () => {
-//     try {
-//       const dataToSubmit = {
-//         ...formData,
-//         department: profile?.role === "superadmin" ? formData.department : profile?.department,
-//       };
-//       let response;
-//       if (mode === "add") {
-//         response = await axios.post("/api/faculty", dataToSubmit);
-//         toast.success('Faculty added successfully');
-//         onSubmit();
-//       } else if (mode === "edit") {
-//         response = await axios.put(`/api/faculty`, dataToSubmit);
-//         toast.success('Faculty updated successfully');
-//       }
-//       onClose();
-//       handleClear();
-//     } catch (error) {
-//       console.error("Error:", error);
-//       toast.error('Error occurred while saving faculty data');
-//     }
-//   };
-
-//   useEffect(() => {
-//     if (!isOpen) {
-//       handleClear();
-//     }
-//   }, [isOpen]);
-
-//   return (
-//     <Modal isOpen={isOpen} onClose={onClose}>
-//       <ModalContent>
-//         <ModalHeader>{mode === "add" ? "Add Faculty" : "Edit Faculty"}</ModalHeader>
-//         <ModalBody>
-//           <Input
-//             label="Faculty ID"
-//             name="facultyId"
-//             value={formData.facultyId}
-//             onChange={handleChange}
-//             required
-//             disabled={mode !== "add"}
-//             variant="bordered"
-//             size="sm"
-//           />
-//           <Input
-//             label="Name"
-//             name="name"
-//             value={formData.name}
-//             onChange={handleChange}
-//             required
-//             variant="bordered"
-//             size="sm"
-//           />
-//           {profile?.role === "superadmin" ? (
-//             <Select
-//               label="Department"
-//               placeholder="Select department"
-//               name="department"
-//               selectedKeys={new Set([formData.department])}
-//               onSelectionChange={(value) => handleSelectChange("department", value.currentKey)}
-//               variant="bordered"
-//               size="sm"
-//             >
-//               {departmentOptions.map((department) => (
-//                 <SelectItem key={department.key} textValue={department.label}>
-//                   {department.label}
-//                 </SelectItem>
-//               ))}
-//             </Select>
-//           ) : (
-//             <Input
-//               label="Department"
-//               name="department"
-//               value={profile?.department}
-//               disabled
-//               variant="bordered"
-//               size="sm"
-//             />
-//           )}
-//           <Input
-//             label="Email"
-//             name="email"
-//             value={formData.email}
-//             onChange={handleChange}
-//             required
-//             variant="bordered"
-//             size="sm"
-//           />
-//           <Input
-//             label="Password"
-//             name="password"
-//             value={formData.password}
-//             onChange={handleChange}
-//             required
-//             variant="bordered"
-//             size="sm"
-//           />
-//           <Select
-//             label="Admin"
-//             placeholder="Select Admin Status"
-//             name="isAdmin"
-//             selectedKeys={new Set([formData.isAdmin ? "true" : "false"])}
-//             onSelectionChange={(value) => handleSelectChange("isAdmin", value.currentKey === "true")}
-//             variant="bordered"
-//             size="sm"
-//           >
-//             <SelectItem key="true" textValue="Yes">
-//               Yes
-//             </SelectItem>
-//             <SelectItem key="false" textValue="No">
-//               No
-//             </SelectItem>
-//           </Select>
-//         </ModalBody>
-//         <ModalFooter>
-//           <Button auto flat color="error" onClick={onClose}>
-//             Cancel
-//           </Button>
-//           <Button auto onClick={handleSubmit}>
-//             {mode === "add" ? "Add" : "Update"}
-//           </Button>
-//         </ModalFooter>
-//       </ModalContent>
-//     </Modal>
-//   );
-// };
-
-// export default FacultyModal;
 import React, { useState, useEffect } from "react";
 import {
   Modal,
@@ -244,6 +49,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
       yearOfPassing: ""
     }
   });
+  const [errors, setErrors] = useState({});
   const [profile, setProfile] = useState(null);
   const [isSubmiting, setIsSubmiting] = useState(false);
 
@@ -325,10 +131,19 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
       // Otherwise, it's a regular field
       return { ...prev, [name]: value };
     });
+    
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleSelectChange = (key, value) => {
     setFormData({ ...formData, [key]: value });
+    // Clear error for this field
+    if (errors[key]) {
+      setErrors(prev => ({ ...prev, [key]: "" }));
+    }
   };
 
   const handleClear = () => {
@@ -356,6 +171,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
         yearOfPassing: ""
       }
     });
+    setErrors({});
     setActiveStep(0);
   };
 
@@ -364,12 +180,43 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
       ...prev,
       department: departmentId.target.value
     }));
+    // Clear department error
+    if (errors.department) {
+      setErrors(prev => ({ ...prev, department: "" }));
+    }
+  };
+
+  const validateStep = (stepIndex) => {
+    const newErrors = {};
+    
+    if (stepIndex === 0) { // Personal Details validation
+      if (!formData.id.trim()) newErrors.id = "Faculty ID is required";
+      if (!formData.name.trim()) newErrors.name = "Name is required";
+      if (!formData.email.trim()) newErrors.email = "Email is required";
+      if (mode === "add" && !formData.password.trim()) newErrors.password = "Password is required";
+    } 
+    else if (stepIndex === 1) { // Employment Details validation
+      if (profile?.role === "superadmin" && !formData.department) {
+        newErrors.department = "Department is required";
+      }
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async () => {
     if (isSubmiting) {
       return;
     }
+    
+    // Final validation before submission
+    const isValid = validateStep(activeStep);
+    if (!isValid) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+    
     setIsSubmiting(true);
     try {
       // Create a new object with only non-empty values
@@ -419,7 +266,16 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
         const errorMessage = error.response.data.error || "Error occurred while saving faculty data";
         
         if (error.response.status === 409) {
-          toast.error(errorMessage);
+          // Check specific duplication errors
+          if (errorMessage.includes("email")) {
+            toast.error("Email already registered");
+            setErrors(prev => ({ ...prev, email: "Email already exists" }));
+          } else if (errorMessage.includes("id") || errorMessage.includes("ID")) {
+            toast.error("Faculty ID already exists");
+            setErrors(prev => ({ ...prev, id: "Faculty ID already exists" }));
+          } else {
+            toast.error(errorMessage);
+          }
         } else if (error.response.status === 400) {
           toast.error(errorMessage);
         } else {
@@ -442,8 +298,13 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
   }, [isOpen]);
 
   const goToNextStep = () => {
-    if (activeStep < steps.length - 1) {
-      setActiveStep(activeStep + 1);
+    const isValid = validateStep(activeStep);
+    if (isValid) {
+      if (activeStep < steps.length - 1) {
+        setActiveStep(activeStep + 1);
+      }
+    } else {
+      toast.error("Please fill all required fields before proceeding");
     }
   };
 
@@ -459,7 +320,7 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
         return (
           <div className="space-y-4">
             <Input
-              label="Faculty ID"
+              label="Faculty ID *"
               name="id"
               value={formData.id}
               onChange={handleChange}
@@ -467,9 +328,11 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
               disabled={mode !== "add"}
               variant="bordered"
               size="sm"
+              isInvalid={!!errors.id}
+              errorMessage={errors.id}
             />
             <Input
-              label="Name"
+              label="Name *"
               name="name"
               value={formData.name}
               onChange={handleChange}
@@ -477,9 +340,11 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
               variant="bordered"
               size="sm"
               startContent={<User className="w-4 h-4 text-default-400" />}
+              isInvalid={!!errors.name}
+              errorMessage={errors.name}
             />
             <Input
-              label="Email"
+              label="Email *"
               name="email"
               value={formData.email}
               onChange={handleChange}
@@ -487,9 +352,11 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
               variant="bordered"
               size="sm"
               type="email"
+              isInvalid={!!errors.email}
+              errorMessage={errors.email}
             />
             <Input
-              label="Password"
+              label={`Password ${mode === "add" ? "*" : ""}`}
               name="password"
               value={formData.password}
               onChange={handleChange}
@@ -497,6 +364,8 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
               variant="bordered"
               size="sm"
               type="password"
+              isInvalid={!!errors.password}
+              errorMessage={errors.password}
             />
             <Input
               label="Contact Number"
@@ -546,6 +415,9 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
                 className="w-full"
                 size="md"
                 selectedDepartment={formData.department}
+                isRequired={profile?.role === "superadmin"}
+                isInvalid={!!errors.department}
+                errorMessage={errors.department}
               />
             )}
             <Input
@@ -672,7 +544,12 @@ const FacultyModal = ({ isOpen, onClose, mode, faculty, onSubmit }) => {
               <div 
                 key={step.key}
                 className={`flex flex-col items-center cursor-pointer ${index <= activeStep ? 'text-primary' : 'text-gray-400'}`}
-                onClick={() => setActiveStep(index)}
+                onClick={() => {
+                  // Only allow navigation to completed steps or current step
+                  if (index <= activeStep) {
+                    setActiveStep(index);
+                  }
+                }}
               >
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 border-2 ${index <= activeStep ? 'border-primary bg-primary/10' : 'border-gray-300'}`}>
                   {index < activeStep ? '✓' : index + 1}
