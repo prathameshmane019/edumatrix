@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Modal, Button, Input, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, RadioGroup, Radio } from "@nextui-org/react";
 import { toast } from "sonner";
@@ -14,6 +12,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
   const [activeStep, setActiveStep] = useState(0);
   const [isClassValid, setIsClassValid] = useState(true);
   const [isSubmiting, setIsSubmiting] = useState(false);
+  const [errors, setErrors] = useState({});
 
   // Initial form data state with nested structure mapping
   const [formData, setFormData] = useState({
@@ -120,6 +119,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
     if (!isOpen) {
       handleClear();
       setActiveStep(0);
+      setErrors({});
     }
   }, [isOpen]);
 
@@ -140,7 +140,12 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
       ...prev,
       [name]: value
     }));
-  }, []);
+    
+    // Clear error for this field when user makes changes
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
+  }, [errors]);
 
   const handleInputChange = useCallback((name, value) => {
     setFormData(prev => ({
@@ -148,11 +153,16 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
       [name]: value
     }));
     
+    // Clear error for this field when user makes changes
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
+    
     // Reset class validity when class is changed
     if (name === 'class') {
       setIsClassValid(true);
     }
-  }, []);
+  }, [errors]);
 
   const handleDepartmentSelect = useCallback((departmentId) => {
     setFormData(prev => ({
@@ -161,64 +171,175 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
       class: '' // Reset class when department changes
     }));
     setIsClassValid(true);
-  }, []);
+    
+    // Clear department error
+    if (errors.department) {
+      setErrors(prev => ({ ...prev, department: "" }));
+    }
+  }, [errors]);
 
   const handleClear = useCallback(() => {
     setFormData(prev => ({
       ...initialFormState,
       department: profile?.role === "superadmin" ? "" : profile?.id
     }));
-    setIsSubmiting(false)
+    setIsSubmiting(false);
     setIsClassValid(true);
+    setErrors({});
   }, [initialFormState, profile]);
 
-  // Validate form data
+  // Validate current step fields
+  const validateStep = (step) => {
+    const newErrors = {};
+    let isValid = true;
+    
+    switch(step) {
+      case 0: // Personal Details
+        if (!formData._id) {
+          newErrors._id = "ID is required";
+          isValid = false;
+        }
+        
+        if (!formData.name) {
+          newErrors.name = "Name is required";
+          isValid = false;
+        }
+        
+        if (formData.email && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(formData.email)) {
+          newErrors.email = "Please enter a valid email";
+          isValid = false;
+        }
+        
+        if (formData.phoneNo && !/^\+?[1-9]\d{1,14}$/.test(formData.phoneNo)) {
+          newErrors.phoneNo = "Please enter a valid phone number";
+          isValid = false;
+        }
+        break;
+        
+      case 3: // Academic Details
+        if (!formData.rollNumber) {
+          newErrors.rollNumber = "Roll Number is required";
+          isValid = false;
+        }
+        
+        if (!formData.year) {
+          newErrors.year = "Academic Year is required";
+          isValid = false;
+        }
+        
+        if (!formData.department) {
+          newErrors.department = "Department is required";
+          isValid = false;
+        }
+        
+        if (!formData.class) {
+          newErrors.class = "Class is required";
+          isValid = false;
+        }
+        
+        if (!isClassValid) {
+          newErrors.class = "Selected class is not available";
+          isValid = false;
+        }
+        break;
+        
+      default:
+        break;
+    }
+    
+    setErrors(prev => ({ ...prev, ...newErrors }));
+    return isValid;
+  };
+
+  // Validate form data before submission
   const validateForm = useCallback(() => {
+    const newErrors = {};
+    let isValid = true;
+    
+    // Required fields
     if (!formData._id) {
-      toast.error("ID is required");
+      newErrors._id = "ID is required";
+      isValid = false;
       setActiveStep(0);
-      return false;
     }
-    if (!formData.rollNumber) {
-      toast.error("Roll Number is required");
-      setActiveStep(0);
-      return false;
-    }
+    
     if (!formData.name) {
-      toast.error("Name is required");
+      newErrors.name = "Name is required";
+      isValid = false;
       setActiveStep(0);
-      return false;
     }
+    
+    if (!formData.rollNumber) {
+      newErrors.rollNumber = "Roll Number is required";
+      isValid = false;
+      setActiveStep(3);
+    }
+    
     if (!formData.year) {
-      toast.error("Academic Year is required");
-      setActiveStep(1);
-      return false;
+      newErrors.year = "Academic Year is required";
+      isValid = false;
+      setActiveStep(3);
     }
+    
     if (!formData.department) {
-      toast.error("Please select department");
+      newErrors.department = "Department is required";
+      isValid = false;
       setActiveStep(3);
-      return false;
     }
+    
     if (!formData.class) {
-      toast.error("Please select class");
+      newErrors.class = "Class is required";
+      isValid = false;
       setActiveStep(3);
-      return false;
     }
+    
     if (!isClassValid) {
-      toast.error("Selected class is not available. Please choose a valid class");
+      newErrors.class = "Selected class is not available";
+      isValid = false;
       setActiveStep(3);
-      return false;
     }
-    return true;
+    
+    // Format validation
+    if (formData.email && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email";
+      isValid = false;
+      setActiveStep(0);
+    }
+    
+    if (formData.phoneNo && !/^\+?[1-9]\d{1,14}$/.test(formData.phoneNo)) {
+      newErrors.phoneNo = "Please enter a valid phone number";
+      isValid = false;
+      setActiveStep(0);
+    }
+    
+    if (formData.parentEmail && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(formData.parentEmail)) {
+      newErrors.parentEmail = "Please enter a valid parent email";
+      isValid = false;
+      setActiveStep(2);
+    }
+    
+    if (formData.parentContact && !/^\+?[1-9]\d{1,14}$/.test(formData.parentContact)) {
+      newErrors.parentContact = "Please enter a valid parent contact number";
+      isValid = false;
+      setActiveStep(2);
+    }
+    
+    setErrors(newErrors);
+    
+    if (!isValid) {
+      // Show first error in toast
+      const firstError = Object.values(newErrors)[0];
+      toast.error(firstError);
+    }
+    
+    return isValid;
   }, [formData, isClassValid]);
 
   const handleSubmit = async () => {
-    // if (isSubmiting) return; // Prevent multiple submissions
- console.log("Submiting form... ");
+    if (isSubmiting) return; // Prevent multiple submissions
+    
     setIsSubmiting(true);
     try {
-      console.log(formData);
-      
       if (!validateForm()) {
         setIsSubmiting(false);
         return;
@@ -236,11 +357,39 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
       onClose();
       handleClear();
       setActiveStep(0);
+      
     } catch (error) {
       console.error("Error:", error);
-      const errorMessage = error.response?.data?.message || "Error occurred while saving student data";
-      toast.error(errorMessage);
-      setIsSubmiting(false)
+      
+      // Handle specific error cases
+      if (error.response?.status === 409) {
+        // Check for specific duplicate errors
+        const errorMessage = error.response?.data?.message || "";
+        
+        if (errorMessage.includes("email")) {
+          toast.error("Email address is already registered");
+          setErrors(prev => ({ ...prev, email: "Email already exists" }));
+          setActiveStep(0);
+        } 
+        else if (errorMessage.includes("_id") || errorMessage.includes("ID")) {
+          toast.error("Student ID already exists");
+          setErrors(prev => ({ ...prev, _id: "Student ID already exists" }));
+          setActiveStep(0);
+        }
+        else if (errorMessage.includes("rollNumber")) {
+          toast.error("Roll number already exists");
+          setErrors(prev => ({ ...prev, rollNumber: "Roll number already exists" }));
+          setActiveStep(3);
+        }
+        else {
+          // Generic duplicate error
+          toast.error(errorMessage || "Record already exists");
+        }
+      } else {
+        // Generic error
+        const errorMessage = error.response?.data?.message || "Error occurred while saving student data";
+        toast.error(errorMessage);
+      }
     } finally {
       setIsSubmiting(false);
     }
@@ -257,8 +406,11 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
   ];
 
   const nextStep = () => {
-    if (activeStep < steps.length - 1) {
-      setActiveStep(activeStep + 1);
+    // Validate current step before proceeding
+    if (validateStep(activeStep)) {
+      if (activeStep < steps.length - 1) {
+        setActiveStep(activeStep + 1);
+      }
     }
   };
 
@@ -268,6 +420,11 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
     }
   };
 
+  // Helper for required field indicator
+  const RequiredIndicator = () => (
+    <span className="text-red-500 ml-1">*</span>
+  );
+
   // Render different form sections based on active step
   const renderStepContent = () => {
     switch (activeStep) {
@@ -275,23 +432,27 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
         return (
           <div className="grid grid-cols-2 gap-5">
             <Input
-              label="ID"
+              label={<>ID<RequiredIndicator /></>}
               name="_id"
               value={formData._id}
               onChange={handleChange}
-              required
               disabled={mode !== "add"}
               variant="bordered"
               size="sm"
+              color={errors._id ? "danger" : "default"}
+              isInvalid={!!errors._id}
+              errorMessage={errors._id}
             />
             <Input
-              label="Name"
+              label={<>Name<RequiredIndicator /></>}
               name="name"
               value={formData.name}
               onChange={handleChange}
-              required
               variant="bordered"
               size="sm"
+              color={errors.name ? "danger" : "default"}
+              isInvalid={!!errors.name}
+              errorMessage={errors.name}
             />
             <Input
               label="Date of Birth"
@@ -319,6 +480,9 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
               onChange={handleChange}
               variant="bordered"
               size="sm"
+              color={errors.email ? "danger" : "default"}
+              isInvalid={!!errors.email}
+              errorMessage={errors.email}
             />
             <Input
               label="Phone No."
@@ -327,6 +491,9 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
               onChange={handleChange}
               variant="bordered"
               size="sm"
+              color={errors.phoneNo ? "danger" : "default"}
+              isInvalid={!!errors.phoneNo}
+              errorMessage={errors.phoneNo}
             />
             <Input
               label="Password"
@@ -335,6 +502,7 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
               onChange={handleChange}
               variant="bordered"
               size="sm"
+              type="password"
             />
           </div>
         );
@@ -420,6 +588,9 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
               onChange={handleChange}
               variant="bordered"
               size="sm"
+              color={errors.parentContact ? "danger" : "default"}
+              isInvalid={!!errors.parentContact}
+              errorMessage={errors.parentContact}
             />
             <Input
               label="Parent Email"
@@ -428,6 +599,9 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
               onChange={handleChange}
               variant="bordered"
               size="sm"
+              color={errors.parentEmail ? "danger" : "default"}
+              isInvalid={!!errors.parentEmail}
+              errorMessage={errors.parentEmail}
             />
             <Input
               label="Parent Occupation"
@@ -443,24 +617,27 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
         return (
           <div className="grid grid-cols-2 gap-5">
             <Input
-              label="Roll Number"
+              label={<>Roll Number<RequiredIndicator /></>}
               name="rollNumber"
               value={formData.rollNumber}
               onChange={handleChange}
-              required
               variant="bordered"
               size="sm"
+              color={errors.rollNumber ? "danger" : "default"}
+              isInvalid={!!errors.rollNumber}
+              errorMessage={errors.rollNumber}
             />
             <Select
               placeholder="Select Year"
-              label="Academic Year"
+              label={<>Academic Year<RequiredIndicator /></>}
               variant="bordered"
-              required
               size="sm"
               selectedKeys={formData.year ? [formData.year] : []}
               onSelectionChange={(keys) => handleInputChange('year', Array.from(keys)[0])}
               startContent={<Calendar className="w-4 h-4 text-default-400" />}
               className="w-full"
+              isInvalid={!!errors.year}
+              errorMessage={errors.year}
             >
               {academicYearsOptions.map((year) => (
                 <SelectItem key={year.value} value={year.value}>
@@ -475,6 +652,9 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
                 className="w-full"
                 size="md"
                 selectedDepartment={formData.department}
+                required={true}
+                isInvalid={!!errors.department}
+                errorMessage={errors.department}
               />
             )}
             <ClassDropdown 
@@ -484,8 +664,10 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
               selectedClass={formData.class}
               acadmicYear={formData.year}
               selectedDepartment={formData.department || profile?.id}
-              label="Class (Compulsory)"
+              label={<>Class<RequiredIndicator /></>}
               onValidityChange={setIsClassValid}
+              isInvalid={!!errors.class}
+              errorMessage={errors.class}
             />
           </div>
         );
@@ -526,6 +708,9 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
           {/* Step Indicator */}
           <div className="mb-6">
             <h3 className="text-lg font-medium">{steps[activeStep].title}</h3>
+            <div className="text-xs text-gray-500">
+              Fields marked with <span className="text-red-500">*</span> are required
+            </div>
           </div>
 
           {/* Step Content */}
