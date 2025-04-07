@@ -93,6 +93,8 @@ export default function ModuleSelectionPage() {
   const { user, loading } = useUser()
   const [loadingModule, setLoadingModule] = useState(null)
   
+
+  console.log(user);
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
