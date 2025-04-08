@@ -804,21 +804,21 @@ export default function AskToAI() {
                 variant="flat" 
                 className={theme === 'dark' ? 'bg-zinc-700 text-gray-300' : ''}
               >
-                Try: "Generate feedback summary"
+                Try:  &quot;Generate feedback summary &quot;
               </Chip>
               <Chip 
                 size="sm" 
                 variant="flat" 
                 className={theme === 'dark' ? 'bg-zinc-700 text-gray-300' : ''}
               >
-                Try: "List all departments"
+                Try:  &quot;List all departments &quot;
               </Chip>
               <Chip 
                 size="sm" 
                 variant="flat" 
                 className={theme === 'dark' ? 'bg-zinc-700 text-gray-300' : ''}
               >
-                Try: "Student attendance trends"
+                Try: &quot;Student attendance trends&quot;
               </Chip>
             </div>
           </form>
