@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectMongoDB } from '@/lib/connectDb';
 import Student from '@/models/student';
+
 export async function GET(req) {
     try {
         await connectMongoDB();
@@ -13,17 +14,24 @@ export async function GET(req) {
         let query = {};
 
         if (classId) {
+            // When classId is provided, only filter by classId and optional department
             query['academicDetails.class'] = classId;
-        }
+            
+            if (department) {
+                query['academicDetails.department'] = department;
+            }
+        } else {
+            // When no classId is provided, use department and academicYear filters if available
+            if (department) {
+                query['academicDetails.department'] = department;
+            }
 
-        if (department) {
-            query['academicDetails.department'] = department;
+            if (academicYear) {
+                query['academicDetails.academicYear'] = academicYear;
+            }
         }
-
-        if (academicYear) {
-            query['academicDetails.academicYear'] = academicYear;
-        }
-        console.log(query);
+        
+        console.log("Query:", query);
 
         const students = await Student.find(query).lean().exec();
         
@@ -37,7 +45,7 @@ export async function GET(req) {
             year: student.academicDetails.academicYear
         }));
         
-        console.log(formattedStudents);
+        console.log("Results:", formattedStudents.length);
 
         return NextResponse.json(formattedStudents, { status: 200 });
     } catch (error) {

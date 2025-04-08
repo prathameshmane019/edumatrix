@@ -131,8 +131,7 @@ const Sidebar = () => {
           { name: "Profile", href: "/attendance/faculty", icon: MdPortrait },
           { name: "Take Attendance", href: "/attendance/faculty/take", icon: RiCalendarScheduleLine },
           { name: "Update Attendance", href: "/attendance/faculty/update", icon: AiOutlineSchedule },
-          { name: "View Reports", href: "/attendance/faculty/reports", icon: TbReportAnalytics },
-          { name: "Manage Content", href: "/attendance/faculty/content", icon: FaChalkboardTeacher }
+          { name: "View Reports", href: "/attendance/faculty/reports", icon: TbReportAnalytics }, 
         ],
         student: [
           { name: "Profile", href: "/attendance/student", icon: MdPortrait },

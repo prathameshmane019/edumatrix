@@ -11,7 +11,6 @@ export async function POST(req) {
     try {
         await connectMongoDB();
 
-
         const data = await req.json();
         console.log(data);
 
@@ -29,11 +28,11 @@ export async function POST(req) {
         });
         await newClass.save({ session });
 
-        // Update students
+        // Update students - setting class in academicDetails instead of root level
         const studentUpdateOps = students.map(studentId => ({
             updateOne: {
                 filter: { _id: studentId },
-                update: { $set: { class: newClass._id } },
+                update: { $set: { "academicDetails.class": newClass._id } },
                 session
             }
         }));
@@ -106,7 +105,6 @@ export async function PUT(req) {
         session.startTransaction();
         console.log("Transaction started");
 
-
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
 
@@ -131,17 +129,17 @@ export async function PUT(req) {
         existingClass.batches = batches;
         existingClass.institute = institute;
 
-        // Remove class reference from previous students
+        // Remove class reference from previous students - updated to use academicDetails.class
         await Student.updateMany(
             { _id: { $in: previousStudentIds } },
-            { $unset: { class: "" } },
+            { $unset: { "academicDetails.class": "" } },
             { session }
         );
 
-        // Add class reference to new students
+        // Add class reference to new students - updated to use academicDetails.class
         await Student.updateMany(
             { _id: { $in: students } },
-            { $set: { class: existingClass._id } },
+            { $set: { "academicDetails.class": existingClass._id } },
             { session }
         );
 

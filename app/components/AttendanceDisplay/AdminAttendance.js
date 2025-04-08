@@ -612,7 +612,7 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
             instituteId={institute}
             onSelect={handleClassSelect}
             selectedClass={selectedClass}
-            acadmicYear={year}
+            acadmicYear={academicYear}
 
             size="md"
             className='my-4'

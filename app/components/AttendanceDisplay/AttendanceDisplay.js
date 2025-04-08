@@ -44,11 +44,11 @@ export default function AttendanceDisplay() {
     );
   }
   
-  // if (!userProfile) {
-  //   return <div>Please log in to view attendance.</div>
-  // }
+  if (!userProfile) {
+    return <div>Loading</div>
+  }
 
-  switch (userProfile.role) {
+  switch (userProfile?.role) {
     case 'student':
       return <StudentAttendance institute={institute} studentId={userProfile._id} sem={sem} year={year}  />
     case 'faculty':
