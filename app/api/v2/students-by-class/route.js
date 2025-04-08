@@ -8,9 +8,7 @@ export async function GET(req) {
     try {
         await connectMongoDB();
         const { searchParams } = new URL(req.url);
-        const classId = searchParams.get("class");
-        console.log(classId);
-
+        const classId = searchParams.get("class"); 
         // Validate classId
         if (!classId || !mongoose.Types.ObjectId.isValid(classId)) {
             return NextResponse.json({ error: "Invalid class ID" }, { status: 400 });

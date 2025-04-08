@@ -65,7 +65,7 @@ export default function ClassTable() {
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [academicYear, setAcademicYear] = useState(() => profile?.currentYear || getCurrentAcademicYear());
+  const [selectedYear, setAcademicYear] = useState(() => profile?.currentYear || getCurrentAcademicYear());
 
 
 const {user,loading}= useUser()
@@ -84,25 +84,24 @@ const {user,loading}= useUser()
   }, [user]);
   
   useEffect(() => {
-    if (profile?.id || selectedDepartment) {
-      fetchData();
+    if (profile?.id &&  selectedDepartment && selectedYear) {
+      console.log(selectedYear);
+      fetchData(selectedYear);
     }
-  }, [selectedDepartment]);
+  }, [selectedDepartment,selectedYear]);
 
 
   const handleDepartmentSelect = (departmentId) => {
     console.log(departmentId.target.value);
     setSelectedDepartment(departmentId.target.value)
   }
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (year) => {
     if (!selectedDepartment) return;
 
     setIsLoadingClasses(true);
     setIsLoadingTeachers(true);
-    try {
-      console.log(selectedDepartment);
-      
-      const classesResponse = await axios.get(`/api/classes?department=${selectedDepartment}&acadmicYear=${academicYear}`, { timeout: 10000 })
+    try { 
+      const classesResponse = await axios.get(`/api/classes?department=${selectedDepartment}&academicYear=${year}`, { timeout: 10000 })
       if (classesResponse.status === 200 && Array.isArray(classesResponse.data)) {
         setClasses(classesResponse.data);
       } else {
@@ -244,7 +243,7 @@ const {user,loading}= useUser()
           placeholder="Select Year"
           variant="bordered"
           size="sm"
-          selectedKeys={academicYear ? [academicYear] : []}
+          selectedKeys={selectedYear ? [selectedYear] : []}
           onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
           startContent={<Calendar className="w-4 h-4 text-default-400" />}
           className="w-[40%] my-4"

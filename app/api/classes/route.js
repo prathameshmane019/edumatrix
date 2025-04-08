@@ -356,10 +356,12 @@ export async function GET(req) {
         const { searchParams } = new URL(req.url);
         const _id = searchParams.get("_id");
         const department = searchParams.get("department");
+        const year = searchParams.get("academicYear");
 
         let filter = {};
         if (_id) filter._id = _id;
         if (department) filter.department = department;
+        if (year) filter.year = year;
 
         console.log("Filter criteria:", filter);
 
@@ -368,6 +370,7 @@ export async function GET(req) {
             .populate('students', '_id rollNumber name')
             .lean();
 
+       
         if (classes.length === 0) {
             console.log("No classes found for criteria:", filter);
             return NextResponse.json({ status: 404 });
