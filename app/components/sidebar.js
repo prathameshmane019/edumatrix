@@ -83,6 +83,10 @@ const Sidebar = () => {
           { name: "Manage Classes", href: "/course_management/admin/class", icon: MdPortrait },
 
         ],
+        faculty: [
+         
+          { name: "Manage Content", href: "/course_management/faculty", icon: FaChalkboardTeacher }
+        ],
       }
     },
     feedback: {
