@@ -234,6 +234,8 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, department, us
         onClose();
       }}
       size="3xl"
+        placement="center"
+        backdrop="blur"
     >
       <ModalContent className="max-h-[90vh] overflow-y-auto">
         <ModalHeader>{mode === "add" ? "Add Class" : "Edit Class"}</ModalHeader>

@@ -11,8 +11,7 @@ export async function POST(req) {
         const data = await req.json();
 
         const { students, class: classRef, department, institute } = data;
-        console.log("Original data:", data);
-
+        
         // Validate required fields
         if (!classRef) {
             return NextResponse.json({

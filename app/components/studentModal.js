@@ -677,7 +677,10 @@ const StudentModal = ({ isOpen, onClose, mode, student, onSubmit, instituteId, s
   };
 
   return (
-    <Modal isOpen={isOpen} size="2xl" onClose={onClose}>
+    <Modal isOpen={isOpen} size="2xl" onClose={onClose}
+    placement="center"
+    backdrop="blur"
+    >
       <ModalContent>
         <ModalHeader>{mode === "add" ? "Add Student" : "Edit Student"}</ModalHeader>
         <ModalBody>

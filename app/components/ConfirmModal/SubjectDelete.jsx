@@ -36,6 +36,7 @@ export default function SubjectDeleteConfirmModal({
       onClose={onClose}
       size="md"
       placement="center"
+      backdrop="blur"
     >
       <ModalContent>
         <ModalHeader className="flex flex-col gap-1">
