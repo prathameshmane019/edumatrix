@@ -15,8 +15,13 @@ import {
   Button,
   Pagination,
   SelectItem,
-  Select, 
-  Spinner
+  Select,
+  Spinner,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter
 } from "@nextui-org/react";
 import { capitalize } from "@/app/utils/utils";
 import { PlusIcon } from "@/public/PlusIcon";
@@ -38,7 +43,7 @@ const columns = [
   { uid: "id", name: "Class ID", sortable: true },
   { uid: "teacher", name: "Class Coordinator" },
   { uid: "students", name: "Students" }, 
-  { uid: "year", name: "Acadmic Year" },
+  { uid: "year", name: "Academic Year" },
   { uid: "department", name: "Department" },
   { uid: "actions", name: "Actions" },
 ];
@@ -46,14 +51,13 @@ const columns = [
 const INITIAL_VISIBLE_COLUMNS = ["id", "teacher", "students", "year", "department", "actions"];
 
 export default function ClassTable() {
+  const { user } = useUser();
   const [filterValue, setFilterValue] = useState("");
   const [visibleColumns] = useState(new Set(INITIAL_VISIBLE_COLUMNS));
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [isLoadingClasses, setIsLoadingClasses] = useState(false);
-  const [isLoadingTeachers, setIsLoadingTeachers] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [sortDescriptor, setSortDescriptor] = useState({
-    column: "className",
+    column: "id",
     direction: "ascending",
   });
   const [page, setPage] = useState(1);
@@ -61,86 +65,109 @@ export default function ClassTable() {
   const [modalMode, setModalMode] = useState("add");
   const [selectedClass, setSelectedClass] = useState(null);
   const [classes, setClasses] = useState([]);
-  const [teachers, setTeachers] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [profile, setProfile] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedYear, setAcademicYear] = useState(() => profile?.currentYear || getCurrentAcademicYear());
+  const [selectedYear, setSelectedYear] = useState('');
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [classToDelete, setClassToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-
-const {user,loading}= useUser()
- 
-
+  // Set profile and default department when user data is available
   useEffect(() => {
-     if (user) {
-       setProfile(user);   
+    if (user) {
+      setProfile(user);   
+      
       if (user?.role !== "superadmin") { 
         setSelectedDepartment(user?.id); 
       }
-      if (profile?.currentYear) {
-        setAcademicYear(profile?.currentYear); // Set default year from profile
-      }
+      
+      setSelectedYear(user?.currentYear || getCurrentAcademicYear());
     }
   }, [user]);
   
+  // Fetch data when department and year are selected
   useEffect(() => {
-    if (profile?.id &&  selectedDepartment && selectedYear) {
-      console.log(selectedYear);
-      fetchData(selectedYear);
+    if (selectedDepartment && selectedYear) {
+      fetchData();
     }
-  }, [selectedDepartment,selectedYear]);
-
+  }, [selectedDepartment, selectedYear]);
 
   const handleDepartmentSelect = (departmentId) => {
-    console.log(departmentId.target.value);
-    setSelectedDepartment(departmentId.target.value)
-  }
-  const fetchData = useCallback(async (year) => {
-    if (!selectedDepartment) return;
+    setSelectedDepartment(departmentId.target.value);
+  };
+
+  const fetchData = useCallback(async () => {
+    if (!selectedDepartment || !selectedYear) return;
 
     setIsLoadingClasses(true);
-    setIsLoadingTeachers(true);
     try { 
-      const classesResponse = await axios.get(`/api/classes?department=${selectedDepartment}&academicYear=${year}`, { timeout: 10000 })
+      const classesResponse = await axios.get(
+        `/api/classes?department=${selectedDepartment}&academicYear=${selectedYear}`, 
+        { timeout: 10000 }
+      );
+      
       if (classesResponse.status === 200 && Array.isArray(classesResponse.data)) {
         setClasses(classesResponse.data);
       } else {
         setClasses([]);
-        toast.error('No class data ');
+        toast.error('No class data available');
       }
-
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching class data:', error);
       toast.error('Error fetching data. Please try again.');
+      setClasses([]);
     } finally {
       setIsLoadingClasses(false);
-      setIsLoadingTeachers(false);
     }
-  }, [selectedDepartment]);
- 
-  const deleteClass = useCallback(async (_id) => {
+  }, [selectedDepartment, selectedYear]);
+
+  const openDeleteConfirm = useCallback((classItem) => {
+    setClassToDelete(classItem);
+    setDeleteConfirmOpen(true);
+  }, []);
+
+  const closeDeleteConfirm = useCallback(() => {
+    setDeleteConfirmOpen(false);
+    setClassToDelete(null);
+  }, []);
+
+  const deleteClass = useCallback(async () => {
+    if (!classToDelete?._id) return;
+    
+    setIsDeleting(true);
     try {
-      setIsDeleting(true);
-      await axios.delete(`/api/v2/classes?_id=${_id}`, { timeout: 10000 });
-      setClasses(prevClasses => prevClasses.filter(cls => cls._id !== _id));
+      await axios.delete(`/api/v2/classes?_id=${classToDelete._id}`, { timeout: 10000 });
+      
+      // Remove the deleted class from the state directly instead of refetching
+      setClasses(prevClasses => prevClasses.filter(cls => cls._id !== classToDelete._id));
       toast.success('Class deleted successfully');
     } catch (error) {
       console.error("Error deleting class:", error);
       toast.error('Error deleting class. Please try again.');
     } finally {
       setIsDeleting(false);
+      closeDeleteConfirm();
     }
-  }, []);
+  }, [classToDelete, closeDeleteConfirm]);
 
   const downloadExcel = useCallback(() => {
-    const worksheet = XLSX.utils.json_to_sheet(classes);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Classes");
-    XLSX.writeFile(workbook, "classes_data.xlsx");
+    if (!classes.length) {
+      toast.error('No data to download');
+      return;
+    }
+    
+    try {
+      const worksheet = XLSX.utils.json_to_sheet(classes);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Classes");
+      XLSX.writeFile(workbook, "classes_data.xlsx");
+    } catch (error) {
+      console.error("Error downloading excel file:", error);
+      toast.error('Error generating Excel file');
+    }
   }, [classes]);
  
   const pages = Math.ceil((classes?.length || 0) / rowsPerPage);
-
   const hasSearchFilter = Boolean(filterValue);
 
   const headerColumns = useMemo(() => {
@@ -154,7 +181,8 @@ const {user,loading}= useUser()
       filteredClasses = filteredClasses.filter((cls) => {
         return (
           (cls.name && cls.name.toLowerCase().includes(filterValue.toLowerCase())) ||
-          (cls.teacher && cls.teacher.name && cls.teacher.name.toLowerCase().includes(filterValue.toLowerCase()))
+          (cls.teacher?.name && cls.teacher.name.toLowerCase().includes(filterValue.toLowerCase())) ||
+          (cls.id && cls.id.toLowerCase().includes(filterValue.toLowerCase()))
         );
       });
     }
@@ -172,13 +200,26 @@ const {user,loading}= useUser()
     return [...items].sort((a, b) => {
       const first = a[sortDescriptor.column];
       const second = b[sortDescriptor.column];
-      const cmp = first < second ? -1 : first > second ? 1 : 0;
+      
+      // Handle null/undefined values
+      if (first === undefined || first === null) return sortDescriptor.direction === "ascending" ? -1 : 1;
+      if (second === undefined || second === null) return sortDescriptor.direction === "ascending" ? 1 : -1;
+      
+      // Handle nested properties (like teacher.name)
+      const getNestedValue = (obj, key) => {
+        if (key === 'teacher') return obj.teacher?.name;
+        return obj[key];
+      };
+
+      const firstValue = getNestedValue(a, sortDescriptor.column);
+      const secondValue = getNestedValue(b, sortDescriptor.column);
+      
+      const cmp = firstValue < secondValue ? -1 : firstValue > secondValue ? 1 : 0;
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
   }, [sortDescriptor, items]);
  
   const renderCell = useCallback((cls, columnKey) => {
-    const cellValue = cls[columnKey];
     switch (columnKey) {
       case "actions":
         return (
@@ -198,7 +239,7 @@ const {user,loading}= useUser()
             <Tooltip content="Delete">
               <span
                 className="text-lg text-danger cursor-pointer active:opacity-50"
-                onClick={() => deleteClass(cls._id)}
+                onClick={() => openDeleteConfirm(cls)}
               >
                 <DeleteIcon />
               </span>
@@ -206,13 +247,13 @@ const {user,loading}= useUser()
           </div>
         );
       case "teacher":
-        return <span>{cellValue && cellValue.name ? cellValue.name : 'N/A'}</span>;
+        return <span>{cls.teacher?.name || 'N/A'}</span>;
       case "students":
-        return <span>{cellValue ? cellValue.length : 0}</span>;
+        return <span>{cls.students?.length || 0}</span>;
       default:
-        return <span>{cellValue}</span>;
+        return <span>{cls[columnKey] || 'N/A'}</span>;
     }
-  }, [deleteClass]);
+  }, [openDeleteConfirm]);
 
   const renderHeader = useCallback((column) => {
     const columnName = capitalize(column.name);
@@ -221,6 +262,7 @@ const {user,loading}= useUser()
         {columnName}
         {column.sortable && (
           <ChevronDownIcon
+            className="cursor-pointer"
             onClick={() => {
               setSortDescriptor((prev) => ({
                 column: column.uid,
@@ -236,17 +278,28 @@ const {user,loading}= useUser()
     );
   }, []);
 
+  const handleClassSubmit = useCallback(() => {
+    fetchData();
+    setModalOpen(false);
+  }, [fetchData]);
+
+  const handleAddClassClick = useCallback(() => {
+    setModalMode("add");
+    setSelectedClass(null);
+    setModalOpen(true);
+  }, []);
+
   return (
     <>
-      <div className="flex justify-between my-4 gap-3 items-end">
-      <Select
-          placeholder="Select Year"
+      <div className="flex flex-col sm:flex-row justify-between my-4 gap-3 items-end">
+        <Select
+          placeholder="Select Academic Year"
           variant="bordered"
           size="sm"
           selectedKeys={selectedYear ? [selectedYear] : []}
-          onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
+          onSelectionChange={(keys) => setSelectedYear(Array.from(keys)[0])}
           startContent={<Calendar className="w-4 h-4 text-default-400" />}
-          className="w-[40%] my-4"
+          className="w-full sm:w-[40%] my-2 sm:my-4"
         >
           {getAcademicYears(10).map((year) => (
             <SelectItem key={year.value} value={year.value}>
@@ -254,21 +307,23 @@ const {user,loading}= useUser()
             </SelectItem>
           ))}
         </Select>
+        
         {profile?.role !== "admin" && (
           <DepartmentDropdown 
-          instituteId={profile?.role==="superadmin"? profile?._id:profile?.institute?._id}
-          onSelect={handleDepartmentSelect}
-          className="w-full"
-          selectedDepartment={selectedDepartment}
-        />
+            instituteId={profile?.role === "superadmin" ? profile?._id : profile?.institute?._id}
+            onSelect={handleDepartmentSelect}
+            className="w-full sm:w-[40%] my-2 sm:my-4"
+            selectedDepartment={selectedDepartment}
+          />
         )}
+        
         <Input
           isClearable
           classNames={{
-            base: "w-full sm:max-w-[44%] my-4",
+            base: "w-full sm:max-w-[44%] my-2 sm:my-4",
             inputWrapper: "border-1",
           }}
-          placeholder="Search by class name ..."
+          placeholder="Search by class name or teacher..."
           size="sm"
           startContent={<SearchIcon className="text-default-300" />}
           value={filterValue}
@@ -276,18 +331,15 @@ const {user,loading}= useUser()
           onClear={() => setFilterValue("")}
           onChange={(e) => setFilterValue(e.target.value)}
         />
-        <div className="gap-4 my-4 items-center flex">
+        
+        <div className="gap-4 my-2 sm:my-4 items-center flex flex-wrap justify-center sm:justify-end">
           <Button
             color="primary"
             startContent={<PlusIcon />}
             size="sm"
-
             auto
-            onClick={() => {
-              setModalMode("add");
-              setSelectedClass(null);
-              setModalOpen(true);
-            }}
+            onClick={handleAddClassClick}
+            isDisabled={!selectedDepartment || !selectedYear}
           >
             Add Class
           </Button>
@@ -297,12 +349,14 @@ const {user,loading}= useUser()
             variant="ghost"
             onClick={downloadExcel}
             endContent={<FaFileDownload />}
+            isDisabled={!classes.length}
           >
             Download
           </Button>
         </div>
       </div>
-      {isLoadingClasses || isLoadingTeachers ? (
+      
+      {isLoadingClasses ? (
         <div className="flex justify-center items-center h-64">
           <Spinner label="Please wait... fetching Class Data" />
         </div>
@@ -311,6 +365,9 @@ const {user,loading}= useUser()
           aria-label="Class Table"
           sortDescriptor={sortDescriptor}
           onSortChange={setSortDescriptor}
+          classNames={{
+            wrapper: "min-h-[400px]",
+          }}
         >
           <TableHeader columns={headerColumns}>
             {(column) => (
@@ -319,7 +376,7 @@ const {user,loading}= useUser()
               </TableColumn>
             )}
           </TableHeader>
-          <TableBody items={sortedItems}>
+          <TableBody items={sortedItems} emptyContent={"No classes found"}>
             {(item) => (
               <TableRow key={item._id}>
                 {(columnKey) => (
@@ -331,29 +388,68 @@ const {user,loading}= useUser()
         </Table>
       ) : (
         <div className="flex flex-col items-center justify-center">
-          <div className="my-auto mt-32">
-            <Image src="/class.svg" alt="No classes found" width={800} height={800} />
+          <div className="my-auto mt-16 md:mt-32">
+            <Image src="/class.svg" alt="No classes found" width={400} height={400} className="max-w-full" />
           </div>
           <p className="mt-2 text-gray-500">No classes found</p>
         </div>
       )}
-      <Pagination
-        total={pages}
-        initialPage={1}
-        onChange={(page) => setPage(page)}
-        className="mt-4"
-      />
+      
+      {pages > 1 && (
+        <Pagination
+          total={pages}
+          page={page}
+          onChange={(page) => setPage(page)}
+          className="mt-4"
+        />
+      )}
+      
+      {/* Class Add/Edit Modal */}
       <ClassModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         mode={modalMode}
         classData={selectedClass}
-        onSubmit={fetchData}
-        teachers={teachers}
+        onSubmit={handleClassSubmit}
         userRole={profile?.role}
         department={selectedDepartment || profile?.department || profile?.id}
         instituteId={profile?.role === 'superadmin' ? profile?._id : profile?.institute?._id}
+        academicYear={selectedYear}
       />
+      
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={deleteConfirmOpen}
+        onClose={closeDeleteConfirm}
+        placement="center"
+        backdrop="blur"
+      >
+        <ModalContent>
+          {() => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">Confirm Deletion</ModalHeader>
+              <ModalBody>
+                <p>
+                  Are you sure you want to delete the class {classToDelete?.name || classToDelete?.id}?
+                  This action cannot be undone.
+                </p>
+              </ModalBody>
+              <ModalFooter>
+                <Button variant="light" onPress={closeDeleteConfirm}>
+                  Cancel
+                </Button>
+                <Button 
+                  color="danger" 
+                  onPress={deleteClass}
+                  isLoading={isDeleting}
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </>
   );
 }

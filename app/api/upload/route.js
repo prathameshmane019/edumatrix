@@ -51,7 +51,7 @@ export async function POST(req) {
             },
             academicDetails: {
                 rollNumber: student.academicDetails?.rollNumber?.trim(),
-                admissionDate: student.academicDetails?.admissionDate ? new Date(student.academicDetails.admissionDate) : new Date(),
+                academicYear: student.academicDetails?.academicYear ? new Date(student.academicDetails.admissionDate) : new Date(),
                 department: department, // Use provided department
                 class: classRef, // Use provided class reference
                 institute: institute // Use provided institute

@@ -277,9 +277,9 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, department, us
               <DepartmentDropdown
                 instituteId={instituteId}
                 onSelect={(departmentId) => handleInputChange('department', departmentId.target.value)}
-                className="w-full"
-                size="md"
-                selectedDepartment={formData.department}
+                className="w-full my-0" 
+                label="Department"
+                selectedDepartment={formData?.department || department}
               />
             )}
           </div> 

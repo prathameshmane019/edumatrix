@@ -32,7 +32,7 @@ const columns = [
   { uid: "academicDetails.department", name: "Department", sortable: true },
   { uid: "personalDetails.phoneNo", name: "Phone No", sortable: true },
   { uid: "personalDetails.email", name: "Email", sortable: true },
-  { uid: "academicDetails.admissionDate", name: "Admission Date", sortable: true },
+  { uid: "admission.admissionDate", name: "Admission Date", sortable: true },
   { uid: "personalDetails.dateOfBirth", name: "Date of Birth", sortable: true },
   { uid: "personalDetails.gender", name: "Gender", sortable: true },
   { uid: "admission.status", name: "Status", sortable: true },
@@ -190,17 +190,18 @@ export default function StudentTable() {
       setUploadProgress(0);
 
       const formattedStudents = studentsData.map(student => ({
-        _id: student._id?.trim(),
+        _id: student._id?.toString().trim(),
         personalDetails: {
           name: student.name?.trim(),
           email: student.email?.trim()?.toLowerCase(),
-          phoneNo: student.phoneNo?.trim(),
-          dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth).toISOString() : undefined,
+          phoneNo: student.phoneNo.toString()?.trim(),
+          dateOfBirth: student.dateOfBirth ? student.dateOfBirth  : undefined,
           gender: student.gender
         },
+        password: student.password?.trim() || "1234",
         academicDetails: {
           rollNumber: student.rollNumber?.trim(),
-          admissionDate: student.admissionDate ? new Date(student.admissionDate).toISOString() : undefined,
+          academicYear: student.academicYear || academicYear,
           institute: institute,
           class: selectedClass,
           department: selectedDepartment
@@ -209,17 +210,18 @@ export default function StudentTable() {
           admissionNumber: student.admissionNumber?.trim(),
           categoryType: student.categoryType,
           status: student.status || 'active',
-          admissionDate: student.admissionDate ? new Date(student.admissionDate).toISOString() : undefined
+          admissionDate: student.admissionDate ?  student.admissionDate  : undefined
         },
         parents: {
           name: student.parentName?.trim(),
-          contact: student.parentContact?.trim(),
+          contact: student.parentContact.toString()?.trim(),
           email: student.parentEmail?.trim()?.toLowerCase(),
           occupation: student.parentOccupation?.trim(),
           relation: student.relation
         }
       }));
 
+      console.log(formattedStudents);
       const response = await axios.post('/api/upload', {
         students: formattedStudents,
         class: selectedClass,
@@ -265,9 +267,11 @@ export default function StudentTable() {
         "Roll Number": student.academicDetails?.rollNumber || '',
         "Class": student.academicDetails?.class?.toString() || '',
         "Department": student.academicDetails?.department || '',
+        "Academic Year":student.academicDetails.academicYear,
         "Phone No": student.personalDetails?.phoneNo || '',
         "Email": student.personalDetails?.email || '',
-        "Admission Date": student.academicDetails?.admissionDate ? new Date(student.academicDetails.admissionDate).toLocaleDateString() : '',
+        "Password": student.password || '',
+        "Admission Date": student.admission?.admissionDate ? new Date(student.admission.admissionDate).toLocaleDateString() : '',
         "Date of Birth": student.personalDetails?.dateOfBirth ? new Date(student.personalDetails.dateOfBirth).toLocaleDateString() : '',
         "Gender": student.personalDetails?.gender || '',
         "Status": student.admission?.status || 'active',
@@ -297,38 +301,40 @@ export default function StudentTable() {
     const sampleData = [
       {
         _id: "1",
-        name: "John Doe",
+        name: "Prathamesh Mane",
         rollNumber: "R001",
-        email: "john.doe@example.com",
+        password:"1234",
+        email: "prathameshmane@example.com",
         phoneNo: "+1234567890",
-        dateOfBirth: "2000-01-01",
+        dateOfBirth: "12-10-2003",
         gender: "Male",
-        admissionDate: "2023-08-01",
+        admissionDate: "01-02-2025",
         admissionNumber: "A001",
         categoryType: "merit",
         status: "active",
-        parentName: "Jane Doe",
+        parentName: "Bharat Mane",
         parentContact: "+1234567891",
-        parentEmail: "jane.doe@example.com",
-        parentOccupation: "Teacher",
-        relation: "Mother"
+        parentEmail: "bharatm@example.com",
+        parentOccupation: "Farmer",
+        relation: "Father"
       },
       {
         _id: "2",
-        name: "Alice Smith",
+        name: "Aishwary Deshmukh",
         rollNumber: "R002",
-        email: "alice.smith@example.com",
+        email: "aishwarydeshmukh12@gmail.com",
+        password:"1234",
         phoneNo: "+1234567892",
-        dateOfBirth: "2001-02-02",
+        dateOfBirth: "26-03-2004",
         gender: "Female",
-        admissionDate: "2023-08-01",
+        admissionDate: "01-02-2025",
         admissionNumber: "A002",
         categoryType: "reserved",
         status: "active",
-        parentName: "Bob Smith",
+        parentName: "Kapil Deshmukh",
         parentContact: "+1234567893",
-        parentEmail: "bob.smith@example.com",
-        parentOccupation: "Engineer",
+        parentEmail: "kapild@example.com",
+        parentOccupation: "Farmer",
         relation: "Father"
       }
     ];
@@ -382,7 +388,7 @@ export default function StudentTable() {
       if (!first) return sortDescriptor.direction === "ascending" ? 1 : -1;
       if (!second) return sortDescriptor.direction === "ascending" ? -1 : 1;
 
-      if (["personalDetails.dateOfBirth", "academicDetails.admissionDate", "admission.admissionDate"].includes(sortDescriptor.column)) {
+      if (["personalDetails.dateOfBirth", "academicDetails.academicYear", "admission.admissionDate"].includes(sortDescriptor.column)) {
         const dateA = new Date(first);
         const dateB = new Date(second);
         return sortDescriptor.direction === "ascending" ? dateA - dateB : dateB - dateA;
@@ -461,11 +467,11 @@ export default function StudentTable() {
       case "admission.status":
         return <Chip color={getStatusColor(cellValue)} size="sm" variant="flat">{cellValue || 'active'}</Chip>;
       case "personalDetails.dateOfBirth":
-      case "academicDetails.admissionDate":
       case "admission.admissionDate":
         return cellValue ? formatDate(cellValue) : '-';
       case "personalDetails.gender":
       case "academicDetails.department":
+      case "academicDetails.academicYear":
       case "personalDetails.phoneNo":
       case "personalDetails.email":
       case "_id":
