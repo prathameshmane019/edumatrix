@@ -38,9 +38,8 @@ const ContentSchema = new mongoose.Schema({
     enum: ['covered', 'not_covered'],
     default: 'not_covered'
   },
-  courseOutcomes: {
-    type: String
-  },
+  courseOutcomes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'CourseOutcome' }],
+  
   completedDate: {
     type: String
   },
@@ -180,7 +179,19 @@ const SubjectSchema = new mongoose.Schema({
   academicYear: {
     type: String,
     required: true
-  }
+  },
+  coAttainmentTarget: { // e.g., 60% of students should score >= 60% marks for a CO to be considered attained
+    type: Number,
+    min: 0,
+    max: 100,
+    default: 60 // Set a sensible default for your institution
+},
+ coTargetThresholdPercentage: { // e.g., 60% of students should score >= 60% marks for a CO to be considered attained
+    type: Number,
+    min: 0,
+    max: 100,
+    default: 60 // Set a sensible default for your institution
+}
 }, {
   timestamps: true,
 });
