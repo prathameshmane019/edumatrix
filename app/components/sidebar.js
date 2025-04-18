@@ -63,6 +63,20 @@ const Sidebar = () => {
 
       }
     },
+    obe_management: {
+      options: {
+        admin: [
+          { name: "Dashboard", href: "/faculty_management/admin", icon: MdPortrait },
+          { name: "Faculty Management", href: "/faculty_management/admin/manage", icon: MdPortrait },
+        ],
+        faculty: [ 
+          { name: "Course Outcomes", href: "/obe_management/faculty", icon: MdPortrait },
+          { name: "Marks Entry", href: "/obe_management/faculty/marks-entry", icon: MdPortrait },
+          { name: "Attainment", href: "/obe_management/faculty/attainment", icon: MdPortrait },
+        ],
+
+      }
+    },
     department_management: {
       options: {
         superadmin: [
@@ -148,6 +162,7 @@ const Sidebar = () => {
     if (path.includes('course_management')) return 'course_management';
     if (path.includes('faculty_management')) return 'faculty_management';
     if (path.includes('department_management')) return 'department_management';
+    if (path.includes('obe_management')) return 'obe_management';
     if (path.includes('attendance')) return 'attendance';
     return null;
   };
