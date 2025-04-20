@@ -1,94 +1,149 @@
-// app/api/obe/course-outcomes/route.js
-// ... (Paste the complete code for this file from the previous response) ...
+// app/api/v2/obe/course-outcomes/route.js
 import { NextResponse } from "next/server";
-import { connectMongoDB } from '@/lib/connectDb'; // Adjust path as needed
-import CourseOutcome from '@/models/CourseOutcome';
-import Subject from "@/models/subject";
-import ProgramOutcome from '@/models/ProgramOutcome';
-import mongoose from 'mongoose';
-// import { authenticate, authorize } from '@/lib/auth'; // Your auth middleware
+import { connectMongoDB } from "@/lib/connectDb";
+import CourseOutcome from "@/models/OBE/CourseOutcome"; 
+import ProgramOutcome from "@/models/OBE/ProgramOutcome";
 
-// GET Handler
-export async function GET(req) {
-    try {
-        await connectMongoDB();
-        const { searchParams } = new URL(req.url);
-        const subjectId = searchParams.get('subjectId');
-        if (!subjectId) {
-            return NextResponse.json({ success: false, message: 'Subject ID is required' }, { status: 400 });
-        }
-        if (!mongoose.Types.ObjectId.isValid(subjectId)) {
-           return NextResponse.json({ success: false, message: 'Invalid Subject ID format' }, { status: 400 });
-        }
+// Create a new course outcome
+export async function POST(req) {
+  try {
+    await connectMongoDB();
+    const body = await req.json();
 
-        // --- Auth ---
-        // Check if user can view COs for this subject
-        // ---
+    console.log("[API - POST] Received Body:", body);
+    
+    const programOutcome = await ProgramOutcome.findOne({institute: body.instituteId, department: body.department, academicYear: body.academicYear});
 
-        const courseOutcomes = await CourseOutcome.find({ subject: subjectId })
-                                       .populate({ // Populate PO details
-                                           path: 'poMapping.programOutcome',
-                                           select: 'code description' // Select needed fields
-                                        })
-                                       .sort({ code: 1 });
-
-        return NextResponse.json({ success: true, data: courseOutcomes }, { status: 200 });
-    } catch (error) {
-        console.error("API Error fetching course outcomes:", error);
-        return NextResponse.json({ success: false, message: 'Internal Server Error', error: error.message }, { status: 500 });
+    console.log("Program Outcome:", programOutcome);
+    if (!programOutcome) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Program outcome not found" 
+      }, { status: 404 });
     }
+    
+    // Validate required fields
+    if (!body.subject || !body.outcomes || !Array.isArray(body.outcomes)) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Missing required fields" 
+      }, { status: 400 });
+    }
+
+    // Check if a course outcome already exists for this subject
+    const existingCourseOutcome = await CourseOutcome.findOne({
+      subject: body.subject
+    });
+
+    console.log("Existing Course Outcome:", existingCourseOutcome);
+    
+    // If existing course outcome found, append the new outcomes to it
+    if (existingCourseOutcome) {
+      // Combine existing outcomes with new ones, avoiding duplicates based on outcomeCode
+      const existingOutcomeCodes = existingCourseOutcome.outcomes.map(o => o.outcomeCode);
+      
+      // Filter out any new outcomes that might be duplicates
+      const newOutcomes = body.outcomes.filter(outcome => 
+        !existingOutcomeCodes.includes(outcome.outcomeCode)
+      );
+      
+      // Update the existing course outcome with the combined outcomes
+      const updatedCourseOutcome = await CourseOutcome.findByIdAndUpdate(
+        existingCourseOutcome._id,
+        { 
+          $push: { outcomes: { $each: newOutcomes } },
+          updatedBy: body.userId || null,
+          updatedAt: new Date()
+        },
+        { new: true, runValidators: true }
+      ).populate('subject', 'name code')
+       .populate('programOutcome');
+      
+      return NextResponse.json({ 
+        success: true, 
+        message: "Course outcomes appended successfully",
+        data: updatedCourseOutcome 
+      }, { status: 200 });
+    }
+
+    // Create the new course outcome document if none exists
+    const newCourseOutcome = await CourseOutcome.create({
+      subject: body.subject,
+      code: body.code || `CO-${Date.now().toString().slice(-6)}`, // Generate a code if not provided
+      programOutcome: programOutcome._id,
+      institute: body.instituteId,
+      department: body.department,
+      academicYear: body.academicYear,
+      outcomes: body.outcomes,
+      createdBy: body.userId || null
+    });
+
+    return NextResponse.json({ 
+      success: true, 
+      message: "Course outcome created successfully",
+      data: newCourseOutcome 
+    }, { status: 201 });
+    
+  } catch (error) {
+    console.error("Error creating course outcome:", error);
+    
+    // Handle duplicate key error specifically
+    if (error.code === 11000) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "A course outcome already exists for this subject",
+        error: "Duplicate entry" 
+      }, { status: 409 });
+    }
+    
+    return NextResponse.json({ 
+      success: false, 
+      message: "Failed to create course outcome", 
+      error: error.message 
+    }, { status: 500 });
+  }
 }
 
-// POST Handler
-export async function POST(req) {
-    try {
-        await connectMongoDB();
-        const body = await req.json();
-        const { code, description, subject, cognitiveLevel, poMapping } = body;
+// Get course outcomes with optional filters
+export async function GET(req) {
+  try {
+    await connectMongoDB();
+    
+    const { searchParams } = new URL(req.url);
+    const subject = searchParams.get('subject');
+    const programOutcome = searchParams.get('programOutcome');
+    const instituteId = searchParams.get('instituteId');
+    const department = searchParams.get('department');
+    const academicYear = searchParams.get('academicYear');
+    
+    // Build query filters
+    const filter = {};
+    if (subject) filter.subject = subject;
+    if (programOutcome) filter.programOutcome = programOutcome;
+    if (instituteId) filter.institute = instituteId;
+    if (department) filter.department = department;
+    if (academicYear) filter.academicYear = academicYear;
+    
 
-         // --- Auth ---
-        // Check if user (faculty/admin) can create COs for this subject
-        // ---
-
-        if (!code || !description || !subject || !poMapping || !Array.isArray(poMapping) || poMapping.length === 0) {
-             return NextResponse.json({ success: false, message: 'Missing required fields: code, description, subject, poMapping (must be non-empty array).' }, { status: 400 });
-        }
-         if (!mongoose.Types.ObjectId.isValid(subject)) {
-             return NextResponse.json({ message: "Invalid Subject ID format" }, { status: 400 });
-         }
-
-         const subjectExists = await Subject.findById(subject);
-         if (!subjectExists) {
-            return NextResponse.json({ success: false, message: `Subject with ID ${subject} not found.` }, { status: 400 });
-         }
-
-        const poIds = poMapping.map(p => p.programOutcome);
-        // Validate PO ObjectIds
-         if (poIds.some(id => !mongoose.Types.ObjectId.isValid(id))) {
-             return NextResponse.json({ success: false, message: 'One or more Program Outcome IDs in poMapping are invalid.' }, { status: 400 });
-         }
-        const existingPosCount = await ProgramOutcome.countDocuments({ _id: { $in: poIds } });
-        if (existingPosCount !== poIds.length) {
-             return NextResponse.json({ success: false, message: 'One or more Program Outcomes in poMapping not found.' }, { status: 400 });
-        }
-
-        const existingCO = await CourseOutcome.findOne({ code, subject });
-        if (existingCO) {
-            return NextResponse.json({ success: false, message: `Course Outcome code '${code}' already exists for this subject.` }, { status: 409 }); // Conflict
-        }
-
-        const newCourseOutcome = new CourseOutcome(body);
-        await newCourseOutcome.save();
-        // Populate the saved outcome before sending back (optional, but good for immediate display)
-        await newCourseOutcome.populate({ path: 'poMapping.programOutcome', select: 'code description' });
-
-
-        return NextResponse.json({ success: true, data: newCourseOutcome, message: "Course Outcome created." }, { status: 201 });
-    } catch (error) {
-        console.error("API Error creating course outcome:", error);
-         if (error.name === 'ValidationError') {
-            return NextResponse.json({ success: false, message: 'Validation Error', errors: error.errors }, { status: 400 });
-         }
-        return NextResponse.json({ success: false, message: 'Internal Server Error', error: error.message }, { status: 500 });
-    }
+    console.log("[API - GET] Filters:", filter);
+    
+    // Fetch course outcomes
+    const courseOutcomes = await CourseOutcome.find(filter)
+      .populate('subject', 'name code')
+      .populate('programOutcome') 
+    
+      console.log("[API - GET] Course Outcomes:", courseOutcomes);
+      
+    return NextResponse.json({ 
+      success: true, 
+      data: courseOutcomes 
+    }, { status: 200 });
+    
+  } catch (error) {
+    console.error("Error fetching course outcomes:", error);
+    return NextResponse.json({ 
+      success: false, 
+      message: "Failed to fetch course outcomes" 
+    }, { status: 500 });
+  }
 }

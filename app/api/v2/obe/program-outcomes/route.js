@@ -12,7 +12,7 @@ export async function GET(req) {
         const department = searchParams.get("dept");
         const academicYear = searchParams.get("year");
         const type = searchParams.get("type");
-
+ 
         if (!instituteId || !department || !academicYear) {
             return NextResponse.json({ success: false, message: "Missing required parameters: institute, dept, year" }, { status: 400 });
         }
