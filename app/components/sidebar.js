@@ -68,11 +68,11 @@ const Sidebar = () => {
         superadmin: [
           { name: "Dashboard", href: "/obe_management/admin", icon: MdPortrait },
           { name: "PEO Management", href: "/obe_management/admin/peo", icon: MdPortrait },
-        ],
+       { name: "PO/PSO Management", href: "/obe_management/admin/programe-outcomes", icon: MdPortrait },
+      ],
         admin: [
-          { name: "Dashboard", href: "/obe_management/admin", icon: MdPortrait },
-          { name: "PSO Management", href: "/obe_management/admin/pso", icon: MdPortrait },
-          { name: "PO Management", href: "/obe_management/admin/programe-outcomes", icon: MdPortrait },
+          { name: "Dashboard", href: "/obe_management/admin", icon: MdPortrait }, 
+          { name: "PO/PSO Management", href: "/obe_management/admin/programe-outcomes", icon: MdPortrait },
         ],
         faculty: [ 
           { name: "Course Outcomes", href: "/obe_management/faculty", icon: MdPortrait },
