@@ -28,11 +28,30 @@ export async function PUT(req, { params }) {
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return NextResponse.json({ success: false, message: "Invalid Course Outcome ID" }, { status: 400 });
         }
-        const body = await req.json();
-        const updatedCourseOutcome = await CourseOutcome.findByIdAndUpdate(id, body, { new: true, runValidators: true }).populate('subject').populate('programOutcome');
-        if (!updatedCourseOutcome) {
-            return NextResponse.json({ success: false, message: "Course Outcome not found" }, { status: 404 });
+        const { outcomeIndex, updatedOutcome } = await req.json();
+        console.log("[API - PUT] Request Body:", { outcomeIndex, updatedOutcome });
+
+        const courseOutcome = await CourseOutcome.findById(id);
+        if (!courseOutcome) {
+            return NextResponse.json({ success: false, message: "Course Outcome document not found" }, { status: 404 });
         }
+
+        const outcomeToUpdateIndex = courseOutcome.outcomes.findIndex(
+            (outcome) => outcome.index === parseInt(outcomeIndex)
+        );
+
+        if (outcomeToUpdateIndex === -1) {
+            return NextResponse.json({ success: false, message: "Course Outcome to update not found" }, { status: 404 });
+        }
+
+        // Update the specific outcome
+        courseOutcome.outcomes[outcomeToUpdateIndex] = {
+            ...courseOutcome.outcomes[outcomeToUpdateIndex],
+            ...updatedOutcome
+        };
+
+        const updatedCourseOutcome = await courseOutcome.save();
+
         return NextResponse.json({ success: true, data: updatedCourseOutcome }, { status: 200 });
     } catch (error) {
         console.error("Error updating course outcome:", error);
@@ -47,11 +66,21 @@ export async function DELETE(req, { params }) {
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return NextResponse.json({ success: false, message: "Invalid Course Outcome ID" }, { status: 400 });
         }
-        const deletedCourseOutcome = await CourseOutcome.findByIdAndDelete(id);
-        if (!deletedCourseOutcome) {
-            return NextResponse.json({ success: false, message: "Course Outcome not found" }, { status: 404 });
+        const { outcomeIndex } = await req.json();
+
+        const courseOutcome = await CourseOutcome.findById(id);
+        if (!courseOutcome) {
+            return NextResponse.json({ success: false, message: "Course Outcome document not found" }, { status: 404 });
         }
-        return NextResponse.json({ success: true, message: "Course Outcome deleted successfully" }, { status: 200 });
+
+        // Filter out the outcome to be deleted
+        courseOutcome.outcomes = courseOutcome.outcomes.filter(
+            (outcome) => outcome.index !== parseInt(outcomeIndex)
+        );
+
+        const updatedCourseOutcome = await courseOutcome.save();
+
+        return NextResponse.json({ success: true, data: updatedCourseOutcome, message: "Course Outcome deleted successfully" }, { status: 200 });
     } catch (error) {
         console.error("Error deleting course outcome:", error);
         return NextResponse.json({ success: false, message: "Failed to delete course outcome", error: error.message }, { status: 500 });

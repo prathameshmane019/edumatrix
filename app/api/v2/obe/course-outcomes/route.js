@@ -34,37 +34,34 @@ export async function POST(req) {
     const existingCourseOutcome = await CourseOutcome.findOne({
       subject: body.subject
     });
-
-    console.log("Existing Course Outcome:", existingCourseOutcome);
-    
-    // If existing course outcome found, append the new outcomes to it
-    if (existingCourseOutcome) {
-      // Combine existing outcomes with new ones, avoiding duplicates based on outcomeCode
-      const existingOutcomeCodes = existingCourseOutcome.outcomes.map(o => o.outcomeCode);
-      
-      // Filter out any new outcomes that might be duplicates
-      const newOutcomes = body.outcomes.filter(outcome => 
-        !existingOutcomeCodes.includes(outcome.outcomeCode)
-      );
-      
-      // Update the existing course outcome with the combined outcomes
-      const updatedCourseOutcome = await CourseOutcome.findByIdAndUpdate(
-        existingCourseOutcome._id,
-        { 
-          $push: { outcomes: { $each: newOutcomes } },
-          updatedBy: body.userId || null,
-          updatedAt: new Date()
-        },
-        { new: true, runValidators: true }
-      ).populate('subject', 'name code')
-       .populate('programOutcome');
-      
-      return NextResponse.json({ 
-        success: true, 
-        message: "Course outcomes appended successfully",
-        data: updatedCourseOutcome 
-      }, { status: 200 });
-    }
+// If existing course outcome found, append the new outcomes to it
+if (existingCourseOutcome) {
+  // Combine existing outcomes with new ones, avoiding duplicates based on outcomeCode
+  const existingOutcomeCodes = existingCourseOutcome.outcomes.map(o => o.index);
+  
+  // Filter out any new outcomes that might be duplicates
+  const newOutcomes = body.outcomes.filter(outcome => 
+    !existingOutcomeCodes.includes(outcome.index)
+  );
+  
+  // Update the existing course outcome with the combined outcomes
+  const updatedCourseOutcome = await CourseOutcome.findByIdAndUpdate(
+    existingCourseOutcome._id,
+    { 
+      $push: { outcomes: { $each: newOutcomes } },
+      updatedBy: body.userId || null,
+      updatedAt: new Date()
+    },
+    { new: true, runValidators: true }
+  ).populate('subject', 'name code')
+   .populate('programOutcome');
+  
+  return NextResponse.json({ 
+    success: true, 
+    message: "Course outcomes appended successfully",
+    data: updatedCourseOutcome 
+  }, { status: 200 });
+}
 
     // Create the new course outcome document if none exists
     const newCourseOutcome = await CourseOutcome.create({
