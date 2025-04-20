@@ -357,6 +357,7 @@ const MODULE_CONFIG = {
         bgColor: "bg-indigo-50",
         textColor: "text-indigo-600",
         descriptions: {
+            
             admin: "Define POs/PSOs, view overall attainment reports, configure settings.",
             superadmin: "Oversee OBE implementation across institutes, manage global settings.",
             faculty: "Manage COs, Assessments, Marks Entry, and view Attainment for your subjects.",

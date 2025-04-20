@@ -2,10 +2,10 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Button, Input, Select, SelectItem, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Modal, useDisclosure, Spinner, Chip } from '@nextui-org/react';
+import { Button, Input, Select, SelectItem, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Modal,ModalBody, useDisclosure, Spinner, Chip } from '@nextui-org/react';
 import { PlusIcon, EditIcon, DeleteIcon, SearchIcon } from 'lucide-react';
 import axios from 'axios';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 // Assume useUser provides institute, maybe department list? Or fetch departments separately.
 import { useUser } from '@/app/context/UserContext';
 
@@ -42,12 +42,7 @@ export default function ManageProgramOutcomesPage() {
     const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
     const [currentOutcome, setCurrentOutcome] = useState(null);
 
-    // TODO: Implement fetchDepartments if not available in user context
-    const fetchDepartments = useCallback(async () => {
-        // Fetch departments for the logged-in admin's institute
-         console.log("Fetching departments...");
-         // Example: setDepartments([{id: 'CSE', name: 'Computer Science'}, {id: 'ECE', name: 'Electronics'}]);
-    }, [user?.institute?._id]);
+     
 
 
     // TODO: Implement fetchProgramOutcomes based on filters
@@ -90,7 +85,7 @@ export default function ManageProgramOutcomesPage() {
     };
 
     // --- Effects ---
-     useEffect(() => { fetchDepartments(); }, [fetchDepartments]);
+    
      useEffect(() => { fetchProgramOutcomes(); }, [fetchProgramOutcomes]); // Trigger fetch when filters change
 
      // --- Filtering ---
@@ -102,11 +97,9 @@ export default function ManageProgramOutcomesPage() {
             <h1 className="text-2xl font-bold mb-6">Manage Program Outcomes (PO/PSO)</h1>
 
             {/* Filters (Department, Year) and Add Button */}
-             <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border flex flex-wrap gap-4 items-end justify-between">
-                 {/* Select for Department */}
-                 {/* Select for Academic Year */}
+             <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border flex flex-wrap gap-4 items-end justify-between"> 
                  <Input placeholder="Search..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} startContent={<SearchIcon size={18}/>} />
-                 <Button color="primary" startContent={<PlusIcon size={18} />} onPress={() => {setCurrentOutcome(null); onOpen();}} isDisabled={!selectedDept || !selectedYear}>
+                 <Button color="primary" startContent={<PlusIcon size={18} />} onPress={() => {setCurrentOutcome(null); onOpen();}}  >
                      Add New PO/PSO
                  </Button>
              </div>
@@ -140,7 +133,7 @@ export default function ManageProgramOutcomesPage() {
 
             {/* Add/Edit Modal */}
              <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="2xl">
-                <ModalContent>
+                <ModalBody>
                     {(modalOnClose) => (
                         <>
                             <ModalHeader>{currentOutcome ? 'Edit' : 'Add'} Program Outcome</ModalHeader>
@@ -156,7 +149,7 @@ export default function ManageProgramOutcomesPage() {
                             />
                         </>
                     )}
-                </ModalContent>
+                </ModalBody>
              </Modal>
         </div>
     );

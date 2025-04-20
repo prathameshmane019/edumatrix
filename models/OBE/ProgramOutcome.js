@@ -2,24 +2,23 @@
 import mongoose from 'mongoose';
 
 const ProgramOutcomeSchema = new mongoose.Schema({
-  code: { // e.g., PO1, PO2, PSO1
-    type: String,
-    required: [true, 'Program Outcome code is required'],
-    trim: true,
-    uppercase: true,
+  index: { // Numerical index (e.g., 1, 2, 3)
+    type: Number,
+    required: [true, 'Index is required'],
+    min: [1, 'Index must be 1 or greater']
   },
   description: {
     type: String,
-    required: [true, 'Program Outcome description is required'],
+    required: [true, 'Description is required'],
     trim: true,
   },
-  type: { // To distinguish between PO and PSO if needed
+  type: { // To distinguish between PO and PSO
     type: String,
     enum: ['PO', 'PSO'],
-    default: 'PO',
+    required: [true, 'Type (PO or PSO) is required'], // Make type mandatory
   },
   department: { // POs/PSOs are typically department-specific
-    type: String, // Or mongoose.Schema.Types.ObjectId, ref: 'Department' if you use ObjectIds for departments
+    type: String, // Or mongoose.Schema.Types.ObjectId, ref: 'Department'
     required: true,
     index: true,
   },
@@ -29,14 +28,15 @@ const ProgramOutcomeSchema = new mongoose.Schema({
     required: true,
     index: true,
   },
-  academicYear: { // POs might be revised over years
+  academicYear: { // POs/PSOs might be revised over years
     type: String,
     required: true,
   },
 }, { timestamps: true });
 
-// Ensure uniqueness for code within a department, institute, and academic year
-ProgramOutcomeSchema.index({ code: 1, department: 1, institute: 1, academicYear: 1 }, { unique: true });
+// Ensure uniqueness for index+type within a department, institute, and academic year
+// e.g., PO index 1 is different from PSO index 1 for the same dept/inst/year
+ProgramOutcomeSchema.index({ index: 1, type: 1, department: 1, institute: 1, academicYear: 1 }, { unique: true });
 
 const ProgramOutcome = mongoose.models.ProgramOutcome || mongoose.model('ProgramOutcome', ProgramOutcomeSchema);
 export default ProgramOutcome;

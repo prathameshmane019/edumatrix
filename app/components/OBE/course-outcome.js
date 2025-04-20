@@ -55,7 +55,7 @@ function CourseOutcomeForm({ outcome, subjectId, programOutcomes, onSubmit, onCl
         }
     };
 
-     const handlePoSelectionChange = (poId, isChecked) => {
+    const handlePoSelectionChange = (poId, isChecked) => {
         setFormData(prev => {
             let newMapping = [...prev.poMapping];
             if (isChecked) {
@@ -67,7 +67,7 @@ function CourseOutcomeForm({ outcome, subjectId, programOutcomes, onSubmit, onCl
                 // Remove PO
                 newMapping = newMapping.filter(m => m.programOutcome !== poId);
             }
-             if (errors.poMapping) { // Clear error on change
+            if (errors.poMapping) { // Clear error on change
                 setErrors(prev => ({ ...prev, poMapping: null }));
             }
             return { ...prev, poMapping: newMapping };
@@ -75,8 +75,8 @@ function CourseOutcomeForm({ outcome, subjectId, programOutcomes, onSubmit, onCl
     };
 
     const handleCorrelationChange = (poId, level) => {
-         const correlationValue = parseInt(level, 10); // Ensure it's a number
-          if (isNaN(correlationValue)) return; // Ignore if not a number
+        const correlationValue = parseInt(level, 10); // Ensure it's a number
+        if (isNaN(correlationValue)) return; // Ignore if not a number
 
         setFormData(prev => {
             const newMapping = prev.poMapping.map(m =>
@@ -87,19 +87,19 @@ function CourseOutcomeForm({ outcome, subjectId, programOutcomes, onSubmit, onCl
     };
 
     const validateForm = () => {
-         const newErrors = {};
-         if (!formData.code.trim()) newErrors.code = "CO Code is required.";
-         // Add more specific code format validation if needed (e.g., CXXX.Y)
-         if (!formData.description.trim()) newErrors.description = "Description is required.";
-         if (formData.poMapping.length === 0) {
-             newErrors.poMapping = "At least one Program Outcome must be mapped.";
-         } else {
-             // Check if all selected POs have a valid correlation level (should be handled by select default)
-             // No explicit check needed here if Select always has a value
-         }
+        const newErrors = {};
+        if (!formData.code.trim()) newErrors.code = "CO Code is required.";
+        // Add more specific code format validation if needed (e.g., CXXX.Y)
+        if (!formData.description.trim()) newErrors.description = "Description is required.";
+        if (formData.poMapping.length === 0) {
+            newErrors.poMapping = "At least one Program Outcome must be mapped.";
+        } else {
+            // Check if all selected POs have a valid correlation level (should be handled by select default)
+            // No explicit check needed here if Select always has a value
+        }
 
-         setErrors(newErrors);
-         return Object.keys(newErrors).length === 0; // True if no errors
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0; // True if no errors
     };
 
     const handleSubmit = (e) => {
@@ -110,7 +110,7 @@ function CourseOutcomeForm({ outcome, subjectId, programOutcomes, onSubmit, onCl
                 subject: subjectId // Add subject ID before submitting
             });
         } else {
-             toast.error("Please fix the errors in the form.");
+            toast.error("Please fix the errors in the form.");
         }
     };
 
@@ -158,10 +158,10 @@ function CourseOutcomeForm({ outcome, subjectId, programOutcomes, onSubmit, onCl
                 </Select>
 
                 <div className='mt-4'>
-                     <label className="block text-sm font-medium text-foreground pb-2">
-                         Program Outcome Mapping <span className="text-danger">*</span>
-                     </label>
-                     {errors.poMapping && <p className="text-tiny text-danger">{errors.poMapping}</p>}
+                    <label className="block text-sm font-medium text-foreground pb-2">
+                        Program Outcome Mapping <span className="text-danger">*</span>
+                    </label>
+                    {errors.poMapping && <p className="text-tiny text-danger">{errors.poMapping}</p>}
 
                     {programOutcomes.length === 0 ? (
                         <p className='text-sm text-warning-600 p-3 bg-warning-50 rounded-md'>No Program Outcomes found for this subject's department/year. Please define POs first.</p>
@@ -174,17 +174,17 @@ function CourseOutcomeForm({ outcome, subjectId, programOutcomes, onSubmit, onCl
                                 return (
                                     <div key={po._id} className="flex flex-col sm:flex-row sm:items-center gap-2 border-b pb-2 last:border-b-0">
                                         <Checkbox
-                                             isSelected={isSelected}
-                                             onValueChange={(checked) => handlePoSelectionChange(po._id, checked)}
-                                             size="sm"
-                                             className="flex-shrink-0"
-                                         >
+                                            isSelected={isSelected}
+                                            onValueChange={(checked) => handlePoSelectionChange(po._id, checked)}
+                                            size="sm"
+                                            className="flex-shrink-0"
+                                        >
                                             <span className='font-medium'>{po.code}</span>
-                                         </Checkbox>
-                                         <Tooltip content={po.description} placement="top-start" delay={500}>
+                                        </Checkbox>
+                                        <Tooltip content={po.description} placement="top-start" delay={500}>
                                             <p className="text-xs text-gray-600 truncate flex-grow sm:ml-2">{po.description}</p>
-                                         </Tooltip>
-                                         {isSelected && (
+                                        </Tooltip>
+                                        {isSelected && (
                                             <Select
                                                 aria-label={`Correlation level for ${po.code}`}
                                                 size="sm"
@@ -203,7 +203,7 @@ function CourseOutcomeForm({ outcome, subjectId, programOutcomes, onSubmit, onCl
                                     </div>
                                 );
                             })}
-                         </div>
+                        </div>
                     )}
                 </div>
 
@@ -257,7 +257,7 @@ export default function ManageCourseOutcomesPage() {
             const response = await axios.get(`/api/faculty/${user.id}/subjects`, {
                 params: { academicYear: user.currentYear, sem: user.sem }
             });
-             // Adjust based on your actual API response structure
+            // Adjust based on your actual API response structure
             setSubjects(response.data.subjects || response.data.data || []);
         } catch (err) {
             const errorMsg = err.response?.data?.message || "Failed to fetch subjects.";
@@ -285,7 +285,7 @@ export default function ManageCourseOutcomesPage() {
             });
             setProgramOutcomes(response.data.data || []);
             if (!response.data.data || response.data.data.length === 0) {
-                 toast.error("No Program Outcomes found for this subject's context. Please define them first.", {id: 'no-po-toast'});
+                toast.error("No Program Outcomes found for this subject's context. Please define them first.", { id: 'no-po-toast' });
             }
         } catch (err) {
             const errorMsg = err.response?.data?.message || "Failed to fetch program outcomes.";
@@ -309,7 +309,7 @@ export default function ManageCourseOutcomesPage() {
             });
             setCourseOutcomes(response.data.data || []);
         } catch (err) {
-             const errorMsg = err.response?.data?.message || "Failed to fetch course outcomes.";
+            const errorMsg = err.response?.data?.message || "Failed to fetch course outcomes.";
             setError(errorMsg);
             toast.error(errorMsg);
             console.error("Fetch COs Error:", err);
@@ -332,59 +332,59 @@ export default function ManageCourseOutcomesPage() {
             // Clear data if no subject is selected
             setCourseOutcomes([]);
             setProgramOutcomes([]);
-             setCurrentPage(1); // Reset page when subject changes
+            setCurrentPage(1); // Reset page when subject changes
         }
     }, [selectedSubject, fetchCourseOutcomes, fetchProgramOutcomes]);
 
     const handleSubjectChange = (subjectId) => {
-         // Find the subject object from the fetched list
-         const subject = subjects.find(s => s._id === subjectId);
+        // Find the subject object from the fetched list
+        const subject = subjects.find(s => s._id === subjectId);
         setSelectedSubject(subject);
     };
 
     const handleOpenModal = (outcome = null) => {
-         if (!selectedSubject) {
-             toast.error("Please select a subject first.");
-             return;
-         }
-         if (programOutcomes.length === 0 && !outcome) { // Only block adding if no POs exist
-             toast.error("Cannot add new CO. No Program Outcomes defined for this subject's context.");
-             return;
-         }
+        if (!selectedSubject) {
+            toast.error("Please select a subject first.");
+            return;
+        }
+        if (programOutcomes.length === 0 && !outcome) { // Only block adding if no POs exist
+            toast.error("Cannot add new CO. No Program Outcomes defined for this subject's context.");
+            return;
+        }
         setCurrentOutcome(outcome); // null for new, object for edit
         onOpen();
     };
 
     const handleSaveOutcome = async (formData) => {
-         setIsSubmitting(true);
-         const toastId = toast.loading(currentOutcome ? 'Updating outcome...' : 'Adding outcome...');
-         try {
-             let response;
-             if (currentOutcome?._id) {
-                 // Update existing outcome
-                 response = await axios.put(`/api/obe/course-outcomes/${currentOutcome._id}`, formData);
-                 toast.success('Course Outcome updated successfully!', { id: toastId });
-             } else {
-                 // Add new outcome
-                 response = await axios.post('/api/obe/course-outcomes', formData);
-                  toast.success('Course Outcome added successfully!', { id: toastId });
-             }
-             onClose(); // Close modal on success
-             fetchCourseOutcomes(); // Refresh the list
-         } catch (err) {
-              const errorMsg = err.response?.data?.message || (currentOutcome ? "Failed to update outcome." : "Failed to add outcome.");
-              const validationErrors = err.response?.data?.errors;
-               if (validationErrors) {
-                   // Handle specific validation errors (e.g., display them) - basic version just shows main message
-                    console.error("Validation Errors:", validationErrors);
-                   toast.error(`Validation Failed: ${errorMsg}`, { id: toastId });
-              } else {
-                  toast.error(errorMsg, { id: toastId });
-              }
-             console.error("Save Outcome Error:", err);
-         } finally {
-             setIsSubmitting(false);
-         }
+        setIsSubmitting(true);
+        const toastId = toast.loading(currentOutcome ? 'Updating outcome...' : 'Adding outcome...');
+        try {
+            let response;
+            if (currentOutcome?._id) {
+                // Update existing outcome
+                response = await axios.put(`/api/obe/course-outcomes/${currentOutcome._id}`, formData);
+                toast.success('Course Outcome updated successfully!', { id: toastId });
+            } else {
+                // Add new outcome
+                response = await axios.post('/api/obe/course-outcomes', formData);
+                toast.success('Course Outcome added successfully!', { id: toastId });
+            }
+            onClose(); // Close modal on success
+            fetchCourseOutcomes(); // Refresh the list
+        } catch (err) {
+            const errorMsg = err.response?.data?.message || (currentOutcome ? "Failed to update outcome." : "Failed to add outcome.");
+            const validationErrors = err.response?.data?.errors;
+            if (validationErrors) {
+                // Handle specific validation errors (e.g., display them) - basic version just shows main message
+                console.error("Validation Errors:", validationErrors);
+                toast.error(`Validation Failed: ${errorMsg}`, { id: toastId });
+            } else {
+                toast.error(errorMsg, { id: toastId });
+            }
+            console.error("Save Outcome Error:", err);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
 
@@ -392,20 +392,20 @@ export default function ManageCourseOutcomesPage() {
         if (!confirm('Are you sure you want to delete this Course Outcome? This action cannot be undone.')) {
             return;
         }
-         const toastId = toast.loading('Deleting outcome...');
-         try {
+        const toastId = toast.loading('Deleting outcome...');
+        try {
             await axios.delete(`/api/obe/course-outcomes/${outcomeId}`);
             toast.success('Course Outcome deleted successfully!', { id: toastId });
             fetchCourseOutcomes(); // Refresh list
-         } catch(err){
-             const errorMsg = err.response?.data?.message || "Failed to delete outcome.";
-             toast.error(errorMsg, { id: toastId });
-             console.error("Delete Outcome Error:", err);
-         }
+        } catch (err) {
+            const errorMsg = err.response?.data?.message || "Failed to delete outcome.";
+            toast.error(errorMsg, { id: toastId });
+            console.error("Delete Outcome Error:", err);
+        }
     };
 
-   // --- Client-side Filtering and Pagination ---
-   const filteredOutcomes = useMemo(() => {
+    // --- Client-side Filtering and Pagination ---
+    const filteredOutcomes = useMemo(() => {
         if (!searchTerm) return courseOutcomes;
         return courseOutcomes.filter((co) =>
             co.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -414,14 +414,14 @@ export default function ManageCourseOutcomesPage() {
         );
     }, [courseOutcomes, searchTerm]);
 
-   const paginatedItems = useMemo(() => {
+    const paginatedItems = useMemo(() => {
         const start = (currentPage - 1) * rowsPerPage;
         const end = start + rowsPerPage;
         return filteredOutcomes.slice(start, end);
     }, [filteredOutcomes, currentPage, rowsPerPage]);
 
-   const totalPages = Math.ceil(filteredOutcomes.length / rowsPerPage);
-   // --- End Filtering and Pagination ---
+    const totalPages = Math.ceil(filteredOutcomes.length / rowsPerPage);
+    // --- End Filtering and Pagination ---
 
 
     // --- RENDER LOGIC ---
@@ -429,31 +429,31 @@ export default function ManageCourseOutcomesPage() {
         <div className="p-4 md:p-8">
             <h1 className="text-2xl font-bold mb-6 text-gray-700">Manage Course Outcomes (COs)</h1>
 
-             {/* Subject Selection and Controls */}
-             <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
-                 <div className="flex flex-wrap gap-4 items-end justify-between">
-                     <Select
-                         label="Select Subject"
-                         placeholder={isLoadingSubjects ? "Loading..." : "Choose a subject"}
-                         className="min-w-[300px] max-w-md flex-grow"
-                         variant='bordered'
-                         selectedKeys={selectedSubject ? [selectedSubject._id] : []}
-                         onChange={(e) => handleSubjectChange(e.target.value)}
-                         isDisabled={isLoadingSubjects || subjects.length === 0}
-                         isLoading={isLoadingSubjects}
-                         items={subjects}
-                     >
-                          {(subject) => (
+            {/* Subject Selection and Controls */}
+            <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+                <div className="flex flex-wrap gap-4 items-end justify-between">
+                    <Select
+                        label="Select Subject"
+                        placeholder={isLoadingSubjects ? "Loading..." : "Choose a subject"}
+                        className="min-w-[300px] max-w-md flex-grow"
+                        variant='bordered'
+                        selectedKeys={selectedSubject ? [selectedSubject._id] : []}
+                        onChange={(e) => handleSubjectChange(e.target.value)}
+                        isDisabled={isLoadingSubjects || subjects.length === 0}
+                        isLoading={isLoadingSubjects}
+                        items={subjects}
+                    >
+                        {(subject) => (
                             <SelectItem key={subject._id} value={subject._id} textValue={`<span class="math-inline">\{subject\.name\} \(</span>{subject.id})`}>
-                                 <div className="flex flex-col">
+                                <div className="flex flex-col">
                                     <span>{subject.name} ({subject.id})</span>
                                     <span className="text-xs text-gray-500">{subject.academicYear} - {subject.sem}</span>
                                 </div>
                             </SelectItem>
                         )}
-                     </Select>
+                    </Select>
 
-                     <Input
+                    <Input
                         isClearable
                         className="w-full sm:max-w-xs flex-grow"
                         placeholder="Search COs..."
@@ -463,29 +463,29 @@ export default function ManageCourseOutcomesPage() {
                         onValueChange={setSearchTerm}
                         variant='bordered'
                         isDisabled={!selectedSubject}
-                     />
+                    />
 
-                     <Button
+                    <Button
                         color="primary"
                         startContent={<PlusIcon size={18} />}
                         onPress={() => handleOpenModal()}
                         isDisabled={!selectedSubject || isLoadingPOs} // Disable if no subject or POs are loading/missing
                     >
                         Add New CO
-                     </Button>
-                 </div>
-                  {error && <div className="mt-3 text-red-600 text-sm bg-red-50 p-2 rounded border border-red-200">{error}</div>}
-             </div>
+                    </Button>
+                </div>
+                {error && <div className="mt-3 text-red-600 text-sm bg-red-50 p-2 rounded border border-red-200">{error}</div>}
+            </div>
 
 
             {/* CO Table */}
-             {isLoadingCOs && <div className='flex justify-center items-center p-10'><Spinner label="Loading Course Outcomes..." /></div>}
+            {isLoadingCOs && <div className='flex justify-center items-center p-10'><Spinner label="Loading Course Outcomes..." /></div>}
 
             {!isLoadingCOs && selectedSubject && paginatedItems.length > 0 && (
-                 <>
+                <>
                     <Table
-                         aria-label="Course Outcomes Table"
-                         bottomContent={ totalPages > 1 ? (
+                        aria-label="Course Outcomes Table"
+                        bottomContent={totalPages > 1 ? (
                             <div className="flex w-full justify-center">
                                 <Pagination
                                     isCompact
@@ -497,9 +497,9 @@ export default function ManageCourseOutcomesPage() {
                                     onChange={(page) => setCurrentPage(page)}
                                 />
                             </div>
-                            ) : null
-                         }
-                         classNames={{ wrapper: "min-h-[222px]" }} // Prevent layout shift
+                        ) : null
+                        }
+                        classNames={{ wrapper: "min-h-[222px]" }} // Prevent layout shift
                     >
                         <TableHeader>
                             <TableColumn key="code">Code</TableColumn>
@@ -516,30 +516,33 @@ export default function ManageCourseOutcomesPage() {
                                     </TableCell>
                                     <TableCell className='whitespace-normal text-sm'>{item.description}</TableCell>
                                     <TableCell>{item.cognitiveLevel || 'N/A'}</TableCell>
+                                    // Inside the TableBody mapping for courseOutcomes:
                                     <TableCell>
-                                         <div className="flex flex-wrap gap-1 max-w-xs">
-                                             {/* Efficiently get PO codes using a map */}
-                                             {item.poMapping?.map((map, index) => {
-                                                const po = programOutcomes.find(p => (p._id === map.programOutcome?._id || p._id === map.programOutcome)); // Handle populated/unpopulated
+                                        <div className="flex flex-wrap gap-1 max-w-xs">
+                                            {item.poMapping?.map((map, index) => {
+                                                // Find the PO/PSO details using the _id stored in map.programOutcome
+                                                // Assuming programOutcomes state holds fetched POs/PSOs for the subject
+                                                const po = programOutcomes.find(p => p._id === (map.programOutcome?._id || map.programOutcome));
+                                                const displayText = po ? `${po.type} ${po.index}` : 'N/A'; // Display e.g., "PO 1", "PSO 2"
                                                 return (
-                                                    <Tooltip key={index} content={po?.description || 'Unknown PO'} placement='top' delay={300}>
+                                                    <Tooltip key={index} content={po?.description || 'Unknown Outcome'} placement='top' delay={300}>
                                                         <Chip size="sm" variant='bordered' color='secondary' className='cursor-default'>
-                                                            {po?.code || 'N/A'} ({map.correlationLevel})
+                                                            {displayText} ({map.correlationLevel}) {/* Show "PO 1 (3)" */}
                                                         </Chip>
-                                                     </Tooltip>
+                                                    </Tooltip>
                                                 );
-                                             })}
+                                            })}
                                         </div>
                                     </TableCell>
                                     <TableCell>
                                         <div className="relative flex items-center gap-1">
                                             <Tooltip content="Edit Outcome">
                                                 <Button isIconOnly size="sm" variant="light" onPress={() => handleOpenModal(item)}>
-                                                    <EditIcon className="text-default-500" size={18}/>
+                                                    <EditIcon className="text-default-500" size={18} />
                                                 </Button>
                                             </Tooltip>
                                             <Tooltip content="Delete Outcome" color="danger">
-                                                 <Button isIconOnly size="sm" variant="light" color="danger" onPress={() => handleDelete(item._id)}>
+                                                <Button isIconOnly size="sm" variant="light" color="danger" onPress={() => handleDelete(item._id)}>
                                                     <DeleteIcon size={18} />
                                                 </Button>
                                             </Tooltip>
@@ -550,44 +553,44 @@ export default function ManageCourseOutcomesPage() {
                         </TableBody>
                     </Table>
                 </>
-             )}
+            )}
 
-             {/* Empty States */}
-              {!isLoadingCOs && selectedSubject && filteredOutcomes.length === 0 && searchTerm && (
-                   <p className="text-center text-gray-500 mt-10">No course outcomes match your search "{searchTerm}".</p>
-              )}
-              {!isLoadingCOs && selectedSubject && courseOutcomes.length === 0 && !searchTerm && (
-                   <p className="text-center text-gray-500 mt-10">No course outcomes have been defined for this subject yet. Click "Add New CO" to start.</p>
-              )}
-             {!selectedSubject && !isLoadingSubjects && (
+            {/* Empty States */}
+            {!isLoadingCOs && selectedSubject && filteredOutcomes.length === 0 && searchTerm && (
+                <p className="text-center text-gray-500 mt-10">No course outcomes match your search "{searchTerm}".</p>
+            )}
+            {!isLoadingCOs && selectedSubject && courseOutcomes.length === 0 && !searchTerm && (
+                <p className="text-center text-gray-500 mt-10">No course outcomes have been defined for this subject yet. Click "Add New CO" to start.</p>
+            )}
+            {!selectedSubject && !isLoadingSubjects && (
                 <p className="text-center text-gray-500 mt-10">Please select a subject from the dropdown above to manage its Course Outcomes.</p>
-             )}
-              {!selectedSubject && !isLoadingSubjects && subjects.length === 0 && (
+            )}
+            {!selectedSubject && !isLoadingSubjects && subjects.length === 0 && (
                 <p className="text-center text-warning-600 mt-10">No subjects found for your current Academic Year/Semester.</p>
-             )}
+            )}
 
 
             {/* Add/Edit Modal */}
             <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="3xl" placement="top-center" backdrop="blur">
-                 <ModalContent>
+                <ModalContent>
                     {(modalOnClose) => ( // Use modalOnClose provided by ModalContent
-                         <>
+                        <>
                             <ModalHeader className="flex flex-col gap-1 border-b pb-2">
-                                 {currentOutcome ? `Edit Course Outcome (${currentOutcome.code})` : 'Add New Course Outcome'}
-                                 {selectedSubject && <span className='text-sm font-normal text-gray-500'>Subject: {selectedSubject.name}</span>}
+                                {currentOutcome ? `Edit Course Outcome (${currentOutcome.code})` : 'Add New Course Outcome'}
+                                {selectedSubject && <span className='text-sm font-normal text-gray-500'>Subject: {selectedSubject.name}</span>}
                             </ModalHeader>
                             {/* Render the form component */}
                             <CourseOutcomeForm
-                                 outcome={currentOutcome}
-                                 subjectId={selectedSubject?._id}
-                                 programOutcomes={programOutcomes}
-                                 onSubmit={handleSaveOutcome}
-                                 onClose={modalOnClose} // Pass the modal's close handler
-                                 isLoading={isSubmitting}
-                             />
-                         </>
-                     )}
-                 </ModalContent>
+                                outcome={currentOutcome}
+                                subjectId={selectedSubject?._id}
+                                programOutcomes={programOutcomes}
+                                onSubmit={handleSaveOutcome}
+                                onClose={modalOnClose} // Pass the modal's close handler
+                                isLoading={isSubmitting}
+                            />
+                        </>
+                    )}
+                </ModalContent>
             </Modal>
 
         </div>

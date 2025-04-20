@@ -1,114 +1,158 @@
-// app/api/obe/program-outcomes/[poId]/route.js
+// app/api/obe/program-outcomes/[id]/route.js
 import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import ProgramOutcome from "@/models/ProgramOutcome";
+import CourseOutcome from "@/models/CourseOutcome"; // For DELETE validation
 import mongoose from "mongoose";
-// Import other models if needed for validation during delete (e.g., CourseOutcome)
 
-// GET handler for single Program Outcome
-export async function GET(req, { params }) {
-    try {
-        await connectMongoDB();
-        const { poId } = params;
-
-        if (!poId || !mongoose.Types.ObjectId.isValid(poId)) {
-            return NextResponse.json({ message: "Invalid or missing Program Outcome ID" }, { status: 400 });
-        }
-
-        // --- Auth ---
-        // Check if user is authorized to view this specific outcome
-        // ---
-
-        const outcome = await ProgramOutcome.findById(poId);
-
-        if (!outcome) {
-            return NextResponse.json({ success: false, message: "Program Outcome not found" }, { status: 404 });
-        }
-
-        return NextResponse.json({ success: true, data: outcome }, { status: 200 });
-
-    } catch (error) {
-        console.error(`API Error fetching PO ${params.poId}:`, error);
-        return NextResponse.json({ success: false, message: "Internal Server Error", error: error.message }, { status: 500 });
-    }
-}
-
-// PUT handler for updating a Program Outcome
+// PUT handler - Update an outcome
 export async function PUT(req, { params }) {
-    try {
-        await connectMongoDB();
-        const { poId } = params;
-        const body = await req.json();
-        // Exclude fields that shouldn't be easily changed via PUT, like institute or maybe code/year/dept
-        const { code, institute, department, academicYear, ...updateData } = body;
-
-
-        if (!poId || !mongoose.Types.ObjectId.isValid(poId)) {
-            return NextResponse.json({ message: "Invalid or missing Program Outcome ID" }, { status: 400 });
-        }
-
-        // --- Auth ---
-        // Check if user is authorized to update this outcome
-        // ---
-
-        // Add validation if necessary (e.g., ensure description is not empty)
-         if (updateData.description !== undefined && !updateData.description.trim()) {
-            return NextResponse.json({ success: false, message: "Description cannot be empty." }, { status: 400 });
-        }
-
-
-        const updatedOutcome = await ProgramOutcome.findByIdAndUpdate(
-            poId,
-            updateData, // Only update fields passed in updateData
-            { new: true, runValidators: true, context: 'query' }
-        );
-
-        if (!updatedOutcome) {
-            return NextResponse.json({ success: false, message: "Program Outcome not found" }, { status: 404 });
-        }
-
-        return NextResponse.json({ success: true, data: updatedOutcome, message: "Program Outcome updated successfully." }, { status: 200 });
-
-    } catch (error) {
-        console.error(`API Error updating PO ${params.poId}:`, error);
-        if (error.name === 'ValidationError') {
-            return NextResponse.json({ success: false, message: "Validation Error", errors: error.errors }, { status: 400 });
-        }
-        return NextResponse.json({ success: false, message: "Internal Server Error", error: error.message }, { status: 500 });
+  try {
+    await connectMongoDB();
+    const { id } = params;
+    
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Invalid document ID" 
+      }, { status: 400 });
     }
+    
+    const body = await req.json();
+    const { type, index, description, itemId } = body;
+
+    if (!type || !['PO', 'PSO'].includes(type) || !index || !description || !itemId) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Missing required fields" 
+      }, { status: 400 });
+    }
+
+    const numericIndex = Number(index);
+    if (isNaN(numericIndex) || numericIndex < 1 || !Number.isInteger(numericIndex)) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Index must be a positive integer" 
+      }, { status: 400 });
+    }
+
+    const arrayField = type === 'PO' ? 'programOutcomes' : 'programSpecificOutcomes';
+    
+    // Find the document
+    const outcomeDoc = await ProgramOutcome.findById(id);
+    if (!outcomeDoc) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Document not found" 
+      }, { status: 404 });
+    }
+
+    // Check for duplicate index (excluding the item being updated)
+    const duplicateIndex = outcomeDoc[arrayField].find(
+      item => item.index === numericIndex && item._id.toString() !== itemId
+    );
+    
+    if (duplicateIndex) {
+      return NextResponse.json({ 
+        success: false, 
+        message: `${type} with index ${numericIndex} already exists` 
+      }, { status: 409 });
+    }
+
+    // Find and update the specific outcome
+    const outcomeIndex = outcomeDoc[arrayField].findIndex(item => item._id.toString() === itemId);
+    
+    if (outcomeIndex === -1) {
+      return NextResponse.json({ 
+        success: false, 
+        message: `${type} item not found` 
+      }, { status: 404 });
+    }
+
+    outcomeDoc[arrayField][outcomeIndex].index = numericIndex;
+    outcomeDoc[arrayField][outcomeIndex].description = description;
+
+    // Sort outcomes by index
+    outcomeDoc[arrayField].sort((a, b) => a.index - b.index);
+
+    await outcomeDoc.save();
+
+    return NextResponse.json({ 
+      success: true, 
+      data: outcomeDoc[arrayField],
+      message: `${type} updated successfully` 
+    }, { status: 200 });
+
+  } catch (error) {
+    console.error("Error updating program outcome:", error);
+    return NextResponse.json({ 
+      success: false, 
+      message: "Failed to update program outcome" 
+    }, { status: 500 });
+  }
 }
 
-// DELETE handler for a Program Outcome
+// DELETE handler - Delete an outcome
 export async function DELETE(req, { params }) {
-    try {
-        await connectMongoDB();
-        const { poId } = params;
+  try {
+    await connectMongoDB();
+    const { id } = params;
+    
+    const { searchParams } = new URL(req.url);
+    const type = searchParams.get("type");
+    const itemId = searchParams.get("itemId");
 
-        if (!poId || !mongoose.Types.ObjectId.isValid(poId)) {
-            return NextResponse.json({ message: "Invalid or missing Program Outcome ID" }, { status: 400 });
-        }
-
-        // --- Auth ---
-        // Check if user is authorized to delete this outcome
-        // ---
-
-        // **Important Check**: Prevent deletion if this PO is mapped in any Course Outcome?
-        // const coMappingExists = await CourseOutcome.exists({ 'poMapping.programOutcome': poId });
-        // if (coMappingExists) {
-        //     return NextResponse.json({ success: false, message: 'Cannot delete: Program Outcome is mapped in one or more Course Outcomes.' }, { status: 400 });
-        // }
-
-
-        const deletedOutcome = await ProgramOutcome.findByIdAndDelete(poId);
-
-        if (!deletedOutcome) {
-            return NextResponse.json({ success: false, message: "Program Outcome not found" }, { status: 404 });
-        }
-
-        return NextResponse.json({ success: true, message: "Program Outcome deleted successfully." }, { status: 200 }); // 200 or 204 No Content
-
-    } catch (error) {
-        console.error(`API Error deleting PO ${params.poId}:`, error);
-        return NextResponse.json({ success: false, message: "Internal Server Error", error: error.message }, { status: 500 });
+    if (!id || !mongoose.Types.ObjectId.isValid(id) || !type || !['PO', 'PSO'].includes(type) || !itemId) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Invalid parameters" 
+      }, { status: 400 });
     }
+
+    // Check if mapped in Course Outcomes (you'll need to adjust this for your schema)
+    // const coMappingExists = await CourseOutcome.exists({ 'poMapping.programOutcome': itemId });
+    // if (coMappingExists) {
+    //   return NextResponse.json({ 
+    //     success: false, 
+    //     message: 'Cannot delete: Outcome is mapped in one or more Course Outcomes.' 
+    //   }, { status: 400 });
+    // }
+
+    const arrayField = type === 'PO' ? 'programOutcomes' : 'programSpecificOutcomes';
+    
+    // Find the document
+    const outcomeDoc = await ProgramOutcome.findById(id);
+    if (!outcomeDoc) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Document not found" 
+      }, { status: 404 });
+    }
+
+    // Find and remove the specific outcome
+    const outcomeIndex = outcomeDoc[arrayField].findIndex(item => item._id.toString() === itemId);
+    
+    if (outcomeIndex === -1) {
+      return NextResponse.json({ 
+        success: false, 
+        message: `${type} item not found` 
+      }, { status: 404 });
+    }
+
+    outcomeDoc[arrayField].splice(outcomeIndex, 1);
+    await outcomeDoc.save();
+
+    return NextResponse.json({ 
+      success: true, 
+      data: outcomeDoc[arrayField],
+      message: `${type} deleted successfully` 
+    }, { status: 200 });
+
+  } catch (error) {
+    console.error("Error deleting program outcome:", error);
+    return NextResponse.json({ 
+      success: false, 
+      message: "Failed to delete program outcome" 
+    }, { status: 500 });
+  }
 }
