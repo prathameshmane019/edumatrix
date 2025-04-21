@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   Card,
   CardBody,
@@ -13,42 +13,60 @@ import {
   TableBody,
   TableRow,
   TableCell,
+  useDisclosure,
   Spinner,
   Chip,
   Tooltip,
-  Divider
-} from "@nextui-org/react";
-import { 
-  Calendar, 
-  HelpCircle, 
-  BookOpen, 
-  Save, 
-  RefreshCw, 
-  Info 
-} from "lucide-react";
+  Divider,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Textarea,
+  Tabs,
+  Tab,
+  Progress,
+  Badge,
+  Input,
+} from '@nextui-org/react';
+import {
+  Calendar,
+  HelpCircle,
+  BookOpen,
+  Save,
+  RefreshCw,
+  Info,
+  BarChart2,
+  Filter,
+  Download,
+  Edit,
+  Plus,
+} from 'lucide-react';
 import axios from 'axios';
 import { useUser } from '@/app/context/UserContext';
 import { getAcademicYears } from '@/app/utils/acadmicYears';
 import { SubjectDropdown } from '../subject/SubjectDropdown';
 import { toast } from 'sonner';
+import Chart from 'chart.js/auto';
+import { debounce } from 'lodash';
+import { motion } from 'framer-motion';
 
-// Correlation level details with descriptions
 const CORRELATION_LEVELS = [
-  { value: 0, label: "N/A", color: "default", description: "No correlation" },
-  { value: 1, label: "1", color: "warning", description: "Slight correlation" },
-  { value: 2, label: "2", color: "primary", description: "Moderate correlation" },
-  { value: 3, label: "3", color: "success", description: "Strong correlation" }
+  { value: 0, label: 'N/A', color: 'default', description: 'No correlation' },
+  { value: 1, label: '1', color: 'yellow', description: 'Slight correlation' },
+  { value: 2, label: '2', color: 'blue', description: 'Moderate correlation' },
+  { value: 3, label: '3', color: 'green', description: 'Strong correlation' },
 ];
 
-// Cognitive levels with colors
 const COGNITIVE_LEVELS = {
-  'Remember': 'default',
-  'Understand': 'primary',
-  'Apply': 'secondary',
-  'Analyze': 'warning',
-  'Evaluate': 'success',
-  'Create': 'danger',
-  'N/A': 'default'
+  Remember: { color: 'gray', description: 'Recall or recognize information' },
+  Understand: { color: 'blue', description: 'Comprehend the meaning of information' },
+  Apply: { color: 'indigo', description: 'Use information in new situations' },
+  Analyze: { color: 'orange', description: 'Break down information into components' },
+  Evaluate: { color: 'teal', description: 'Make judgments based on criteria' },
+  Create: { color: 'pink', description: 'Produce new or original work' },
+  'N/A': { color: 'gray', description: 'Not applicable' },
 };
 
 const MappingPage = () => {
@@ -61,20 +79,21 @@ const MappingPage = () => {
   const [localMappings, setLocalMappings] = useState({});
   const [courseOutcomeId, setCourseOutcomeId] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [cognitiveFilter, setCognitiveFilter] = useState('all');
+  const [correlationFilter, setCorrelationFilter] = useState('all');
+  const [selectedMapping, setSelectedMapping] = useState(null);
+  const [justification, setJustification] = useState('');
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [activeTab, setActiveTab] = useState('matrix');
+  const [stats, setStats] = useState(null);
+  const chartRef = useRef(null);
+  const [chartInstance, setChartInstance] = useState(null);
 
   const canLoad = user && academicYear && subject;
 
-  useEffect(() => {
-    if (canLoad) fetchMappingData();
-    else {
-      setMappingData(null);
-      setLocalMappings({});
-      setCourseOutcomeId(null);
-      setHasChanges(false);
-    }
-  }, [academicYear, subject, user]);
-
-  const fetchMappingData = async () => {
+  const fetchMappingData = useCallback(async () => {
+    if (!canLoad) return;
     try {
       setIsLoading(true);
       const res = await axios.get('/api/v2/obe/co-po-mapping', {
@@ -85,265 +104,735 @@ const MappingPage = () => {
           department: user?.department,
         },
       });
-      
       const data = res.data?.data;
-      if (!data) throw new Error("No mapping data returned");
-
+      if (!data) throw new Error('No mapping data returned');
       setMappingData(data);
       setCourseOutcomeId(data.courseOutcomeId);
-      initLocalMappings(data);
+      initializeLocalMappings(data);
+      calculateStats(data);
       setHasChanges(false);
     } catch (error) {
-      console.error(error);
-      toast.error(error.response?.data?.message || "Failed to fetch mapping data");
+      toast.error(error.response?.data?.message || 'Failed to fetch mapping data');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [academicYear, subject, user]);
 
-  const initLocalMappings = (data) => {
+  useEffect(() => {
+    fetchMappingData();
+  }, [fetchMappingData]);
+
+  const initializeLocalMappings = (data) => {
     const mappings = {};
-    data.mappings?.forEach(({ courseOutcomeId, programOutcomeId, correlationLevel }) => {
+    data.mappings?.forEach(({ courseOutcomeId, programOutcomeId, outcomeType, correlationLevel, justification }) => {
       if (!mappings[courseOutcomeId]) mappings[courseOutcomeId] = {};
-      mappings[courseOutcomeId][programOutcomeId] = correlationLevel;
+      mappings[courseOutcomeId][`${outcomeType}-${programOutcomeId}`] = {
+        level: correlationLevel,
+        justification: justification || '',
+      };
     });
     setLocalMappings(mappings);
   };
 
-  const updateMapping = (coId, poId, level) => {
-    setLocalMappings(prev => ({
+  const calculateStats = (data) => {
+    if (!data) return;
+    const totalMappings = data.mappings.filter((m) => m.correlationLevel > 0).length;
+    const possibleMappings = data.courseOutcomes.length * (data.programOutcomes.pos.length + data.programOutcomes.psos.length);
+    const byLevel = { 1: 0, 2: 0, 3: 0 };
+    const byType = { PO: 0, PSO: 0 };
+    const byCO = {};
+    data.courseOutcomes.forEach((co) => (byCO[co.id] = 0));
+    data.mappings.forEach((mapping) => {
+      if (mapping.correlationLevel > 0) {
+        byLevel[mapping.correlationLevel]++;
+        byType[mapping.outcomeType]++;
+        byCO[mapping.courseOutcomeId]++;
+      }
+    });
+    setStats({
+      total: totalMappings,
+      coverage: possibleMappings > 0 ? (totalMappings / possibleMappings) * 100 : 0,
+      byLevel,
+      byType,
+      byCO,
+    });
+  };
+
+  const updateMapping = useCallback(
+    debounce((coId, poId, level) => {
+      setLocalMappings((prev) => {
+        const currentMapping = prev[coId]?.[poId] || { level: 0, justification: '' };
+        return {
+          ...prev,
+          [coId]: {
+            ...prev[coId],
+            [poId]: { ...currentMapping, level },
+          },
+        };
+      });
+      setHasChanges(true);
+    }, 300),
+    []
+  );
+
+  const editJustification = (coId, poId) => {
+    const mapping = localMappings[coId]?.[poId];
+    if (!mapping || mapping.level === 0) return;
+    setSelectedMapping({ coId, poId });
+    setJustification(mapping.justification || '');
+    onOpen();
+  };
+
+  const saveJustification = () => {
+    if (!selectedMapping) return;
+    const { coId, poId } = selectedMapping;
+    setLocalMappings((prev) => ({
       ...prev,
       [coId]: {
         ...prev[coId],
-        [poId]: level
-      }
+        [poId]: { ...prev[coId]?.[poId], justification },
+      },
     }));
     setHasChanges(true);
+    onClose();
   };
 
   const handleSave = async () => {
     try {
       setIsSubmitting(true);
-
-      const payload = {
-        matrixData: mappingData.courseOutcomes.map(co => {
-          const mappings = [];
-          const coMappings = localMappings[co.id] || {};
-
-          [...mappingData.programOutcomes.pos, ...mappingData.programOutcomes.psos].forEach(outcome => {
+      const mappings = [];
+      mappingData.courseOutcomes.forEach((co) => {
+        const coMappings = localMappings[co.id] || {};
+        [...mappingData.programOutcomes.pos, ...mappingData.programOutcomes.psos].forEach((outcome) => {
+          const mapping = coMappings[`${outcome.type}-${outcome.id}`] || { level: 0, justification: '' };
+          if (mapping.level > 0) {
             mappings.push({
+              courseOutcomeId: co.id,
               programOutcomeId: outcome.id,
-              correlationLevel: coMappings[outcome.id] || 0,
+              outcomeType: outcome.type,
+              correlationLevel: mapping.level,
+              justification: mapping.justification || '',
             });
-          });
-
-          return { courseOutcomeId: co.id, mappings };
-        }),
-        courseOutcomeId
-      };
-
+          }
+        });
+      });
+      const payload = { courseOutcomeId, userId: user?._id, mappings };
       await axios.put('/api/v2/obe/co-po-mapping', payload);
-      toast.success("Mappings saved successfully!");
+      toast.success('Mappings saved successfully!');
       setHasChanges(false);
-      fetchMappingData(); // refresh
+      calculateStats(mappingData);
     } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Failed to save mappings");
+      toast.error(err.response?.data?.message || 'Failed to save mappings');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const getCellBackgroundColor = (level) => {
-    switch(level) {
-      case 1: return "bg-amber-100 dark:bg-amber-900/30";
-      case 2: return "bg-blue-100 dark:bg-blue-900/30";
-      case 3: return "bg-green-100 dark:bg-green-900/30";
-      default: return "";
+  const filteredCourseOutcomes = useMemo(() => {
+    if (!mappingData) return [];
+    return mappingData.courseOutcomes.filter((co) => {
+      if (cognitiveFilter !== 'all' && co.cognitiveLevel !== cognitiveFilter) return false;
+      if (correlationFilter !== 'all') {
+        const coMappings = localMappings[co.id] || {};
+        return Object.values(coMappings).some((m) => m.level === parseInt(correlationFilter));
+      }
+      return true;
+    });
+  }, [mappingData, cognitiveFilter, correlationFilter, localMappings]);
+
+  const filteredProgramOutcomes = useMemo(() => {
+    if (!mappingData) return { pos: [], psos: [] };
+    if (activeFilter === 'po') return { pos: mappingData.programOutcomes.pos, psos: [] };
+    if (activeFilter === 'pso') return { pos: [], psos: mappingData.programOutcomes.psos };
+    return mappingData.programOutcomes;
+  }, [mappingData, activeFilter]);
+
+  const downloadMapping = () => {
+    if (!mappingData) return;
+    let csvContent = 'data:text/csv;charset=utf-8,';
+    let headers = ['Course Outcome', 'Description'];
+    [...mappingData.programOutcomes.pos, ...mappingData.programOutcomes.psos].forEach((po) => {
+      headers.push(`${po.type}${po.index}`);
+    });
+    csvContent += headers.join(',') + '\r\n';
+    mappingData.courseOutcomes.forEach((co) => {
+      let row = [`CO${co.index}`, `"${co.description.replace(/"/g, '""')}"`];
+      [...mappingData.programOutcomes.pos, ...mappingData.programOutcomes.psos].forEach((po) => {
+        const correlationLevel = localMappings[co.id]?.[`${po.type}-${po.id}`]?.level || 0;
+        row.push(correlationLevel);
+      });
+      csvContent += row.join(',') + '\r\n';
+    });
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `CO-PO_Mapping_${subject}_${academicYear}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  useEffect(() => {
+    if (activeTab === 'stats' && stats && mappingData && chartRef.current) {
+      if (chartInstance) chartInstance.destroy();
+      const newChart = new Chart(chartRef.current, {
+        type: 'doughnut',
+        data: {
+          labels: ['Level 1', 'Level 2', 'Level 3'],
+          datasets: [
+            {
+              data: [stats.byLevel[1] || 0, stats.byLevel[2] || 0, stats.byLevel[3] || 0],
+              backgroundColor: ['#F59E0B', '#3B82F6', '#10B981'],
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top', labels: { color: '#1F2937' } },
+            tooltip: { backgroundColor: '#FFFFFF', bodyColor: '#1F2937', borderColor: '#E5E7EB' },
+          },
+        },
+      });
+      setChartInstance(newChart);
+    }
+    return () => {
+      if (chartInstance) chartInstance.destroy();
+    };
+  }, [activeTab, stats, mappingData]);
+
+  const getCellBackground = (level) => {
+    switch (level) {
+      case 1: return 'bg-yellow-100';
+      case 2: return 'bg-blue-100';
+      case 3: return 'bg-green-100';
+      default: return 'bg-gray-100';
     }
   };
 
   return (
-    <div className="gap-4 flex flex-col p-4">
-      <Card>
-        <CardHeader className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
-          <div className="flex items-center gap-2">
-            <BookOpen size={20} />
-            <h2 className="text-xl font-bold">CO-PO/PSO Mapping Matrix</h2>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Tooltip content="Correlation levels: 1=Slight, 2=Moderate, 3=Strong">
-              <Button isIconOnly variant="light" size="sm">
-                <HelpCircle size={18} />
-              </Button>
-            </Tooltip>
-          </div>
-        </CardHeader>
-        
-        <Divider />
-        
-        <CardBody>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Select
-              placeholder="Select Academic Year"
-              variant="bordered"
-              selectedKeys={academicYear ? [academicYear] : []}
-              onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
-              startContent={<Calendar size={16} />}
-               
-            >
-              {getAcademicYears(10).map(year => (
-                <SelectItem key={year.value} value={year.value}>
-                  {year.label}
-                </SelectItem>
-              ))}
-            </Select>
-
-            <SubjectDropdown
-              instituteId={user?.institute?._id}
-              department={user?.department}
-              academicYear={academicYear}
-              onSelect={setSubject}
-              facultyId={user?._id}
-              selectedSubject={subject}
-              label="Subject"
-            />
-
-            <Button
-              color="primary"
-              onClick={fetchMappingData}
-              isDisabled={!canLoad}
-              isLoading={isLoading}
-              startContent={<RefreshCw size={16} />}
-            >
-              Load Data
-            </Button>
-          </div>
-
-          {isLoading && (
-            <div className="flex justify-center items-center py-10">
-              <Spinner size="lg" />
+    <div className="min-h-screen bg-white text-gray-800 p-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-7xl mx-auto"
+      >
+        <Card className="shadow-lg border border-gray-200 rounded-2xl overflow-hidden">
+          <CardHeader className="bg-primary-200  text-slate-50 p-6">
+            <div className="flex justify-between w-full items-center">
+              <div className="flex items-center gap-4">
+                <BookOpen size={28} />
+                <h1 className="text-2xl font-bold">CO-PO/PSO Mapping Matrix</h1>
+              </div>
+              <Tooltip content="Learn how to map Course Outcomes to Program Outcomes">
+                <Button isIconOnly variant="light" size="sm" className="text-white">
+                  <HelpCircle size={20} />
+                </Button>
+              </Tooltip>
             </div>
-          )}
-
-          {mappingData && mappingData.courseOutcomes?.length > 0 && (
-            <div className="overflow-x-auto">
-              <Table 
-                isStriped 
-                removeWrapper 
-                aria-label="CO-PO/PSO Mapping Matrix"
+          </CardHeader>
+          <CardBody className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Select
+                label="Academic Year"
+                placeholder="Select Academic Year"
+                variant="bordered"
+                selectedKeys={academicYear ? [academicYear] : []}
+                onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
+                startContent={<Calendar size={18} className="text-gray-500" />}
                 classNames={{
-                  th: "bg-default-100 text-center",
-                  td: "text-center"
+                  trigger: 'bg-white border-gray-200 rounded-lg shadow-sm',
+                  label: 'text-gray-700',
                 }}
               >
-                <TableHeader>
-                  <TableColumn className="min-w-[250px]">Course Outcome</TableColumn>
-                  {mappingData.programOutcomes.pos.map(po => (
-                    <TableColumn key={po.id}>
-                      <div className="flex flex-col items-center">
-                        <span className="font-bold">PO{po.index}</span>
-                        <Tooltip content={po.description}>
-                          <span><Info size={14} className="cursor-help mt-1" /></span>
-                        </Tooltip>
-                      </div>
-                    </TableColumn>
-                  ))}
-                  {mappingData.programOutcomes.psos.map(pso => (
-                    <TableColumn key={pso.id}>
-                      <div className="flex flex-col items-center">
-                        <span className="font-bold">PSO{pso.index}</span>
-                        <Tooltip content={pso.description}>
-                          <span><Info size={14} className="cursor-help mt-1" /></span>
-                        </Tooltip>
-                      </div>
-                    </TableColumn>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {mappingData.courseOutcomes.map(co => (
-                    <TableRow key={co.id}>
-                      <TableCell>
-                        <div className="text-left">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold">{co.code}</span>
-                            <Chip 
-                              size="sm" 
-                              color={COGNITIVE_LEVELS[co.cognitiveLevel] || "default"}
-                            >
-                              {co.cognitiveLevel}
-                            </Chip>
-                          </div>
-                          <p className="text-sm mt-1">{co.description}</p>
-                        </div>
-                      </TableCell>
-                      {[...mappingData.programOutcomes.pos, ...mappingData.programOutcomes.psos].map(outcome => {
-                        const correlationLevel = localMappings[co.id]?.[outcome.id] || 0;
-                        return (
-                          <TableCell 
-                            key={`${co.id}-${outcome.id}`}
-                            className={getCellBackgroundColor(correlationLevel)}
-                          >
-                            <Select
-                              size="sm"
-                              aria-label={`Set correlation between ${co.code} and ${outcome.type}${outcome.index}`}
-                              selectedKeys={[correlationLevel.toString()]}
-                              onSelectionChange={(keys) =>
-                                updateMapping(co.id, outcome.id, parseInt(Array.from(keys)[0]))
-                              }
-                              classNames={{
-                                trigger: "min-h-0 h-8 py-0",
-                              }}
-                            >
-                              {CORRELATION_LEVELS.map(level => (
-                                <SelectItem key={level.value.toString()} value={level.value.toString()}>
-                                  <span className="flex gap-2 items-center">
-                                    {level.value > 0 && 
-                                      <Chip size="sm" color={level.color}>{level.label}</Chip>
-                                    }
-                                    {level.value === 0 ? "N/A" : level.description}
-                                  </span>
-                                </SelectItem>
-                              ))}
-                            </Select>
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-
-              <div className="mt-6 flex justify-end">
+                {getAcademicYears(10).map((year) => (
+                  <SelectItem key={year.value} value={year.value} className="text-gray-900">
+                    {year.label}
+                  </SelectItem>
+                ))}
+              </Select>
+              <SubjectDropdown
+                instituteId={user?.institute?._id}
+                department={user?.department}
+                academicYear={academicYear}
+                onSelect={setSubject}
+                facultyId={user?._id}
+                selectedSubject={subject}
+                label="Subject"
+                classNames={{
+                  base: 'bg-white border-gray-200 rounded-lg shadow-sm',
+                  label: 'text-gray-700',
+                }}
+              />
+              <div className="flex gap-3">
                 <Button
                   color="primary"
-                  onClick={handleSave}
-                  isLoading={isSubmitting}
-                  startContent={<Save size={16} />}
-                  isDisabled={!hasChanges}
+                  onClick={fetchMappingData}
+                  isDisabled={!canLoad}
+                  isLoading={isLoading}
+                  className="w-full bg-indigo-500 text-white hover:bg-indigo-600 transition-all shadow-md rounded-lg"
+                  startContent={<RefreshCw size={18} />}
                 >
-                  Save Mappings
+                  Load Data
                 </Button>
+                {mappingData && (
+                  <Button
+                    isIconOnly
+                    variant="flat"
+                    color="secondary"
+                    onClick={downloadMapping}
+                    className="bg-gray-100 text-gray-900 hover:bg-gray-200 rounded-lg shadow-md"
+                    title="Download as CSV"
+                  >
+                    <Download size={18} />
+                  </Button>
+                )}
               </div>
             </div>
-          )}
 
-          {!isLoading && (!subject || !academicYear) && (
-            <div className="text-default-500 mt-4 p-8 text-center border border-dashed rounded-md">
-              <BookOpen size={40} className="mx-auto mb-4 opacity-50" />
-              <p>Please select an academic year and subject to view mappings.</p>
-            </div>
-          )}
+            {isLoading && (
+              <div className="flex justify-center items-center py-12">
+                <Spinner size="lg" color="primary" />
+              </div>
+            )}
 
-          {!isLoading && mappingData?.courseOutcomes?.length === 0 && (
-            <div className="text-default-500 mt-4 p-8 text-center border border-dashed rounded-md">
-              <Info size={40} className="mx-auto mb-4 opacity-50" />  
-              <p>No course outcomes found for selected subject and year.</p>
-            </div>
-          )}
-        </CardBody>
-      </Card>
+            {mappingData && mappingData.courseOutcomes?.length > 0 && (
+              <>
+                <Tabs
+                  selectedKey={activeTab}
+                  onSelectionChange={setActiveTab}
+                  className="border-b border-gray-200"
+                  variant="underlined"
+                  color="primary"
+                >
+                  <Tab
+                    key="matrix"
+                    title={
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <BookOpen size={18} />
+                        <span>Mapping Matrix</span>
+                      </div>
+                    }
+                  />
+                  <Tab
+                    key="stats"
+                    title={
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <BarChart2 size={18} />
+                        <span>Statistics</span>
+                      </div>
+                    }
+                  />
+                </Tabs>
+
+                {activeTab === 'matrix' && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-6"
+                  >
+                    <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-xl shadow-md">
+                      <Select
+                        label="Outcome Type"
+                        size="sm"
+                        className="w-48"
+                        selectedKeys={[activeFilter]}
+                        onChange={(e) => setActiveFilter(e.target.value)}
+                        startContent={<Filter size={14} className="text-gray-500" />}
+                        classNames={{
+                          trigger: 'bg-white border-gray-200 rounded-lg',
+                          label: 'text-gray-700',
+                        }}
+                      >
+                        <SelectItem key="all" value="all">All Outcomes</SelectItem>
+                        <SelectItem key="po" value="po">Program Outcomes</SelectItem>
+                        <SelectItem key="pso" value="pso">Program Specific</SelectItem>
+                      </Select>
+                      <Select
+                        label="Cognitive Level"
+                        size="sm"
+                        className="w-48"
+                        selectedKeys={[cognitiveFilter]}
+                        onChange={(e) => setCognitiveFilter(e.target.value)}
+                        classNames={{
+                          trigger: 'bg-white border-gray-200 rounded-lg',
+                          label: 'text-gray-700',
+                        }}
+                      >
+                        <SelectItem key="all" value="all">All Levels</SelectItem>
+                        {Object.keys(COGNITIVE_LEVELS).map((level) => (
+                          <SelectItem key={level} value={level} className="text-gray-900">
+                            {level}
+                          </SelectItem>
+                        ))}
+                      </Select>
+                      <Select
+                        label="Correlation Level"
+                        size="sm"
+                        className="w-48"
+                        selectedKeys={[correlationFilter]}
+                        onChange={(e) => setCorrelationFilter(e.target.value)}
+                        classNames={{
+                          trigger: 'bg-white border-gray-200 rounded-lg',
+                          label: 'text-gray-700',
+                        }}
+                      >
+                        <SelectItem key="all" value="all">All Correlations</SelectItem>
+                        {CORRELATION_LEVELS.filter((l) => l.value > 0).map((level) => (
+                          <SelectItem key={level.value.toString()} value={level.value.toString()}>
+                            {level.label} - {level.description}
+                          </SelectItem>
+                        ))}
+                      </Select>
+                    </div>
+
+                    <div className="overflow-x-auto rounded-xl shadow-lg">
+                      <Table
+                        isStriped
+                        aria-label="CO-PO/PSO Mapping Matrix"
+                        className="min-w-full bg-white"
+                        classNames={{
+                          th: 'bg-gray-100 text-gray-700 py-4',
+                          td: 'py-3',
+                        }}
+                      >
+                        <TableHeader>
+                          <TableColumn className="min-w-[300px] text-left font-semibold">Course Outcome</TableColumn>
+                          {filteredProgramOutcomes.pos.map((po) => (
+                            <TableColumn key={po.id} className="text-center">
+                              <div className="flex flex-col items-center">
+                                <span className="font-bold text-blue-600">PO{po.index}</span>
+                                <Tooltip content={po.description}>
+                                  <Info size={14} className="cursor-pointer mt-1 text-blue-500" />
+                                </Tooltip>
+                              </div>
+                            </TableColumn>
+                          ))}
+                          {filteredProgramOutcomes.psos.map((pso) => (
+                            <TableColumn key={pso.id} className="text-center">
+                              <div className="flex flex-col items-center">
+                                <span className="font-bold text-purple-600">PSO{pso.index}</span>
+                                <Tooltip content={pso.description}>
+                                  <Info size={14} className="cursor-pointer mt-1 text-purple-500" />
+                                </Tooltip>
+                              </div>
+                            </TableColumn>
+                          ))}
+                        </TableHeader>
+                        <TableBody>
+                          {filteredCourseOutcomes.length > 0 ? (
+                            filteredCourseOutcomes.map((co) => (
+                              <TableRow key={co.id} className="hover:bg-gray-50 transition-colors">
+                                <TableCell className="text-left">
+                                  <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-semibold text-gray-800">{co.code}</span>
+                                      <Chip
+                                        size="sm"
+                                        color={COGNITIVE_LEVELS[co.cognitiveLevel]?.color || 'default'}
+                                        variant="flat"
+                                        className="text-xs"
+                                      >
+                                        {co.cognitiveLevel}
+                                      </Chip>
+                                    </div>
+                                    <p className="text-sm text-gray-600 line-clamp-2">{co.description}</p>
+                                  </div>
+                                </TableCell>
+                                {[...filteredProgramOutcomes.pos, ...filteredProgramOutcomes.psos].map((outcome) => {
+                                  const mappingKey = `${outcome.type}-${outcome.id}`;
+                                  const mapping = localMappings[co.id]?.[mappingKey] || { level: 0, justification: '' };
+                                  const correlationLevel = mapping.level;
+
+                                  return (
+                                    <TableCell
+                                      key={mappingKey}
+                                      className={`${getCellBackground(correlationLevel)} transition-colors`}
+                                    >
+                                      <div className="flex flex-col items-center gap-1">
+                                        <Select
+                                          size="sm"
+                                          aria-label={`Set correlation for ${co.code} - ${outcome.type}${outcome.index}`}
+                                          selectedKeys={[correlationLevel.toString()]}
+                                          onChange={(e) => updateMapping(co.id, mappingKey, parseInt(e.target.value))}
+                                          className="w-24"
+                                          classNames={{
+                                            trigger: 'h-8 py-0 bg-white border-gray-200 rounded-md shadow-sm',
+                                          }}
+                                        >
+                                          {CORRELATION_LEVELS.map((level) => (
+                                            <SelectItem
+                                              key={level.value.toString()}
+                                              value={level.value.toString()}
+                                              className="text-gray-900"
+                                            >
+                                              <div className="flex items-center gap-2">
+                                                <Chip size="sm" color={level.color} variant="flat">
+                                                  {level.label}
+                                                </Chip>
+                                                <span className="text-xs">{level.description}</span>
+                                              </div>
+                                            </SelectItem>
+                                          ))}
+                                        </Select>
+                                        {correlationLevel > 0 && (
+                                          <Button
+                                            size="sm"
+                                            isIconOnly
+                                            variant="light"
+                                            onClick={() => editJustification(co.id, mappingKey)}
+                                            className={`text-${mapping.justification ? 'blue-500' : 'gray-400'} hover:text-blue-600`}
+                                            title={mapping.justification ? 'Edit justification' : 'Add justification'}
+                                          >
+                                            {mapping.justification ? <Edit size={14} /> : <Plus size={14} />}
+                                          </Button>
+                                        )}
+                                        {mapping.justification && (
+                                          <Tooltip content={mapping.justification}>
+                                            <span className="text-xs text-blue-500 cursor-pointer hover:underline">
+                                              View
+                                            </span>
+                                          </Tooltip>
+                                        )}
+                                      </div>
+                                    </TableCell>
+                                  );
+                                })}
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell
+                                colSpan={1 + filteredProgramOutcomes.pos.length + filteredProgramOutcomes.psos.length}
+                                className="text-center py-6 text-gray-500"
+                              >
+                                No results match the current filters.
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeTab === 'stats' && stats && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                    className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+                  >
+                    <Card className="p-6 bg-white shadow-lg rounded-xl">
+                      <h3 className="text-xl font-semibold text-gray-800 mb-4">Mapping Overview</h3>
+                      <div className="space-y-6">
+                        <div>
+                          <div className="flex justify-between mb-2 text-gray-700">
+                            <span className="font-medium">Coverage</span>
+                            <span className="font-semibold">{stats.coverage.toFixed(1)}%</span>
+                          </div>
+                          <Progress
+                            value={stats.coverage}
+                            color={stats.coverage > 60 ? 'success' : stats.coverage > 30 ? 'warning' : 'danger'}
+                            className="h-4"
+                            showValueLabel
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                          <div>
+                            <span className="text-3xl font-bold text-indigo-600">{stats.total}</span>
+                            <p className="text-sm text-gray-500">Total Mappings</p>
+                          </div>
+                          <div>
+                            <span className="text-3xl font-bold text-indigo-600">{stats.byType.PO}</span>
+                            <p className="text-sm text-gray-500">PO Mappings</p>
+                          </div>
+                          <div>
+                            <span className="text-3xl font-bold text-indigo-600">{stats.byType.PSO}</span>
+                            <p className="text-sm text-gray-500">PSO Mappings</p>
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-700 mb-3">Correlation Distribution</h4>
+                          <div className="relative w-full h-64">
+                            <canvas ref={chartRef} className="w-full h-full"></canvas>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                    <Card className="p-6 bg-white shadow-lg rounded-xl">
+                      <h3 className="text-xl font-semibold text-gray-800 mb-4">Course Outcome Analysis</h3>
+                      <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                        {Object.entries(stats.byCO).map(([coId, count]) => {
+                          const co = mappingData.courseOutcomes.find((c) => c.id === coId);
+                          if (!co) return null;
+                          const totalPossible = filteredProgramOutcomes.pos.length + filteredProgramOutcomes.psos.length;
+                          const coveragePercent = totalPossible > 0 ? (count / totalPossible) * 100 : 0;
+                          return (
+                            <div key={coId} className="bg-gray-50 p-3 rounded-lg shadow-inner">
+                              <div className="flex justify-between items-center mb-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-gray-800">{co.code}</span>
+                                  <Chip
+                                    size="sm"
+                                    color={COGNITIVE_LEVELS[co.cognitiveLevel]?.color || 'default'}
+                                    variant="flat"
+                                  >
+                                    {co.cognitiveLevel}
+                                  </Chip>
+                                </div>
+                                <span className="text-sm text-gray-600">
+                                  {count}/{totalPossible} ({coveragePercent.toFixed(0)}%)
+                                </span>
+                              </div>
+                              <Progress
+                                value={coveragePercent}
+                                color={coveragePercent > 70 ? 'success' : coveragePercent > 40 ? 'warning' : 'danger'}
+                                className="h-2"
+                              />
+                              <p className="text-xs text-gray-500 mt-1 line-clamp-2">{co.description}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </Card>
+                  </motion.div>
+                )}
+
+                <div className="flex justify-between items-center mt-6 p-4 bg-gray-50 rounded-xl shadow-md">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="text-sm font-medium text-gray-700">Correlation Levels:</span>
+                    {CORRELATION_LEVELS.filter((l) => l.value > 0).map((level) => (
+                      <Chip
+                        key={level.value}
+                        color={level.color}
+                        size="sm"
+                        variant="flat"
+                        className="transition-all hover:scale-105"
+                      >
+                        {level.label} - {level.description}
+                      </Chip>
+                    ))}
+                  </div>
+                  <Button
+                    color="primary"
+                    onClick={handleSave}
+                    isLoading={isSubmitting}
+                    startContent={<Save size={18} />}
+                    isDisabled={!hasChanges}
+                    className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 transition-all shadow-md rounded-lg px-6"
+                  >
+                    Save Mappings
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {!isLoading && (!subject || !academicYear) && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+                className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-8 text-center mt-6 shadow-lg"
+              >
+                <BookOpen size={48} className="mx-auto mb-4 text-gray-400" />
+                <p className="text-lg font-semibold text-gray-700">
+                  Select an academic year and subject to begin mapping.
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Align course outcomes with program objectives for better curriculum planning.
+                </p>
+              </motion.div>
+            )}
+
+            {!isLoading && mappingData?.courseOutcomes?.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+                className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-8 text-center mt-6 shadow-lg"
+              >
+                <Info size={48} className="mx-auto mb-4 text-gray-400" />
+                <p className="text-lg font-semibold text-gray-700">
+                  No course outcomes found for the selected subject and year.
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Ensure outcomes are defined or try a different subject.
+                </p>
+              </motion.div>
+            )}
+          </CardBody>
+        </Card>
+
+        <Modal isOpen={isOpen} onClose={onClose} size="2xl" className="bg-white">
+          <ModalContent>
+            <ModalHeader className="border-b border-gray-200">
+              <h3 className="text-xl font-semibold text-gray-800">Mapping Justification</h3>
+            </ModalHeader>
+            <ModalBody className="p-6">
+              {selectedMapping && mappingData && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-4"
+                >
+                  <div className="flex items-center gap-4">
+                    <Chip
+                      color="primary"
+                      variant="flat"
+                      className="bg-indigo-500 text-white"
+                    >
+                      {mappingData.courseOutcomes.find((co) => co.id === selectedMapping.coId)?.code || 'CO'}
+                    </Chip>
+                    <span className="text-2xl text-gray-500">→</span>
+                    <Chip
+                      color="secondary"
+                      variant="flat"
+                      className="bg-purple-500 text-white"
+                    >
+                      {selectedMapping.poId.split('-')[0]}
+                      {mappingData.programOutcomes.pos
+                        .concat(mappingData.programOutcomes.psos)
+                        .find((po) => `${po.type}-${po.id}` === selectedMapping.poId)?.index}
+                    </Chip>
+                    <Chip
+                      color={CORRELATION_LEVELS[localMappings[selectedMapping.coId]?.[selectedMapping.poId]?.level || 0].color}
+                      size="lg"
+                      className="text-white"
+                    >
+                      Level {localMappings[selectedMapping.coId]?.[selectedMapping.poId]?.level || 0}
+                    </Chip>
+                  </div>
+                  <Textarea
+                    label="Justification"
+                    placeholder="Explain how this course outcome supports the program outcome..."
+                    value={justification}
+                    onChange={(e) => setJustification(e.target.value)}
+                    className="w-full bg-white border-gray-200 rounded-lg"
+                    rows={6}
+                  />
+                </motion.div>
+              )}
+            </ModalBody>
+            <ModalFooter className="border-t border-gray-200">
+              <Button variant="light" onPress={onClose} className="text-gray-700">
+                Cancel
+              </Button>
+              <Button
+                color="primary"
+                onPress={saveJustification}
+                className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600"
+              >
+                Save
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      </motion.div>
     </div>
   );
 };

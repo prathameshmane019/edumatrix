@@ -1,10 +1,9 @@
-import ManageCourseOutcomesPage from '@/app/components/OBE/course-outcome'
 import React from 'react'
 
 const page = () => {
   return (
     <div>
-      <ManageCourseOutcomesPage />
+      Faculty Page
     </div>
   )
 }

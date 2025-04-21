@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { RxExit } from "react-icons/rx";
-import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdPortrait } from "react-icons/md";
+import { MdKeyboardArrowLeft, MdKeyboardArrowRight, MdMap, MdPortrait } from "react-icons/md";
 import { TbReportAnalytics } from "react-icons/tb";
 import { AiOutlineSchedule } from "react-icons/ai";
 import { SiGoogleclassroom } from "react-icons/si";
@@ -75,7 +75,9 @@ const Sidebar = () => {
           { name: "PO/PSO Management", href: "/obe_management/admin/programe-outcomes", icon: MdPortrait },
         ],
         faculty: [ 
-          { name: "Course Outcomes", href: "/obe_management/faculty", icon: MdPortrait },
+          { name: "Dashboard", href: "/obe_management/faculty", icon: MdPortrait },
+          { name: "Course Outcomes", href: "/obe_management/faculty/co", icon: MdPortrait },
+          { name: "CO Mapping", href: "/obe_management/faculty/mapping", icon:MdMap },
           { name: "Marks Entry", href: "/obe_management/faculty/marks-entry", icon: MdPortrait },
           { name: "Attainment", href: "/obe_management/faculty/attainment", icon: MdPortrait },
         ],
