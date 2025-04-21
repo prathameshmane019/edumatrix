@@ -17,7 +17,6 @@ import {
   Spinner,
   Chip,
   Tooltip,
-  Divider,
   Modal,
   ModalContent,
   ModalHeader,
@@ -27,7 +26,6 @@ import {
   Tabs,
   Tab,
   Progress,
-  Badge,
   Input,
 } from '@nextui-org/react';
 import {
@@ -51,23 +49,7 @@ import { toast } from 'sonner';
 import Chart from 'chart.js/auto';
 import { debounce } from 'lodash';
 import { motion } from 'framer-motion';
-
-const CORRELATION_LEVELS = [
-  { value: 0, label: 'N/A', color: 'default', description: 'No correlation' },
-  { value: 1, label: '1', color: 'yellow', description: 'Slight correlation' },
-  { value: 2, label: '2', color: 'blue', description: 'Moderate correlation' },
-  { value: 3, label: '3', color: 'green', description: 'Strong correlation' },
-];
-
-const COGNITIVE_LEVELS = {
-  Remember: { color: 'gray', description: 'Recall or recognize information' },
-  Understand: { color: 'blue', description: 'Comprehend the meaning of information' },
-  Apply: { color: 'indigo', description: 'Use information in new situations' },
-  Analyze: { color: 'orange', description: 'Break down information into components' },
-  Evaluate: { color: 'teal', description: 'Make judgments based on criteria' },
-  Create: { color: 'pink', description: 'Produce new or original work' },
-  'N/A': { color: 'gray', description: 'Not applicable' },
-};
+import { CORRELATION_LEVELS, COGNITIVE_LEVELS, initializeLocalMappings, calculateStats, downloadMapping } from './MappingUtils';
 
 const MappingPage = () => {
   const { user } = useUser();
@@ -108,8 +90,8 @@ const MappingPage = () => {
       if (!data) throw new Error('No mapping data returned');
       setMappingData(data);
       setCourseOutcomeId(data.courseOutcomeId);
-      initializeLocalMappings(data);
-      calculateStats(data);
+      initializeLocalMappings(data, setLocalMappings);
+      calculateStats(data, setStats);
       setHasChanges(false);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to fetch mapping data');
@@ -121,42 +103,6 @@ const MappingPage = () => {
   useEffect(() => {
     fetchMappingData();
   }, [fetchMappingData]);
-
-  const initializeLocalMappings = (data) => {
-    const mappings = {};
-    data.mappings?.forEach(({ courseOutcomeId, programOutcomeId, outcomeType, correlationLevel, justification }) => {
-      if (!mappings[courseOutcomeId]) mappings[courseOutcomeId] = {};
-      mappings[courseOutcomeId][`${outcomeType}-${programOutcomeId}`] = {
-        level: correlationLevel,
-        justification: justification || '',
-      };
-    });
-    setLocalMappings(mappings);
-  };
-
-  const calculateStats = (data) => {
-    if (!data) return;
-    const totalMappings = data.mappings.filter((m) => m.correlationLevel > 0).length;
-    const possibleMappings = data.courseOutcomes.length * (data.programOutcomes.pos.length + data.programOutcomes.psos.length);
-    const byLevel = { 1: 0, 2: 0, 3: 0 };
-    const byType = { PO: 0, PSO: 0 };
-    const byCO = {};
-    data.courseOutcomes.forEach((co) => (byCO[co.id] = 0));
-    data.mappings.forEach((mapping) => {
-      if (mapping.correlationLevel > 0) {
-        byLevel[mapping.correlationLevel]++;
-        byType[mapping.outcomeType]++;
-        byCO[mapping.courseOutcomeId]++;
-      }
-    });
-    setStats({
-      total: totalMappings,
-      coverage: possibleMappings > 0 ? (totalMappings / possibleMappings) * 100 : 0,
-      byLevel,
-      byType,
-      byCO,
-    });
-  };
 
   const updateMapping = useCallback(
     debounce((coId, poId, level) => {
@@ -220,7 +166,7 @@ const MappingPage = () => {
       await axios.put('/api/v2/obe/co-po-mapping', payload);
       toast.success('Mappings saved successfully!');
       setHasChanges(false);
-      calculateStats(mappingData);
+      calculateStats(mappingData, setStats);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save mappings');
     } finally {
@@ -246,31 +192,6 @@ const MappingPage = () => {
     if (activeFilter === 'pso') return { pos: [], psos: mappingData.programOutcomes.psos };
     return mappingData.programOutcomes;
   }, [mappingData, activeFilter]);
-
-  const downloadMapping = () => {
-    if (!mappingData) return;
-    let csvContent = 'data:text/csv;charset=utf-8,';
-    let headers = ['Course Outcome', 'Description'];
-    [...mappingData.programOutcomes.pos, ...mappingData.programOutcomes.psos].forEach((po) => {
-      headers.push(`${po.type}${po.index}`);
-    });
-    csvContent += headers.join(',') + '\r\n';
-    mappingData.courseOutcomes.forEach((co) => {
-      let row = [`CO${co.index}`, `"${co.description.replace(/"/g, '""')}"`];
-      [...mappingData.programOutcomes.pos, ...mappingData.programOutcomes.psos].forEach((po) => {
-        const correlationLevel = localMappings[co.id]?.[`${po.type}-${po.id}`]?.level || 0;
-        row.push(correlationLevel);
-      });
-      csvContent += row.join(',') + '\r\n';
-    });
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `CO-PO_Mapping_${subject}_${academicYear}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   useEffect(() => {
     if (activeTab === 'stats' && stats && mappingData && chartRef.current) {
@@ -320,7 +241,7 @@ const MappingPage = () => {
         className="max-w-7xl mx-auto"
       >
         <Card className="shadow-lg border border-gray-200 rounded-2xl overflow-hidden">
-          <CardHeader className="bg-primary-200  text-slate-50 p-6">
+          <CardHeader className="bg-primary-200 text-slate-50 p-6">
             <div className="flex justify-between w-full items-center">
               <div className="flex items-center gap-4">
                 <BookOpen size={28} />
@@ -382,7 +303,7 @@ const MappingPage = () => {
                     isIconOnly
                     variant="flat"
                     color="secondary"
-                    onClick={downloadMapping}
+                    onClick={() => downloadMapping(mappingData, localMappings, subject, academicYear)}
                     className="bg-gray-100 text-gray-900 hover:bg-gray-200 rounded-lg shadow-md"
                     title="Download as CSV"
                   >
