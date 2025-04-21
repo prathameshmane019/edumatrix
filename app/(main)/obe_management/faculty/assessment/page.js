@@ -308,6 +308,7 @@ export default function ManageAssessmentsPage() {
     const [isLoadingCOs, setIsLoadingCOs] = useState(false); // Need to load COs for the form
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
+   
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 8;
@@ -319,35 +320,13 @@ export default function ManageAssessmentsPage() {
     const isLoading = isLoadingSubjects || isLoadingAssessments || isLoadingCOs;
 
     // --- Data Fetching Callbacks ---
-    const fetchSubjects = useCallback(async () => {
-        if (!user?.id || !user?.institute?._id) return;
-      
-        setIsLoadingSubjects(true);
-        setError(null);
-      
-        try {
-          // Create a new endpoint or modify your API to handle non-ObjectId facultyId
-          // Or use a different endpoint that doesn't require ObjectId validation
-          const response = await axios.get('/api/v2/faculty/subjects', {
-            params: {
-              facultyId: user.id,
-              institute: user.institute._id,
-              academicYear: user.currentYear,
-              sem: user.sem
-            }
-          });
-            
-          const fetchedSubjects = response.data || [];
-          setSubjects(fetchedSubjects);
-        } catch (err) {
-          const errorMsg = err.response?.data?.message || "Failed to fetch subjects.";
-          setError(errorMsg);
-          toast.error(errorMsg);
-          console.error("fetchSubjects error:", err);
-        } finally {
-          setIsLoadingSubjects(false);
-        }
-      }, [user]);
+    const [filters, setFilters] = useState({
+        subject: '',
+        academicYear: user?.currentYear || '',
+        sem: user?.sem || '',
+        instituteId: user?.institute?._id || ''
+      });
+     
       
       
 
@@ -481,16 +460,16 @@ export default function ManageAssessmentsPage() {
                     {/* Subject Selector (same as CO page) */}
                     <SubjectDropdown
   facultyId={user?.id}
-  instituteId={user?.institute?._id}
-  onSelect={(subjectId) => {
-    // Only proceed if we have a valid subject ID
-    if (subjectId && subjects.some(s => s._id === subjectId)) {
-      const subject = subjects.find(s => s._id === subjectId);
-      setSelectedSubject(subject);
-    }
+  instituteId={filters.instituteId}
+  academicYear={filters.academicYear}
+  sem={filters.sem}
+  selectedSubject={filters.subject}
+  onSelect={(subjectId, subjectObj) => {
+    setFilters((prev) => ({ ...prev, subject: subjectId }));
+    setSelectedSubject(subjectObj);
   }}
-  selectedSubject={selectedSubject?._id || ""}
-/>                 
+/>
+            
 
                     <Input
                         isClearable className="w-full sm:max-w-xs flex-grow" placeholder="Search Assessments..."
@@ -598,9 +577,10 @@ export default function ManageAssessmentsPage() {
              {!selectedSubject && !isLoadingSubjects && (
                  <p className="text-center text-gray-500 mt-10">Please select a subject to manage assessments.</p>
              )}
-             {!selectedSubject && !isLoadingSubjects && subjects.length === 0 && (
-                 <p className="text-center text-warning-600 mt-10">No subjects found for your current Academic Year/Semester.</p>
-             )}
+            {!selectedSubject && (
+  <p className="text-center text-warning-600 mt-10">Please select a subject to manage assessments.</p>
+)}
+
 
 
             {/* Add/Edit Modal */}
