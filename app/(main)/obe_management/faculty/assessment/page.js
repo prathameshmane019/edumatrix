@@ -13,7 +13,10 @@ import axios from 'axios';
 import { useUser } from '@/app/context/UserContext'; // Adjust path
 import { toast } from 'sonner';
 import { parseDate, getLocalTimeZone, today, CalendarDate } from "@internationalized/date"; // For DatePicker
+import { SubjectDropdown } from '@/app/components/subject/SubjectDropdown';
 import { I18nProvider } from '@react-aria/i18n'; // For DatePicker locale
+
+
 
 const ASSESSMENT_TYPES = ['Exam', 'Quiz', 'Assignment', 'Lab', 'Project', 'Presentation', 'Other'];
 
@@ -317,18 +320,36 @@ export default function ManageAssessmentsPage() {
 
     // --- Data Fetching Callbacks ---
     const fetchSubjects = useCallback(async () => {
-        if (!user?.id || !user?.currentYear || !user?.sem) return;
-        setIsLoadingSubjects(true); setError(null);
+        if (!user?.id || !user?.institute?._id) return;
+      
+        setIsLoadingSubjects(true);
+        setError(null);
+      
         try {
-            const response = await axios.get(`/api/faculty/${user.id}/subjects`, {
-                params: { academicYear: user.currentYear, sem: user.sem }
-            });
-            setSubjects(response.data.subjects || response.data.data || []);
+          // Create a new endpoint or modify your API to handle non-ObjectId facultyId
+          // Or use a different endpoint that doesn't require ObjectId validation
+          const response = await axios.get('/api/v2/faculty/subjects', {
+            params: {
+              facultyId: user.id,
+              institute: user.institute._id,
+              academicYear: user.currentYear,
+              sem: user.sem
+            }
+          });
+            
+          const fetchedSubjects = response.data || [];
+          setSubjects(fetchedSubjects);
         } catch (err) {
-            const errorMsg = err.response?.data?.message || "Failed to fetch subjects.";
-            setError(errorMsg); toast.error(errorMsg); console.error(err);
-        } finally { setIsLoadingSubjects(false); }
-    }, [user]);
+          const errorMsg = err.response?.data?.message || "Failed to fetch subjects.";
+          setError(errorMsg);
+          toast.error(errorMsg);
+          console.error("fetchSubjects error:", err);
+        } finally {
+          setIsLoadingSubjects(false);
+        }
+      }, [user]);
+      
+      
 
     const fetchAssessments = useCallback(async () => {
         if (!selectedSubject?._id) return;
@@ -458,26 +479,18 @@ export default function ManageAssessmentsPage() {
             <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
                 <div className="flex flex-wrap gap-4 items-end justify-between">
                     {/* Subject Selector (same as CO page) */}
-                     <Select
-                        label="Select Subject"
-                        placeholder={isLoadingSubjects ? "Loading..." : "Choose a subject"}
-                        className="min-w-[300px] max-w-md flex-grow"
-                        variant='bordered'
-                        selectedKeys={selectedSubject ? [selectedSubject._id] : []}
-                        onChange={(e) => handleSubjectChange(e.target.value)}
-                        isDisabled={isLoadingSubjects || subjects.length === 0}
-                        isLoading={isLoadingSubjects}
-                        items={subjects}
-                    >
-                        {(subject) => (
-                            <SelectItem key={subject._id} value={subject._id} textValue={`${subject.name} (${subject.id})`}>
-                                <div className="flex flex-col">
-                                    <span>{subject.name} ({subject.id})</span>
-                                    <span className="text-xs text-gray-500">{subject.academicYear} - {subject.sem}</span>
-                                </div>
-                            </SelectItem>
-                        )}
-                    </Select>
+                    <SubjectDropdown
+  facultyId={user?.id}
+  instituteId={user?.institute?._id}
+  onSelect={(subjectId) => {
+    // Only proceed if we have a valid subject ID
+    if (subjectId && subjects.some(s => s._id === subjectId)) {
+      const subject = subjects.find(s => s._id === subjectId);
+      setSelectedSubject(subject);
+    }
+  }}
+  selectedSubject={selectedSubject?._id || ""}
+/>                 
 
                     <Input
                         isClearable className="w-full sm:max-w-xs flex-grow" placeholder="Search Assessments..."
