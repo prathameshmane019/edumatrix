@@ -19,7 +19,7 @@ export function SubjectDropdown({
   subType
 }) 
 {
-  console.log(instituteId,facultyId,semester);
+  console.log(instituteId,facultyId,semester,academicYear,selectedClass,department,subType,fetchBy);
   
   const [subjects, setSubjects] = useState([])
   const [isLoading, setIsLoading] = useState(false)
