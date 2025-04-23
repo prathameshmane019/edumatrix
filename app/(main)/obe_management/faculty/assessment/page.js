@@ -280,6 +280,7 @@ function ManageAssessmentsPage({ subject: initialSubject }) {
     [subject, fetchAssessments, academicYear, filterSem],
   )
 
+
   // Table columns definition
   const columns = [
     { key: "name", label: "Name" },

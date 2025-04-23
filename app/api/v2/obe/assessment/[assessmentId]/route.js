@@ -1,8 +1,8 @@
 // app/api/obe/assessments/[assessmentId]/route.js
 import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
-import Assessment from "@/models/Assessment";
-import CourseOutcome from "@/models/CourseOutcome"; // For PUT validation
+import Assessment from "@/models/OBE/Assessment";
+
 // import StudentResult from "@/models/StudentResult"; // For DELETE validation
 import mongoose from "mongoose";
 
