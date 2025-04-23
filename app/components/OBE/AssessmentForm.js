@@ -43,12 +43,22 @@ export default function AssessmentForm({
     console.log("Initializing form from assessment:", assessment)
 
     if (assessment) {
+      // Ensure consistent data format for coMapping
+      const normalizedCoMapping = Array.isArray(assessment.coMapping)
+        ? assessment.coMapping.map((mapping) => ({
+            courseOutcome: mapping.courseOutcome?._id || mapping.courseOutcome, // Handle both populated and unpopulated refs
+            coIndex: Number(mapping.coIndex),
+            maxMarks: Number(mapping.maxMarks || 0),
+          }))
+        : []
+
       setFormData({
         name: assessment.name || "",
         type: assessment.type || "",
-        maxMarks: assessment.maxMarks?.toString() || "",
+        maxMarks: assessment.maxMarks !== undefined ? String(assessment.maxMarks) : "",
         assessmentDate: assessment.assessmentDate ? parseDate(assessment.assessmentDate.split("T")[0]) : null,
-        coMapping: assessment.coMapping || [],
+        coMapping: normalizedCoMapping,
+        sem: assessment.sem || semester || "",
       })
     } else {
       setFormData({
@@ -57,29 +67,38 @@ export default function AssessmentForm({
         maxMarks: "",
         assessmentDate: null,
         coMapping: [],
+        sem: semester || "",
       })
     }
     setErrors({})
-  }, [assessment])
+  }, [assessment, semester])
 
   // Process course outcomes for the selector component
   const availableCOs = useMemo(() => {
-    if (!courseOutcomes || courseOutcomes.length === 0) return []
+    if (!courseOutcomes || !Array.isArray(courseOutcomes) || courseOutcomes.length === 0) return []
 
-    // Flatten the nested structure to make it easier to work with
-    const flattened = courseOutcomes
-      .flatMap((coDoc) =>
-        (coDoc.outcomes || []).map((outcome) => ({
-          mainCoDocId: coDoc._id,
-          coIndex: outcome.index,
-          description: outcome.description,
-          cognitiveLevel: outcome.cognitiveLevel,
-        })),
-      )
-      .sort((a, b) => a.coIndex - b.coIndex)
+    try {
+      // Flatten the nested structure to make it easier to work with
+      const flattened = courseOutcomes
+        .flatMap((coDoc) => {
+          if (!coDoc || !coDoc.outcomes || !Array.isArray(coDoc.outcomes)) return []
 
-    console.log("Processed availableCOs:", flattened)
-    return flattened
+          return coDoc.outcomes.map((outcome) => ({
+            mainCoDocId: coDoc._id,
+            coIndex: Number(outcome.index),
+            description: outcome.description || "",
+            cognitiveLevel: outcome.cognitiveLevel || "N/A",
+          }))
+        })
+        .filter((item) => item.mainCoDocId && item.coIndex) // Filter out invalid items
+        .sort((a, b) => a.coIndex - b.coIndex)
+
+      console.log("Processed availableCOs:", flattened)
+      return flattened
+    } catch (err) {
+      console.error("Error processing course outcomes:", err)
+      return []
+    }
   }, [courseOutcomes])
 
   // Handle input changes
@@ -114,10 +133,17 @@ export default function AssessmentForm({
   const handleCoMappingChange = useCallback((updatedCoMapping) => {
     console.log("CO mapping changed:", updatedCoMapping)
 
+    // Normalize the format for our formData
+    const normalizedMapping = updatedCoMapping.map((co) => ({
+      courseOutcome: co.mainCoDocId, // Store as courseOutcome for API
+      coIndex: Number(co.coIndex),
+      maxMarks: Number(co.maxMarks || 0),
+    }))
+
     // Update form data with the new mapping
     setFormData((prev) => ({
       ...prev,
-      coMapping: updatedCoMapping,
+      coMapping: normalizedMapping,
     }))
 
     // Clear related errors
@@ -127,6 +153,16 @@ export default function AssessmentForm({
       coMappingSum: null,
     }))
   }, [])
+
+  // Prepare selected COs for the CourseOutcomeSelect component
+  // Transform coMapping to format expected by CourseOutcomeSelect
+  const selectedCOsForComponent = useMemo(() => {
+    return formData.coMapping.map((mapping) => ({
+      mainCoDocId: mapping.courseOutcome, // Map back to mainCoDocId for component
+      coIndex: Number(mapping.coIndex),
+      maxMarks: Number(mapping.maxMarks || 0),
+    }))
+  }, [formData.coMapping])
 
   // Validate the form before submission
   const validateForm = useCallback(() => {
@@ -198,10 +234,14 @@ export default function AssessmentForm({
           type: formData.type,
           maxMarks: Number(formData.maxMarks),
           assessmentDate: formData.assessmentDate?.toString() || null,
-          coMapping: formData.coMapping,
+          coMapping: formData.coMapping.map((co) => ({
+            courseOutcome: co.courseOutcome,
+            coIndex: Number(co.coIndex),
+            maxMarks: Number(co.maxMarks || 0),
+          })),
           subject: subject,
           academicYear: academicYear,
-          sem: semester,
+          sem: formData.sem || semester,
         }
 
         console.log("Submitting payload:", payload)
@@ -212,15 +252,6 @@ export default function AssessmentForm({
     },
     [formData, validateForm, onSubmit, subject, academicYear, semester],
   )
-
-  // Prepare selected COs for the CourseOutcomeSelect component
-  const selectedCOs = useMemo(() => {
-    return formData.coMapping.map((mapping) => ({
-      mainCoDocId: mapping.courseOutcome,
-      coIndex: mapping.coIndex,
-      maxMarks: mapping.maxMarks,
-    }))
-  }, [formData.coMapping])
 
   return (
     <form onSubmit={handleSubmit}>
@@ -283,6 +314,25 @@ export default function AssessmentForm({
             isInvalid={!!errors.assessmentDate}
             errorMessage={errors.assessmentDate}
           />
+
+          {/* Semester Select - Added for clarity */}
+          <Select
+            label="Semester"
+            placeholder="Select semester"
+            selectedKeys={formData.sem ? new Set([formData.sem]) : new Set()}
+            onChange={(e) => handleInputChange({ target: { name: "sem", value: e.target.value } })}
+            variant="bordered"
+            isRequired
+            isInvalid={!!errors.sem}
+            errorMessage={errors.sem}
+          >
+            <SelectItem key="sem1" value="sem1">
+              Semester 1
+            </SelectItem>
+            <SelectItem key="sem2" value="sem2">
+              Semester 2
+            </SelectItem>
+          </Select>
         </div>
 
         {/* Course Outcome Mapping Section */}
@@ -309,8 +359,9 @@ export default function AssessmentForm({
           ) : (
             /* CO Selection Component */
             <CourseOutcomeSelect
+              key={`co-select-${subject}-${formData.maxMarks}`} // Add key to force re-render when crucial props change
               availableCOs={availableCOs}
-              selectedCOs={selectedCOs}
+              selectedCOs={selectedCOsForComponent}
               onChange={handleCoMappingChange}
               totalAssessmentMarks={Number(formData.maxMarks) || 0}
               showMarkInput={true}

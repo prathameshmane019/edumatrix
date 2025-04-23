@@ -15,22 +15,24 @@ import {
   TableCell,
   Spinner,
   Tooltip,
+  Chip,
 } from "@nextui-org/react"
-import { PlusIcon, EditIcon, TrashIcon, CalendarIcon } from "lucide-react"
+import { PlusIcon, EditIcon, TrashIcon, CalendarIcon, Users, FileText } from "lucide-react"
 import { useDisclosure } from "@nextui-org/react"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 import axios from "axios"
 import { SubjectDropdown } from "@/app/components/subject/SubjectDropdown"
 import AssessmentForm from "@/app/components/OBE/AssessmentForm"
 import { getAcademicYears } from "@/app/utils/acadmicYears"
-import { Chip } from "@nextui-org/react"
 import { useUser } from "@/app/context/UserContext"
 
-function ManageAssessmentsPage({ subject: initialSubject }) {
+export default function ManageAssessmentsPage({ subject: initialSubject }) {
   // Debug initial props
   console.log("ManageAssessmentsPage initial props:", { initialSubject })
 
   const { isOpen, onOpen, onClose } = useDisclosure()
+  const router = useRouter()
   const [subject, setSubject] = useState(initialSubject || null)
   const [assessments, setAssessments] = useState([])
   const [selectedAssessment, setSelectedAssessment] = useState(null)
@@ -66,7 +68,7 @@ function ManageAssessmentsPage({ subject: initialSubject }) {
     setIsLoadingAssessments(true)
 
     try {
-      const response = await axios.get(`/api/v2/obe/assessment`, {
+      const response = await axios.get(`/api/v2/obe/assessments`, {
         params: {
           subjectId: subId,
           academicYear: acadYear,
@@ -146,8 +148,6 @@ function ManageAssessmentsPage({ subject: initialSubject }) {
     const selectedYear = keys.size > 0 ? Array.from(keys)[0].toString() : ""
     console.log("Academic year changed:", selectedYear)
     setAcademicYear(selectedYear)
-    setSubject(null)
-    setFilterSem("")
   }, [])
 
   // Handle semester filter change
@@ -189,6 +189,14 @@ function ManageAssessmentsPage({ subject: initialSubject }) {
     [onOpen, isLoadingCOs],
   )
 
+  // Navigate to assessment details page
+  const handleViewAssessment = useCallback(
+    (assessment) => {
+      router.push(`assessment/${assessment._id}`)
+    },
+    [router],
+  )
+
   // Handle save assessment
   const handleSaveAssessment = useCallback(
     async (assessmentData) => {
@@ -201,7 +209,7 @@ function ManageAssessmentsPage({ subject: initialSubject }) {
       setIsSubmitting(true)
 
       try {
-        const url = selectedAssessment ? `/api/obe/assessments/${selectedAssessment._id}` : "/api/obe/assessments"
+        const url = selectedAssessment ? `/api/v2/obe/assessments/${selectedAssessment._id}` : "/api/v2/obe/assessments"
 
         const method = selectedAssessment ? "PUT" : "POST"
 
@@ -267,7 +275,7 @@ function ManageAssessmentsPage({ subject: initialSubject }) {
       setIsLoadingAssessments(true)
 
       try {
-        await axios.delete(`/api/obe/assessments/${assessmentId}`)
+        await axios.delete(`/api/v2/obe/assessments/${assessmentId}`)
         toast.success("Assessment deleted successfully.")
         fetchAssessments(subject, academicYear, filterSem)
       } catch (error) {
@@ -291,7 +299,7 @@ function ManageAssessmentsPage({ subject: initialSubject }) {
   ]
 
   return (
-    <div>
+    <div className="m-10">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold">Manage Assessments</h2>
@@ -347,13 +355,13 @@ function ManageAssessmentsPage({ subject: initialSubject }) {
           selectedKeys={filterSem ? new Set([filterSem]) : new Set()}
           onSelectionChange={handleFilterSemChange}
           className="max-w-xs"
-          isDisabled={!subject}
+          isDisabled={!academicYear}
         >
           <SelectItem key="sem1" value="sem1">
-            sem1
+            Semester 1
           </SelectItem>
           <SelectItem key="sem2" value="sem2">
-            sem2
+            Semester 2
           </SelectItem>
         </Select>
 
@@ -376,7 +384,7 @@ function ManageAssessmentsPage({ subject: initialSubject }) {
         />
 
         {/* Clear Filters Button */}
-        {(academicYear || filterSem) && (
+        {(academicYear || filterSem || subject) && (
           <Button
             size="sm"
             onPress={() => {
@@ -417,9 +425,17 @@ function ManageAssessmentsPage({ subject: initialSubject }) {
           </TableHeader>
           <TableBody items={assessments} emptyContent={"No assessments found for the selected filters."}>
             {(assessment) => (
-              <TableRow key={assessment._id}>
+              <TableRow
+                key={assessment._id}
+                className="cursor-pointer"
+                onClick={() => handleViewAssessment(assessment)}
+              >
                 <TableCell>{assessment.name}</TableCell>
-                <TableCell>{assessment.type}</TableCell>
+                <TableCell>
+                  <Chip color="primary" variant="flat" size="sm">
+                    {assessment.type}
+                  </Chip>
+                </TableCell>
                 <TableCell>{assessment.maxMarks}</TableCell>
                 <TableCell>
                   {assessment.assessmentDate ? new Date(assessment.assessmentDate).toLocaleDateString() : "-"}
@@ -432,15 +448,46 @@ function ManageAssessmentsPage({ subject: initialSubject }) {
                       </Chip>
                     ))}
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center gap-2">
+                    <Tooltip content="View Details">
+                      <Button
+                        isIconOnly
+                        size="sm"
+                        variant="flat"
+                        color="primary"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleViewAssessment(assessment)
+                        }}
+                      >
+                        <FileText className="h-4 w-4" />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content="Manage Student Marks">
+                      <Button
+                        isIconOnly
+                        size="sm"
+                        variant="flat"
+                        color="success"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          router.push(`assessment/${assessment._id}?tab=marks`)
+                        }}
+                      >
+                        <Users className="h-4 w-4" />
+                      </Button>
+                    </Tooltip>
                     <Tooltip content="Edit">
                       <Button
                         isIconOnly
                         size="sm"
                         variant="bordered"
                         color="primary"
-                        onClick={() => handleEditAssessment(assessment)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleEditAssessment(assessment)
+                        }}
                         isDisabled={isLoadingCOs}
                       >
                         <EditIcon className="h-4 w-4" />
@@ -452,7 +499,10 @@ function ManageAssessmentsPage({ subject: initialSubject }) {
                         size="sm"
                         variant="light"
                         color="danger"
-                        onClick={() => handleDeleteAssessment(assessment._id)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteAssessment(assessment._id)
+                        }}
                         isDisabled={isLoadingAssessments}
                       >
                         <TrashIcon className="h-4 w-4" />
@@ -495,5 +545,3 @@ function ManageAssessmentsPage({ subject: initialSubject }) {
     </div>
   )
 }
-
-export default ManageAssessmentsPage
