@@ -366,8 +366,7 @@ export default function ManageAssessmentsPage() {
         } finally { setIsLoadingCOs(false); }
     }, [selectedSubject]);
 
-    // --- Effects ---
-    useEffect(() => { fetchSubjects(); }, [fetchSubjects]);
+    
 
     useEffect(() => {
         if (selectedSubject) {
