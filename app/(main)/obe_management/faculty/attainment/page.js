@@ -144,7 +144,7 @@ export default function ViewAttainmentPage() {
              )}
 
             {!isLoadingAttainment && coAttainmentData.length === 0 && poAttainmentData.length === 0 && selectedSubject && (
-                 <p className='text-center text-gray-500 mt-10'>Click "Calculate Attainment" to view results for the selected subject.</p>
+                 <p className='text-center text-gray-500 mt-10'>Click &#34; Calculate Attainment &#34; to view results for the selected subject.</p>
              )}
 
 
