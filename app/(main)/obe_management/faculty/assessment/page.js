@@ -1,5 +1,5 @@
 // ManageAssessmentsPage.jsx
-"use client"
+"use client";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Button,
@@ -25,17 +25,20 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { SubjectDropdown } from "@/app/components/subject/SubjectDropdown";
 import AssessmentForm from "@/app/components/OBE/AssessmentForm";
+import AssessmentDeleteConfirmModal from "@/app/components/ConfirmModal/AssessmentDelete";
 import { getAcademicYears } from "@/app/utils/acadmicYears";
 import { useUser } from "@/app/context/UserContext";
 
 export default function ManageAssessmentsPage({ subject: initialSubject }) {
   console.log("ManageAssessmentsPage initial props:", { initialSubject });
 
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isFormOpen, onOpen: onFormOpen, onClose: onFormClose } = useDisclosure(); // For AssessmentForm modal
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure(); // For delete modal
   const router = useRouter();
   const [subject, setSubject] = useState(initialSubject || null);
   const [assessments, setAssessments] = useState([]);
   const [selectedAssessment, setSelectedAssessment] = useState(null);
+  const [assessmentToDelete, setAssessmentToDelete] = useState(null); // New state for deletion
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingAssessments, setIsLoadingAssessments] = useState(false);
   const [courseOutcomes, setCourseOutcomes] = useState([]);
@@ -148,8 +151,8 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
     }
     console.log("Opening add assessment form");
     setSelectedAssessment(null);
-    onOpen();
-  }, [onOpen, subject, academicYear, isLoadingCOs]);
+    onFormOpen();
+  }, [onFormOpen, subject, academicYear, isLoadingCOs]);
 
   const handleEditAssessment = useCallback(
     (assessment) => {
@@ -159,9 +162,9 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
       }
       console.log("Opening edit assessment form:", assessment);
       setSelectedAssessment(assessment);
-      onOpen();
+      onFormOpen();
     },
-    [onOpen, isLoadingCOs]
+    [onFormOpen, isLoadingCOs]
   );
 
   const handleViewAssessment = useCallback(
@@ -202,7 +205,7 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
         console.log("API response:", response.data);
         toast.success(`Assessment ${selectedAssessment ? "updated" : "created"} successfully.`);
         fetchAssessments(subject, academicYear, filterSem);
-        onClose();
+        onFormClose();
       } catch (error) {
         console.error("Save Assessment Error:", error);
         const apiErrors = error.response?.data?.errors;
@@ -214,16 +217,13 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
         setIsSubmitting(false);
       }
     },
-    [selectedAssessment, subject, fetchAssessments, onClose, academicYear, filterSem]
+    [selectedAssessment, subject, fetchAssessments, onFormClose, academicYear, filterSem]
   );
 
   const handleDeleteAssessment = useCallback(
     async (assessmentId) => {
       if (!subject || !academicYear) {
         toast.error("Subject or Academic Year context is missing.");
-        return;
-      }
-      if (!window.confirm("Are you sure you want to delete this assessment? This action cannot be undone.")) {
         return;
       }
       console.log("Deleting assessment:", assessmentId);
@@ -236,11 +236,18 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
         console.error("Delete Assessment Error:", error);
         toast.error(`Error deleting assessment: ${error.response?.data?.message || error.message || "Unknown error"}`);
       } finally {
-        // fetchAssessments will set loading to false
+        setIsLoadingAssessments(false);
       }
     },
     [subject, fetchAssessments, academicYear, filterSem]
   );
+
+  // New function to open delete modal
+  const openDeleteModal = useCallback((assessment) => {
+    console.log("Opening delete modal for assessment:", assessment);
+    setAssessmentToDelete(assessment);
+    onDeleteOpen();
+  }, [onDeleteOpen]);
 
   // Memoize props to ensure stability
   const stableSubject = useMemo(() => subject, [subject]);
@@ -350,7 +357,7 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
           </Button>
         )}
       </div>
-      {isLoadingCOs && subject && academicYear && (
+      {isLoadingCOs && !isLoadingAssessments && subject && academicYear && (
         <div className="flex justify-center py-4">
           <Spinner label="Loading Course Outcomes..." />
         </div>
@@ -388,7 +395,7 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
                 <TableCell>
                   {Array.isArray(assessment.coMapping) &&
                     assessment.coMapping.map((map, index) => (
-                      <Chip variant="flat" color="success" key={`${assessment._id}-co-map-${index}`} size="sm" className="mr-1 mb-1">
+                      <Chip variant="flat" color='warning' key={`${assessment._id}-co-map-${index}`} size="sm" className="mr-1 mb-1">
                         {`CO${map.coIndex} (${map.maxMarks})`}
                       </Chip>
                     ))}
@@ -432,7 +439,8 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
                         onClick={(e) => {
                           e.stopPropagation();
                           handleEditAssessment(assessment);
-                        }} 
+                        }}
+                        isDisabled={isLoadingCOs}
                       >
                         <EditIcon className="h-4 w-4" />
                       </Button>
@@ -445,7 +453,7 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
                         color="danger"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteAssessment(assessment._id);
+                          openDeleteModal(assessment); // Updated to open modal
                         }}
                         isDisabled={isLoadingAssessments}
                       >
@@ -461,8 +469,8 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
       ) : (
         <p className="text-gray-500 py-8 text-center">No assessments found for the selected subject and filters.</p>
       )}
-      <Modal className="max-h-[80vh] overflow-y-auto" isOpen={isOpen} onOpenChange={onClose} size="xl" scrollBehavior="inside">
-        <ModalContent className="">
+      <Modal backdrop='blur' isOpen={isFormOpen} onOpenChange={onFormClose} size="xl" scrollBehavior="inside">
+        <ModalContent className="max-h-[90vh] overflow-y-auto">
           {(closeModal) => (
             <>
               <ModalHeader className="flex flex-col gap-1">
@@ -484,6 +492,12 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
           )}
         </ModalContent>
       </Modal>
+      <AssessmentDeleteConfirmModal
+        isOpen={isDeleteOpen}
+        onClose={onDeleteClose}
+        onConfirmDelete={handleDeleteAssessment}
+        assessment={assessmentToDelete}
+      />
     </div>
   );
 }
