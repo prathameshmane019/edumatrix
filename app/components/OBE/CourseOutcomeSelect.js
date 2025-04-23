@@ -1,6 +1,20 @@
-"use client"
-import { useState, useEffect, useCallback, useMemo } from "react"
-import { Checkbox, Input, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@nextui-org/react"
+// CourseOutcomeSelect.jsx
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Checkbox, Input, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@nextui-org/react";
+import debounce from "lodash/debounce";
+
+// Custom equality check for CO arrays
+const areCOsEqual = (arr1, arr2) => {
+  if (!Array.isArray(arr1) || !Array.isArray(arr2) || arr1.length !== arr2.length) return false;
+  return arr1.every((co1, i) => {
+    const co2 = arr2[i];
+    return (
+      co1.mainCoDocId === co2.mainCoDocId &&
+      co1.coIndex === co2.coIndex &&
+      Math.abs(co1.maxMarks - co2.maxMarks) < 0.001
+    );
+  });
+};
 
 export default function CourseOutcomeSelect({
   availableCOs = [],
@@ -11,148 +25,133 @@ export default function CourseOutcomeSelect({
   disabled = false,
   required = false,
 }) {
-  // Create a more consistent representation of selected COs
+  console.log("CourseSelect props:", { availableCOs, selectedCOs });
+
+  // Normalize selectedCOs
   const normalizedSelectedCOs = useMemo(() => {
-    return Array.isArray(selectedCOs)
-      ? selectedCOs.map((co) => ({
-          mainCoDocId: co.mainCoDocId || co.courseOutcome, // Handle both formats
-          coIndex: Number(co.coIndex),
-          maxMarks: Number(co.maxMarks || 0),
-        }))
-      : []
-  }, [selectedCOs])
+    if (!Array.isArray(selectedCOs)) return [];
+    return selectedCOs.map((co) => ({
+      mainCoDocId: co.mainCoDocId || (typeof co.courseOutcome === "string" ? co.courseOutcome : co.courseOutcome?._id),
+      coIndex: Number(co.coIndex),
+      maxMarks: Number(co.maxMarks || 0),
+    }));
+  }, [selectedCOs]); // No need for JSON.stringify; rely on stable selectedCOs
 
-  // Use a keyed object for selection state instead of Map
-  const [selectionState, setSelectionState] = useState({})
+  const [selectionState, setSelectionState] = useState({});
 
-  // Initialize selection from normalized props
+  // Sync selectionState with normalizedSelectedCOs
   useEffect(() => {
-    const newSelection = {}
-
+    const newSelection = {};
     normalizedSelectedCOs.forEach((co) => {
-      if (co.mainCoDocId && co.coIndex) {
-        const key = `${co.mainCoDocId}-${co.coIndex}`
+      if (co.mainCoDocId && co.coIndex !== undefined) {
+        const key = `${co.mainCoDocId}-${co.coIndex}`;
         newSelection[key] = {
           mainCoDocId: co.mainCoDocId,
           coIndex: Number(co.coIndex),
           maxMarks: Number(co.maxMarks || 0),
-        }
+        };
       }
-    })
+    });
 
-    setSelectionState(newSelection)
-  }, [normalizedSelectedCOs])
+    // Only update if different
+    const currentSelectionArray = Object.values(selectionState).map((co) => ({
+      mainCoDocId: co.mainCoDocId,
+      coIndex: co.coIndex,
+      maxMarks: co.maxMarks,
+    }));
+    if (!areCOsEqual(currentSelectionArray, normalizedSelectedCOs)) {
+      setSelectionState(newSelection);
+    }
+  }, [normalizedSelectedCOs]);
 
-  // Convert selection state to array for parent component
+  // Compute selectionArray
   const selectionArray = useMemo(() => {
     return Object.values(selectionState).map((co) => ({
       mainCoDocId: co.mainCoDocId,
       coIndex: Number(co.coIndex),
       maxMarks: Number(co.maxMarks || 0),
-    }))
-  }, [selectionState])
+    }));
+  }, [selectionState]);
 
-  // Notify parent of changes, but only when necessary
+  // Debounced onChange
+  const debouncedOnChange = useMemo(
+    () =>
+      debounce((newSelection) => {
+        if (typeof onChange === "function") {
+          onChange(newSelection);
+        }
+      }, 300),
+    [onChange]
+  );
+
+  // Notify parent of changes
   useEffect(() => {
-    // Only trigger if the selection actually changed
-    const hasChanged =
-      selectionArray.length !== normalizedSelectedCOs.length ||
-      !selectionArray.every((newCO, i) => {
-        const oldCO = normalizedSelectedCOs[i]
-        if (!oldCO) return false
-
-        return (
-          newCO.mainCoDocId === oldCO.mainCoDocId &&
-          newCO.coIndex === oldCO.coIndex &&
-          Math.abs(newCO.maxMarks - oldCO.maxMarks) < 0.001
-        )
-      })
-
-    if (hasChanged && typeof onChange === "function") {
-      // Convert back to the format expected by parent
-      const updatedCOs = selectionArray.map((co) => ({
-        mainCoDocId: co.mainCoDocId,
-        coIndex: co.coIndex,
-        maxMarks: co.maxMarks,
-      }))
-
-      onChange(updatedCOs)
+    if (!areCOsEqual(selectionArray, normalizedSelectedCOs)) {
+      debouncedOnChange(selectionArray);
     }
-  }, [selectionArray, normalizedSelectedCOs, onChange])
+    return () => debouncedOnChange.cancel(); // Cleanup debounce on unmount
+  }, [selectionArray, normalizedSelectedCOs, debouncedOnChange]);
 
-  // Handle checkbox selection
   const handleSelectionChange = useCallback((isSelected, coItem) => {
-    if (!coItem?.mainCoDocId || !coItem?.coIndex) return
-
-    const key = `${coItem.mainCoDocId}-${coItem.coIndex}`
-
+    if (!coItem?.mainCoDocId || coItem?.coIndex === undefined) return;
+    const key = `${coItem.mainCoDocId}-${coItem.coIndex}`;
     setSelectionState((prev) => {
-      const newState = { ...prev }
-
+      const newState = { ...prev };
       if (isSelected) {
-        // Add to selection with default 0 marks
         newState[key] = {
           mainCoDocId: coItem.mainCoDocId,
           coIndex: Number(coItem.coIndex),
           maxMarks: prev[key]?.maxMarks || 0,
-        }
+        };
       } else {
-        // Remove from selection
-        delete newState[key]
+        delete newState[key];
       }
+      return newState;
+    });
+  }, []);
 
-      return newState
-    })
-  }, [])
+  const handleMarksChange = useCallback(
+    debounce((value, coItem) => {
+      if (!coItem?.mainCoDocId || coItem?.coIndex === undefined) return;
+      if (value === "" || /^\d*\.?\d*$/.test(value)) {
+        const key = `${coItem.mainCoDocId}-${coItem.coIndex}`;
+        const numValue = value === "" ? 0 : Number(value);
+        setSelectionState((prev) => {
+          if (!prev[key]) return prev;
+          return {
+            ...prev,
+            [key]: {
+              ...prev[key],
+              maxMarks: isNaN(numValue) ? 0 : numValue,
+            },
+          };
+        });
+      }
+    }, 300),
+    []
+  );
 
-  // Handle marks input change
-  const handleMarksChange = useCallback((value, coItem) => {
-    if (!coItem?.mainCoDocId || !coItem?.coIndex) return
-
-    // Only allow valid numeric input
-    if (value === "" || /^\d*\.?\d*$/.test(value)) {
-      const key = `${coItem.mainCoDocId}-${coItem.coIndex}`
-      const numValue = value === "" ? 0 : Number(value)
-
-      setSelectionState((prev) => {
-        // Only update if this CO is actually selected
-        if (!prev[key]) return prev
-
-        return {
-          ...prev,
-          [key]: {
-            ...prev[key],
-            maxMarks: isNaN(numValue) ? 0 : numValue,
-          },
-        }
-      })
-    }
-  }, [])
-
-  // Check if a CO is selected
   const isSelected = useCallback(
     (coItem) => {
-      if (!coItem?.mainCoDocId || !coItem?.coIndex) return false
-      const key = `${coItem.mainCoDocId}-${coItem.coIndex}`
-      return !!selectionState[key]
+      if (!coItem?.mainCoDocId || coItem?.coIndex === undefined) return false;
+      const key = `${coItem.mainCoDocId}-${coItem.coIndex}`;
+      return !!selectionState[key];
     },
-    [selectionState],
-  )
+    [selectionState]
+  );
 
-  // Get marks for a CO
   const getMarks = useCallback(
     (coItem) => {
-      if (!coItem?.mainCoDocId || !coItem?.coIndex) return 0
-      const key = `${coItem.mainCoDocId}-${coItem.coIndex}`
-      return selectionState[key]?.maxMarks || 0
+      if (!coItem?.mainCoDocId || coItem?.coIndex === undefined) return 0;
+      const key = `${coItem.mainCoDocId}-${coItem.coIndex}`;
+      return selectionState[key]?.maxMarks || 0;
     },
-    [selectionState],
-  )
+    [selectionState]
+  );
 
-  // Calculate total marks allocated
   const totalAllocated = useMemo(() => {
-    return Object.values(selectionState).reduce((sum, co) => sum + Number(co.maxMarks || 0), 0)
-  }, [selectionState])
+    return Object.values(selectionState).reduce((sum, co) => sum + Number(co.maxMarks || 0), 0);
+  }, [selectionState]);
 
   return (
     <div>
@@ -168,7 +167,6 @@ export default function CourseOutcomeSelect({
           </span>
         </div>
       )}
-
       <Table aria-label="Course Outcomes Selection Table" selectionMode="none">
         <TableHeader>
           <TableColumn>Select</TableColumn>
@@ -179,7 +177,7 @@ export default function CourseOutcomeSelect({
         <TableBody emptyContent="No course outcomes available">
           {Array.isArray(availableCOs) && availableCOs.length > 0 ? (
             availableCOs.map((co) => {
-              const key = `${co.mainCoDocId}-${co.coIndex}`
+              const key = `${co.mainCoDocId}-${co.coIndex}`;
               return (
                 <TableRow key={key}>
                   <TableCell>
@@ -204,7 +202,7 @@ export default function CourseOutcomeSelect({
                     </TableCell>
                   )}
                 </TableRow>
-              )
+              );
             })
           ) : (
             <TableRow>
@@ -213,10 +211,9 @@ export default function CourseOutcomeSelect({
           )}
         </TableBody>
       </Table>
-
       {required && Object.keys(selectionState).length === 0 && (
         <p className="text-danger text-sm mt-2">At least one Course Outcome must be selected.</p>
       )}
     </div>
-  )
+  );
 }

@@ -1,12 +1,25 @@
-"use client"
-import { useState, useEffect, useCallback, useMemo } from "react"
-import { Button, ModalBody, ModalFooter, Select, SelectItem, Input, Spinner } from "@nextui-org/react"
-import { parseDate, today, getLocalTimeZone } from "@internationalized/date"
-import { DatePicker } from "@nextui-org/react"
-import { toast } from "sonner"
-import CourseOutcomeSelect from "./CourseOutcomeSelect"
+// AssessmentForm.jsx
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Button, ModalBody, ModalFooter, Select, SelectItem, Input, Spinner } from "@nextui-org/react";
+import { parseDate, today, getLocalTimeZone } from "@internationalized/date";
+import { DatePicker } from "@nextui-org/react";
+import { toast } from "sonner";
+import CourseOutcomeSelect from "./CourseOutcomeSelect";
 
-const ASSESSMENT_TYPES = ["Exam", "Quiz", "Assignment", "Lab", "Project", "Presentation", "Other"]
+// Custom equality check for CO mappings
+const areCOMappingsEqual = (arr1, arr2) => {
+  if (!Array.isArray(arr1) || !Array.isArray(arr2) || arr1.length !== arr2.length) return false;
+  return arr1.every((co1, i) => {
+    const co2 = arr2[i];
+    return (
+      co1.courseOutcome === co2.courseOutcome &&
+      co1.coIndex === co2.coIndex &&
+      Math.abs(co1.maxMarks - co2.maxMarks) < 0.001
+    );
+  });
+};
+
+const ASSESSMENT_TYPES = ["Exam", "Quiz", "Assignment", "Lab", "Project", "Presentation", "Other"];
 
 export default function AssessmentForm({
   assessment,
@@ -19,14 +32,14 @@ export default function AssessmentForm({
   semester,
   isLoadingCOs,
 }) {
-  // Debug incoming props
   console.log("AssessmentForm props:", {
     hasAssessment: !!assessment,
     subject,
-    courseOutcomesCount: courseOutcomes?.length,
+    courseOutcomes,
     academicYear,
+    assessment,
     semester,
-  })
+  });
 
   const [formData, setFormData] = useState({
     name: "",
@@ -34,201 +47,166 @@ export default function AssessmentForm({
     maxMarks: "",
     assessmentDate: null,
     coMapping: [],
-  })
+    sem: semester || "",
+  });
 
-  const [errors, setErrors] = useState({})
+  const [errors, setErrors] = useState({});
 
-  // Initialize form data from assessment prop
+  // Initialize form data
   useEffect(() => {
-    console.log("Initializing form from assessment:", assessment)
+    console.log("Initializing form from assessment:", assessment);
+    const newFormData = assessment
+      ? {
+          name: assessment.name || "",
+          type: assessment.type || "",
+          maxMarks: assessment.maxMarks !== undefined ? String(assessment.maxMarks) : "",
+          assessmentDate: assessment.assessmentDate ? parseDate(assessment.assessmentDate.split("T")[0]) : null,
+          coMapping: Array.isArray(assessment.coMapping)
+            ? assessment.coMapping.map((mapping) => ({
+                courseOutcome: mapping.courseOutcome?._id || mapping.courseOutcome, // Extract _id
+                coIndex: Number(mapping.coIndex),
+                maxMarks: Number(mapping.maxMarks || 0),
+              }))
+            : [],
+          sem: assessment.sem || semester || "",
+        }
+      : {
+          name: "",
+          type: "",
+          maxMarks: "",
+          assessmentDate: null,
+          coMapping: [],
+          sem: semester || "",
+        };
 
-    if (assessment) {
-      // Ensure consistent data format for coMapping
-      const normalizedCoMapping = Array.isArray(assessment.coMapping)
-        ? assessment.coMapping.map((mapping) => ({
-            courseOutcome: mapping.courseOutcome?._id || mapping.courseOutcome, // Handle both populated and unpopulated refs
-            coIndex: Number(mapping.coIndex),
-            maxMarks: Number(mapping.maxMarks || 0),
-          }))
-        : []
-
-      setFormData({
-        name: assessment.name || "",
-        type: assessment.type || "",
-        maxMarks: assessment.maxMarks !== undefined ? String(assessment.maxMarks) : "",
-        assessmentDate: assessment.assessmentDate ? parseDate(assessment.assessmentDate.split("T")[0]) : null,
-        coMapping: normalizedCoMapping,
-        sem: assessment.sem || semester || "",
-      })
-    } else {
-      setFormData({
-        name: "",
-        type: "",
-        maxMarks: "",
-        assessmentDate: null,
-        coMapping: [],
-        sem: semester || "",
-      })
+    // Only update if different
+    if (!areCOMappingsEqual(newFormData.coMapping, formData.coMapping) || JSON.stringify(newFormData) !== JSON.stringify(formData)) {
+      setFormData(newFormData);
+      setErrors({});
     }
-    setErrors({})
-  }, [assessment, semester])
+  }, [assessment, semester]);
 
-  // Process course outcomes for the selector component
   const availableCOs = useMemo(() => {
-    if (!courseOutcomes || !Array.isArray(courseOutcomes) || courseOutcomes.length === 0) return []
-
+    if (!courseOutcomes || !Array.isArray(courseOutcomes) || courseOutcomes.length === 0) return [];
     try {
-      // Flatten the nested structure to make it easier to work with
       const flattened = courseOutcomes
         .flatMap((coDoc) => {
-          if (!coDoc || !coDoc.outcomes || !Array.isArray(coDoc.outcomes)) return []
-
+          if (!coDoc || !coDoc.outcomes || !Array.isArray(coDoc.outcomes)) return [];
           return coDoc.outcomes.map((outcome) => ({
             mainCoDocId: coDoc._id,
             coIndex: Number(outcome.index),
             description: outcome.description || "",
             cognitiveLevel: outcome.cognitiveLevel || "N/A",
-          }))
+          }));
         })
-        .filter((item) => item.mainCoDocId && item.coIndex) // Filter out invalid items
-        .sort((a, b) => a.coIndex - b.coIndex)
-
-      console.log("Processed availableCOs:", flattened)
-      return flattened
+        .filter((item) => item.mainCoDocId && item.coIndex)
+        .sort((a, b) => a.coIndex - b.coIndex);
+      console.log("Processed availableCOs:", flattened);
+      return flattened;
     } catch (err) {
-      console.error("Error processing course outcomes:", err)
-      return []
+      console.error("Error processing course outcomes:", err);
+      return [];
     }
-  }, [courseOutcomes])
+  }, [courseOutcomes]);
 
-  // Handle input changes
   const handleInputChange = useCallback((e) => {
-    const { name, value } = e.target
-
+    const { name, value } = e.target;
     if (name === "maxMarks") {
-      // Validate numeric input
       if (value === "" || /^\d*\.?\d*$/.test(value)) {
-        setFormData((prev) => ({ ...prev, [name]: value }))
-
-        // Clear related errors
+        setFormData((prev) => ({ ...prev, [name]: value }));
         setErrors((prev) => ({
           ...prev,
           [name]: null,
           coMappingSum: null,
-        }))
+        }));
       }
     } else {
-      setFormData((prev) => ({ ...prev, [name]: value }))
-      setErrors((prev) => ({ ...prev, [name]: null }))
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      setErrors((prev) => ({ ...prev, [name]: null }));
     }
-  }, [])
+  }, []);
 
-  // Handle date changes
   const handleDateChange = useCallback((dateValue) => {
-    setFormData((prev) => ({ ...prev, assessmentDate: dateValue }))
-    setErrors((prev) => ({ ...prev, assessmentDate: null }))
-  }, [])
+    setFormData((prev) => ({ ...prev, assessmentDate: dateValue }));
+    setErrors((prev) => ({ ...prev, assessmentDate: null }));
+  }, []);
 
-  // Handle CO mapping changes from CourseOutcomeSelect
   const handleCoMappingChange = useCallback((updatedCoMapping) => {
-    console.log("CO mapping changed:", updatedCoMapping)
-
-    // Normalize the format for our formData
+    console.log("CO mapping changed:", updatedCoMapping);
     const normalizedMapping = updatedCoMapping.map((co) => ({
-      courseOutcome: co.mainCoDocId, // Store as courseOutcome for API
+      courseOutcome: co.mainCoDocId,
       coIndex: Number(co.coIndex),
       maxMarks: Number(co.maxMarks || 0),
-    }))
-
-    // Update form data with the new mapping
-    setFormData((prev) => ({
-      ...prev,
-      coMapping: normalizedMapping,
-    }))
-
-    // Clear related errors
+    }));
+    setFormData((prev) => {
+      if (areCOMappingsEqual(normalizedMapping, prev.coMapping)) return prev;
+      return { ...prev, coMapping: normalizedMapping };
+    });
     setErrors((prev) => ({
       ...prev,
       coMapping: null,
       coMappingSum: null,
-    }))
-  }, [])
+    }));
+  }, []);
 
-  // Prepare selected COs for the CourseOutcomeSelect component
-  // Transform coMapping to format expected by CourseOutcomeSelect
   const selectedCOsForComponent = useMemo(() => {
-    return formData.coMapping.map((mapping) => ({
-      mainCoDocId: mapping.courseOutcome, // Map back to mainCoDocId for component
+    const mapped = formData.coMapping.map((mapping) => ({
+      mainCoDocId: mapping.courseOutcome,
       coIndex: Number(mapping.coIndex),
       maxMarks: Number(mapping.maxMarks || 0),
-    }))
-  }, [formData.coMapping])
+    }));
+    return mapped;
+  }, [formData.coMapping]); // Stable if formData.coMapping is stable
 
-  // Validate the form before submission
   const validateForm = useCallback(() => {
-    console.log("Validating form:", formData)
+    console.log("Validating form:", formData);
+    const newErrors = {};
+    let isValid = true;
 
-    const newErrors = {}
-    let isValid = true
-
-    // Validate name
     if (!formData.name.trim()) {
-      newErrors.name = "Assessment Name is required."
-      isValid = false
+      newErrors.name = "Assessment Name is required.";
+      isValid = false;
     }
 
-    // Validate type
     if (!formData.type) {
-      newErrors.type = "Assessment Type is required."
-      isValid = false
+      newErrors.type = "Assessment Type is required.";
+      isValid = false;
     }
 
-    // Validate max marks
-    const maxMarksValue = Number(formData.maxMarks)
+    const maxMarksValue = Number(formData.maxMarks);
     if (formData.maxMarks === "" || isNaN(maxMarksValue) || maxMarksValue <= 0) {
-      newErrors.maxMarks = "Total Max Marks must be a positive number."
-      isValid = false
+      newErrors.maxMarks = "Total Max Marks must be a positive number.";
+      isValid = false;
     }
 
-    // Validate CO mapping if max marks is valid
     if (isValid && !isNaN(maxMarksValue) && maxMarksValue > 0) {
-      // Check if any COs are mapped
       if (!formData.coMapping || formData.coMapping.length === 0) {
-        newErrors.coMapping = "At least one Course Outcome must be mapped."
-        isValid = false
+        newErrors.coMapping = "At least one Course Outcome must be mapped.";
+        isValid = false;
       } else {
-        // Calculate total mapped marks
-        const totalMappedMarks = formData.coMapping.reduce((sum, item) => sum + Number(item.maxMarks || 0), 0)
-
-        // Check if total matches assessment max marks (with small tolerance)
+        const totalMappedMarks = formData.coMapping.reduce((sum, item) => sum + Number(item.maxMarks || 0), 0);
         if (Math.abs(totalMappedMarks - maxMarksValue) > 0.01) {
-          newErrors.coMappingSum = `Sum of marks mapped to COs (${totalMappedMarks.toFixed(2)}) must equal Total Max Marks (${maxMarksValue}).`
-          isValid = false
+          newErrors.coMappingSum = `Sum of marks mapped to COs (${totalMappedMarks.toFixed(2)}) must equal Total Max Marks (${maxMarksValue}).`;
+          isValid = false;
         }
-
-        // Check if any mapped CO has marks > 0
-        const hasMarksGreaterThanZero = formData.coMapping.some((item) => Number(item.maxMarks) > 0)
-
+        const hasMarksGreaterThanZero = formData.coMapping.some((item) => Number(item.maxMarks) > 0);
         if (!hasMarksGreaterThanZero) {
-          newErrors.coMapping = "At least one Course Outcome must have marks greater than 0."
-          isValid = false
+          newErrors.coMapping = "At least one Course Outcome must have marks greater than 0.";
+          isValid = false;
         }
       }
     }
 
-    console.log("Validation result:", { isValid, errors: newErrors })
-    setErrors(newErrors)
-    return isValid
-  }, [formData])
+    console.log("Validation result:", { isValid, errors: newErrors });
+    setErrors(newErrors);
+    return isValid;
+  }, [formData]);
 
-  // Handle form submission
   const handleSubmit = useCallback(
     (e) => {
-      e.preventDefault()
-      console.log("Form submitted, data:", formData)
-
+      e.preventDefault();
+      console.log("Form submitted, data:", formData);
       if (validateForm()) {
-        // Prepare payload for API
         const payload = {
           name: formData.name.trim(),
           type: formData.type,
@@ -242,22 +220,21 @@ export default function AssessmentForm({
           subject: subject,
           academicYear: academicYear,
           sem: formData.sem || semester,
-        }
-
-        console.log("Submitting payload:", payload)
-        onSubmit(payload)
+        };
+        console.log("Submitting payload:", payload);
+        onSubmit(payload);
       } else {
-        toast.error("Please fix the errors in the form.")
+        toast.error("Please fix the errors in the form.");
       }
     },
-    [formData, validateForm, onSubmit, subject, academicYear, semester],
-  )
+    [formData, validateForm, onSubmit, subject, academicYear, semester]
+  );
 
   return (
     <form onSubmit={handleSubmit}>
-      <ModalBody className="max-h-[70vh] overflow-y-auto">
+      
+      <ModalBody  >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Assessment Name */}
           <Input
             label="Assessment Name"
             name="name"
@@ -269,8 +246,6 @@ export default function AssessmentForm({
             isInvalid={!!errors.name}
             errorMessage={errors.name}
           />
-
-          {/* Assessment Type */}
           <Select
             label="Assessment Type"
             placeholder="Select type"
@@ -287,8 +262,6 @@ export default function AssessmentForm({
               </SelectItem>
             ))}
           </Select>
-
-          {/* Max Marks */}
           <Input
             label="Total Max Marks"
             name="maxMarks"
@@ -301,8 +274,6 @@ export default function AssessmentForm({
             isInvalid={!!errors.maxMarks || !!errors.coMappingSum}
             errorMessage={errors.maxMarks || errors.coMappingSum}
           />
-
-          {/* Assessment Date */}
           <DatePicker
             label="Assessment Date (Optional)"
             value={formData.assessmentDate}
@@ -314,8 +285,6 @@ export default function AssessmentForm({
             isInvalid={!!errors.assessmentDate}
             errorMessage={errors.assessmentDate}
           />
-
-          {/* Semester Select - Added for clarity */}
           <Select
             label="Semester"
             placeholder="Select semester"
@@ -334,12 +303,8 @@ export default function AssessmentForm({
             </SelectItem>
           </Select>
         </div>
-
-        {/* Course Outcome Mapping Section */}
         <div className="mt-6">
           <h3 className="text-lg font-semibold mb-2 text-gray-700">Course Outcome Mapping</h3>
-
-          {/* Error messages */}
           {errors.coMappingSum && (
             <p className="text-danger text-sm mb-2 p-2 bg-danger-50 rounded-md border border-danger-200">
               {errors.coMappingSum}
@@ -350,16 +315,13 @@ export default function AssessmentForm({
               {errors.coMapping}
             </p>
           )}
-
-          {/* Loading state */}
           {isLoadingCOs ? (
             <div className="flex justify-center py-4">
               <Spinner size="sm" label="Loading Course Outcomes..." />
             </div>
           ) : (
-            /* CO Selection Component */
             <CourseOutcomeSelect
-              key={`co-select-${subject}-${formData.maxMarks}`} // Add key to force re-render when crucial props change
+              key={assessment?._id || "new-assessment"} // Stable key
               availableCOs={availableCOs}
               selectedCOs={selectedCOsForComponent}
               onChange={handleCoMappingChange}
@@ -371,10 +333,8 @@ export default function AssessmentForm({
           )}
         </div>
       </ModalBody>
-
-      {/* Form Actions */}
       <ModalFooter>
-        <Button color="danger" variant="light" onPress={onClose} isDisabled={isLoading}>
+        <Button color="danger" variant="light" onPress={onClose} is garantizarDisabled={isLoading}>
           Cancel
         </Button>
         <Button
@@ -387,5 +347,5 @@ export default function AssessmentForm({
         </Button>
       </ModalFooter>
     </form>
-  )
+  );
 }

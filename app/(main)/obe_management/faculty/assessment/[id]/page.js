@@ -55,7 +55,7 @@ export default function AssessmentPage({ params }) {
 
     // Navigate back to assessments list
     const handleBackClick = useCallback(() => {
-        router.push("/manage-assessments")
+        router.back()
     }, [router])
 
     if (isLoading) {
