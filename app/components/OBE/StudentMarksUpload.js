@@ -87,7 +87,7 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
     setStudents((prev) => [
       ...prev,
       {
-        _id: `temp-${Date.now()}`, // Temporary ID until saved
+        _id: "", // Temporary ID until saved
         rollNumber: "",
         name: "",
         marks: "",
@@ -149,7 +149,7 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
       const payload = {
         assessmentId: assessment._id,
         students: students.map((student) => ({
-          _id: student._id && !student.isNew ? student._id : undefined,
+          _id: student._id ,
           rollNumber: student.rollNumber,
           name: student.name,
           marks: student.marks === "" ? null : Number(student.marks),
@@ -190,6 +190,7 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
     try {
       // Prepare data for export
       const exportData = students.map((student) => ({
+        "Student ID": student._id || "",
         "Roll Number": student.rollNumber,
         "Student Name": student.name,
         Marks: student.marks === "" ? "Not Evaluated" : student.marks,
@@ -244,12 +245,15 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
         // Map Excel data to our format
         const importedStudents = jsonData.map((row, index) => {
           // Try to find matching columns - be flexible with column names
+          const _idKey = Object.keys(row).find(
+            (key) => key.toLowerCase().includes("student") || key.toLowerCase().includes("id"),
+          )
           const rollNumberKey = Object.keys(row).find(
-            (key) => key.toLowerCase().includes("roll") || key.toLowerCase().includes("id"),
+            (key) => key.toLowerCase().includes("roll") || key.toLowerCase().includes("rollNumber"),
           )
 
           const nameKey = Object.keys(row).find(
-            (key) => key.toLowerCase().includes("name") || key.toLowerCase().includes("student"),
+            (key) => key.toLowerCase().includes("name"),
           )
 
           const marksKey = Object.keys(row).find(
@@ -257,6 +261,7 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
           )
 
           // Extract values or use defaults
+          const _id = _idKey ? row[_idKey] : `Student_${index + 1}` // Temporary ID
           const rollNumber = rollNumberKey ? row[rollNumberKey] : `Student ${index + 1}`
           const name = nameKey ? row[nameKey] : ""
           const marks = marksKey
@@ -266,7 +271,7 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
             : ""
 
           return {
-            _id: `temp-import-${index}-${Date.now()}`,
+            _id: String(_id),
             rollNumber: String(rollNumber),
             name: String(name),
             marks: marks,
@@ -303,11 +308,13 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
       // Create template data
       const templateData = [
         {
+          "Student ID": "EN12345",
           "Roll Number": "12345",
           "Student Name": "John Doe",
           Marks: 85,
         },
         {
+          "Student ID": "EN67890",
           "Roll Number": "67890",
           "Student Name": "Jane Smith",
           Marks: 92,
@@ -430,6 +437,7 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
 
             <Table aria-label="Student Marks Table" selectionMode="none">
               <TableHeader>
+                <TableColumn>Student ID</TableColumn>
                 <TableColumn>Roll Number</TableColumn>
                 <TableColumn>Name</TableColumn>
                 <TableColumn>Marks</TableColumn>
@@ -438,6 +446,17 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
               <TableBody emptyContent="No students added yet. Add students or import from Excel.">
                 {students.map((student) => (
                   <TableRow key={student._id}>
+                    <TableCell>  
+                        <Input
+                          size="sm"
+                          value={student._id}
+                          onChange={(e) => handleStudentInfoChange(student._id, "_id", e.target.value)}
+                          placeholder="Enter student ID"
+                          variant="bordered"
+                          className="max-w-[150px]"
+                        /> 
+                    </TableCell>
+
                     <TableCell>
                       <Input
                         size="sm"

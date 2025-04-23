@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Assessment from "@/models/OBE/Assessment";
 import Subject from "@/models/subject"; // Assuming Subject model exists and is correct
+
 import CourseOutcome from "@/models/OBE/CourseOutcome"; // Assuming CourseOutcome model is correct and updated (with outcomes array and index)
 import mongoose from "mongoose";
 

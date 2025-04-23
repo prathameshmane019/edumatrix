@@ -353,7 +353,7 @@ const MODULE_CONFIG = {
     obe_management: {
         id: 'obe-service', // Must match subscription if you use that
         name: "OBE Management",
-        illustration: "/illustrations/obe.svg", // << CREATE THIS SVG ILLUSTRATION
+        illustration: "/obe.png", // << CREATE THIS SVG ILLUSTRATION
         bgColor: "bg-indigo-50",
         textColor: "text-indigo-600",
         descriptions: {

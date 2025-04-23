@@ -1,49 +1,33 @@
 "use client"
 import { useState, useEffect, useCallback } from "react"
-import { Card, CardBody, CardHeader, Spinner, Divider } from "@nextui-org/react"
+import {
+  Card,
+  CardBody,
+  CardHeader,
+  Divider,
+  Spinner,
+  Tabs,
+  Tab,
+  Progress,
+} from "@nextui-org/react"
 import { toast } from "sonner"
 import axios from "axios"
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts"
-
-// Define colors for charts
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d"]
-const GRADE_COLORS = {
-  "A+": "#4CAF50",
-  A: "#8BC34A",
-  "B+": "#CDDC39",
-  B: "#FFEB3B",
-  "C+": "#FFC107",
-  C: "#FF9800",
-  D: "#FF5722",
-  F: "#F44336",
-}
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 
 export default function AssessmentAnalytics({ assessment }) {
-  const [studentMarks, setStudentMarks] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [analytics, setAnalytics] = useState({
+  const [isLoading, setIsLoading] = useState(false)
+  const [studentData, setStudentData] = useState([])
+  const [stats, setStats] = useState({
+    total: 0,
+    evaluated: 0,
     average: 0,
-    median: 0,
     highest: 0,
     lowest: 0,
     passRate: 0,
-    gradeDistribution: [],
-    marksDistribution: [],
+    distribution: []
   })
 
-  // Fetch student marks
+  // Fetch student marks for this assessment
   const fetchStudentMarks = useCallback(async () => {
     if (!assessment?._id) return
 
@@ -54,323 +38,257 @@ export default function AssessmentAnalytics({ assessment }) {
       })
 
       if (response.data.success && Array.isArray(response.data.data)) {
-        const marks = response.data.data.filter(
-          (student) => student.marks !== null && student.marks !== undefined && !isNaN(student.marks),
-        )
-        setStudentMarks(marks)
-
-        // Calculate analytics if we have marks
-        if (marks.length > 0) {
-          calculateAnalytics(marks)
-        }
+        setStudentData(response.data.data)
+        calculateStats(response.data.data)
       } else {
-        setStudentMarks([])
+        setStudentData([])
+        resetStats()
       }
     } catch (error) {
       console.error("Error fetching student marks:", error)
-      toast.error("Failed to load student marks for analytics")
-      setStudentMarks([])
+      toast.error("Failed to load student marks")
+      setStudentData([])
+      resetStats()
     } finally {
       setIsLoading(false)
     }
   }, [assessment])
 
-  // Calculate analytics from marks
-  const calculateAnalytics = useCallback(
-    (marks) => {
-      if (!marks.length || !assessment) return
+  // Calculate statistics from student marks
+  const calculateStats = useCallback((data) => {
+    // Filter out students with no marks
+    const evaluatedStudents = data.filter(student => student.marks !== null && student.marks !== "")
+    
+    if (evaluatedStudents.length === 0) {
+      resetStats()
+      return
+    }
 
-      // Extract numeric marks
-      const numericMarks = marks.map((student) => Number(student.marks)).filter((mark) => !isNaN(mark))
+    const marks = evaluatedStudents.map(student => student.marks)
+    const total = data.length
+    const evaluated = evaluatedStudents.length
+    const average = marks.reduce((sum, mark) => sum + mark, 0) / evaluated
+    const highest = Math.max(...marks)
+    const lowest = Math.min(...marks)
+    
+    // Assume passing is 40% of max marks (adjust as needed)
+    const passingMark = assessment?.maxMarks * 0.4 || 0
+    const passCount = evaluatedStudents.filter(student => student.marks >= passingMark).length
+    const passRate = evaluated > 0 ? (passCount / evaluated) * 100 : 0
 
-      if (numericMarks.length === 0) {
-        setAnalytics({
-          average: 0,
-          median: 0,
-          highest: 0,
-          lowest: 0,
-          passRate: 0,
-          gradeDistribution: [],
-          marksDistribution: [],
-        })
-        return
-      }
+    // Create distribution buckets (0-20%, 21-40%, etc.)
+    const maxMarks = assessment?.maxMarks || 100
+    const bucketSize = maxMarks / 5
+    const distribution = [
+      { name: '0-20%', count: 0, color: '#ef4444' },
+      { name: '21-40%', count: 0, color: '#f97316' },
+      { name: '41-60%', count: 0, color: '#facc15' },
+      { name: '61-80%', count: 0, color: '#84cc16' },
+      { name: '81-100%', count: 0, color: '#22c55e' }
+    ]
 
-      // Sort marks for calculations
-      numericMarks.sort((a, b) => a - b)
+    evaluatedStudents.forEach(student => {
+      const percentage = (student.marks / maxMarks) * 100
+      const bucketIndex = Math.min(Math.floor(percentage / 20), 4)
+      distribution[bucketIndex].count++
+    })
 
-      // Calculate basic statistics
-      const sum = numericMarks.reduce((acc, mark) => acc + mark, 0)
-      const average = sum / numericMarks.length
-      const median =
-        numericMarks.length % 2 === 0
-          ? (numericMarks[numericMarks.length / 2 - 1] + numericMarks[numericMarks.length / 2]) / 2
-          : numericMarks[Math.floor(numericMarks.length / 2)]
-      const highest = numericMarks[numericMarks.length - 1]
-      const lowest = numericMarks[0]
+    setStats({
+      total,
+      evaluated,
+      average,
+      highest,
+      lowest,
+      passRate,
+      distribution
+    })
+  }, [assessment])
 
-      // Calculate pass rate (assuming 40% is passing)
-      const passingThreshold = assessment.maxMarks * 0.4
-      const passCount = numericMarks.filter((mark) => mark >= passingThreshold).length
-      const passRate = (passCount / numericMarks.length) * 100
-
-      // Calculate grade distribution
-      const gradeRanges = [
-        { grade: "A+", min: 90, max: 100 },
-        { grade: "A", min: 80, max: 89.99 },
-        { grade: "B+", min: 70, max: 79.99 },
-        { grade: "B", min: 60, max: 69.99 },
-        { grade: "C+", min: 50, max: 59.99 },
-        { grade: "C", min: 40, max: 49.99 },
-        { grade: "D", min: 35, max: 39.99 },
-        { grade: "F", min: 0, max: 34.99 },
+  // Reset stats to default values
+  const resetStats = useCallback(() => {
+    setStats({
+      total: 0,
+      evaluated: 0,
+      average: 0,
+      highest: 0,
+      lowest: 0,
+      passRate: 0,
+      distribution: [
+        { name: '0-20%', count: 0, color: '#ef4444' },
+        { name: '21-40%', count: 0, color: '#f97316' },
+        { name: '41-60%', count: 0, color: '#facc15' },
+        { name: '61-80%', count: 0, color: '#84cc16' },
+        { name: '81-100%', count: 0, color: '#22c55e' }
       ]
+    })
+  }, [])
 
-      const gradeDistribution = gradeRanges
-        .map((range) => {
-          const percentage = (mark) => (mark / assessment.maxMarks) * 100
-          const count = numericMarks.filter(
-            (mark) => percentage(mark) >= range.min && percentage(mark) <= range.max,
-          ).length
-
-          return {
-            grade: range.grade,
-            count,
-            percentage: (count / numericMarks.length) * 100,
-          }
-        })
-        .filter((grade) => grade.count > 0)
-
-      // Calculate marks distribution (histogram)
-      const maxMark = assessment.maxMarks
-      const binSize = maxMark / 10 // 10 bins
-      const bins = Array.from({ length: 10 }, (_, i) => ({
-        range: `${Math.round(i * binSize)}-${Math.round((i + 1) * binSize)}`,
-        min: i * binSize,
-        max: (i + 1) * binSize,
-        count: 0,
-      }))
-
-      numericMarks.forEach((mark) => {
-        const binIndex = Math.min(Math.floor(mark / binSize), bins.length - 1)
-        bins[binIndex].count++
-      })
-
-      const marksDistribution = bins.filter((bin) => bin.count > 0)
-
-      setAnalytics({
-        average,
-        median,
-        highest,
-        lowest,
-        passRate,
-        gradeDistribution,
-        marksDistribution,
-      })
-    },
-    [assessment],
-  )
-
-  // Load data on mount
+  // Load student marks when assessment changes
   useEffect(() => {
-    fetchStudentMarks()
-  }, [fetchStudentMarks])
+    if (assessment?._id) {
+      fetchStudentMarks()
+    } else {
+      setStudentData([])
+      resetStats()
+    }
+  }, [assessment, fetchStudentMarks, resetStats])
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardBody className="py-8">
-          <div className="flex justify-center">
-            <Spinner label="Loading analytics..." />
-          </div>
-        </CardBody>
-      </Card>
-    )
+  // Custom tooltip for the charts
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-2 border rounded shadow-md">
+          <p className="font-medium">{`${payload[0].name}`}</p>
+          <p className="text-sm">{`Count: ${payload[0].value}`}</p>
+        </div>
+      )
+    }
+    return null
   }
 
-  if (studentMarks.length === 0) {
+  if (!assessment) {
     return (
       <Card>
-        <CardBody className="py-8">
-          <p className="text-center text-gray-500">
-            No student marks available for analytics. Please add student marks first.
-          </p>
+        <CardBody>
+          <p className="text-center text-gray-500">Please select an assessment to view analytics</p>
         </CardBody>
       </Card>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Summary Statistics */}
-      <Card>
-        <CardHeader>
-          <h3 className="text-lg font-semibold">Performance Summary</h3>
-        </CardHeader>
-        <CardBody>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="bg-primary-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Average</p>
-              <p className="text-xl font-bold">{analytics.average.toFixed(2)}</p>
-              <p className="text-xs text-gray-500">{((analytics.average / assessment.maxMarks) * 100).toFixed(1)}%</p>
-            </div>
+    <Card className="w-full">
+      <CardHeader>
+        <h3 className="text-lg font-semibold">Assessment Analytics</h3>
+      </CardHeader>
 
-            <div className="bg-primary-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Median</p>
-              <p className="text-xl font-bold">{analytics.median.toFixed(2)}</p>
-              <p className="text-xs text-gray-500">{((analytics.median / assessment.maxMarks) * 100).toFixed(1)}%</p>
-            </div>
-
-            <div className="bg-success-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Highest</p>
-              <p className="text-xl font-bold">{analytics.highest.toFixed(2)}</p>
-              <p className="text-xs text-gray-500">{((analytics.highest / assessment.maxMarks) * 100).toFixed(1)}%</p>
-            </div>
-
-            <div className="bg-warning-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Lowest</p>
-              <p className="text-xl font-bold">{analytics.lowest.toFixed(2)}</p>
-              <p className="text-xs text-gray-500">{((analytics.lowest / assessment.maxMarks) * 100).toFixed(1)}%</p>
-            </div>
-
-            <div className="bg-secondary-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Pass Rate</p>
-              <p className="text-xl font-bold">{analytics.passRate.toFixed(1)}%</p>
-              <p className="text-xs text-gray-500">Threshold: {(assessment.maxMarks * 0.4).toFixed(1)} marks</p>
-            </div>
+      <CardBody>
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <Spinner label="Loading analytics..." />
           </div>
-        </CardBody>
-      </Card>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Grade Distribution */}
-        <Card>
-          <CardHeader>
-            <h3 className="text-lg font-semibold">Grade Distribution</h3>
-          </CardHeader>
-          <CardBody>
-            {analytics.gradeDistribution.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={analytics.gradeDistribution}
-                    dataKey="count"
-                    nameKey="grade"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    label={({ grade, percentage }) => `${grade} (${percentage.toFixed(1)}%)`}
-                  >
-                    {analytics.gradeDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={GRADE_COLORS[entry.grade] || COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => [`${value} students`, "Count"]} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-center text-gray-500 py-10">No grade data available</p>
-            )}
-          </CardBody>
-        </Card>
-
-        {/* Marks Distribution */}
-        <Card>
-          <CardHeader>
-            <h3 className="text-lg font-semibold">Marks Distribution</h3>
-          </CardHeader>
-          <CardBody>
-            {analytics.marksDistribution.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={analytics.marksDistribution}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="range" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => [`${value} students`, "Count"]} />
-                  <Legend />
-                  <Bar dataKey="count" name="Students" fill="#8884d8" />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-center text-gray-500 py-10">No distribution data available</p>
-            )}
-          </CardBody>
-        </Card>
-      </div>
-
-      {/* CO Achievement Analysis */}
-      <Card>
-        <CardHeader>
-          <h3 className="text-lg font-semibold">Course Outcome Achievement</h3>
-        </CardHeader>
-        <CardBody>
-          <p className="text-sm text-gray-500 mb-4">
-            This analysis shows the average achievement level for each Course Outcome mapped to this assessment.
-          </p>
-
-          {Array.isArray(assessment.coMapping) && assessment.coMapping.length > 0 ? (
-            <div className="space-y-4">
-              {assessment.coMapping.map((mapping, index) => {
-                // Calculate achievement for this CO
-                const coMaxMarks = mapping.maxMarks
-                const totalAchieved = studentMarks.reduce((sum, student) => {
-                  // Calculate proportional marks for this CO
-                  const proportion = coMaxMarks / assessment.maxMarks
-                  return sum + student.marks * proportion
-                }, 0)
-
-                const averageAchieved = totalAchieved / studentMarks.length
-                const achievementPercentage = (averageAchieved / coMaxMarks) * 100
-
-                // Determine achievement level
-                let achievementLevel = "Low"
-                let colorClass = "text-danger"
-
-                if (achievementPercentage >= 70) {
-                  achievementLevel = "High"
-                  colorClass = "text-success"
-                } else if (achievementPercentage >= 50) {
-                  achievementLevel = "Medium"
-                  colorClass = "text-warning"
-                }
-
-                return (
-                  <div key={`co-achievement-${index}`}>
-                    <div className="flex justify-between items-center mb-2">
-                      <div>
-                        <span className="font-medium">CO{mapping.coIndex}</span>
-                        <span className="text-gray-500 ml-2">({mapping.maxMarks} marks)</span>
-                      </div>
-                      <div className={colorClass}>
-                        {achievementPercentage.toFixed(1)}% - {achievementLevel}
-                      </div>
-                    </div>
-
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div
-                        className={`h-2.5 rounded-full ${
-                          achievementPercentage >= 70
-                            ? "bg-success"
-                            : achievementPercentage >= 50
-                              ? "bg-warning"
-                              : "bg-danger"
-                        }`}
-                        style={{ width: `${Math.min(100, achievementPercentage)}%` }}
-                      ></div>
-                    </div>
-
-                    {index < assessment.coMapping.length - 1 && <Divider className="my-3" />}
-                  </div>
-                )
-              })}
+        ) : (
+          <>
+            {/* Overview Statistics */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <Card shadow="sm">
+                <CardBody className="p-4">
+                  <p className="text-sm text-gray-500">Total Students</p>
+                  <h4 className="text-2xl font-bold">{stats.total}</h4>
+                  <p className="text-xs text-gray-500">
+                    {stats.evaluated} evaluated ({Math.round((stats.evaluated / stats.total) * 100) || 0}%)
+                  </p>
+                </CardBody>
+              </Card>
+              
+              <Card shadow="sm">
+                <CardBody className="p-4">
+                  <p className="text-sm text-gray-500">Average Score</p>
+                  <h4 className="text-2xl font-bold">
+                    {stats.average.toFixed(1)}
+                    <span className="text-sm text-gray-500"> / {assessment.maxMarks}</span>
+                  </h4>
+                  <Progress 
+                    aria-label="Average Score" 
+                    value={(stats.average / assessment.maxMarks) * 100} 
+                    className="mt-2"
+                    color="primary"
+                  />
+                </CardBody>
+              </Card>
+              
+              <Card shadow="sm">
+                <CardBody className="p-4">
+                  <p className="text-sm text-gray-500">Pass Rate</p>
+                  <h4 className="text-2xl font-bold">{stats.passRate.toFixed(1)}%</h4>
+                  <Progress 
+                    aria-label="Pass Rate" 
+                    value={stats.passRate} 
+                    className="mt-2"
+                    color={stats.passRate >= 70 ? "success" : stats.passRate >= 40 ? "warning" : "danger"}
+                  />
+                </CardBody>
+              </Card>
             </div>
-          ) : (
-            <p className="text-center text-gray-500 py-4">No course outcomes mapped to this assessment</p>
-          )}
-        </CardBody>
-      </Card>
-    </div>
+            
+            <Divider className="my-4" />
+            
+            {/* Charts */}
+            <Tabs aria-label="Analytics Charts">
+              <Tab key="distribution" title="Score Distribution">
+                <div className="py-4">
+                  <h4 className="text-md font-medium mb-4">Score Distribution</h4>
+                  
+                  <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={stats.distribution}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis allowDecimals={false} />
+                        <RechartsTooltip content={<CustomTooltip />} />
+                        <Bar dataKey="count" name="Students">
+                          {stats.distribution.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </Tab>
+              
+              <Tab key="pie" title="Percentage View">
+                <div className="py-4">
+                  <h4 className="text-md font-medium mb-4">Score Distribution (Percentage)</h4>
+                  
+                  <div className="h-72 flex justify-center">
+                    <ResponsiveContainer width="80%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={stats.distribution.filter(item => item.count > 0)}
+                          dataKey="count"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {stats.distribution.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip />
+                        <Legend layout="vertical" verticalAlign="middle" align="right" />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </Tab>
+            </Tabs>
+            
+            {/* Additional stats */}
+            <Divider className="my-4" />
+            
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <div>
+                <p className="text-sm text-gray-500">Highest Score</p>
+                <p className="font-semibold">{stats.highest} / {assessment.maxMarks}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm text-gray-500">Lowest Score</p>
+                <p className="font-semibold">{stats.lowest} / {assessment.maxMarks}</p>
+              </div>
+            </div>
+            
+            {stats.total === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                No student data available. Add student marks to view analytics.
+              </div>
+            )}
+          </>
+        )}
+      </CardBody>
+    </Card>
   )
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/connectDb";
 import Assessment from "@/models/OBE/Assessment"; // Corrected path if needed, based on your project structure
 import Subject from "@/models/subject"; // Corrected path if needed
+import CourseOutcome from "@/models/OBE/CourseOutcome";
 import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"; // Corrected path if needed
@@ -66,42 +67,93 @@ async function validateCoMapping(coMapping, subjectId, totalMaxMarks) {
   return { isValid: errors.length === 0, errors };
 }
 
-// GET handler for single Assessment
+// Modified GET handler to prevent issues with virtual fields
 export async function GET(req, { params }) {
-  try {
-    await connectMongoDB();
-    const { id } = params;
-
-    console.log("Fetching assessment with ID:", id);
-
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ success: false, message: "Invalid or missing Assessment ID" }, { status: 400 });
+    try {
+      await connectMongoDB();
+      const { id } = params;
+  
+      console.log("Fetching assessment with ID:", id);
+  
+      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+        return NextResponse.json({ success: false, message: "Invalid or missing Assessment ID" }, { status: 400 });
+      }
+  
+      // Option 1: Explicitly exclude virtuals when populating CourseOutcome
+      const assessment = await Assessment.findById(id)
+        .populate({
+          path: "coMapping.courseOutcome",
+          select: "code description academicYear -_id", // Explicitly select fields, exclude _id
+          options: { virtuals: false } // Disable virtuals for populated docs
+        })
+        .populate("subject", "name code academicYear");
+  
+      // Option 2 (Alternative): Handle potential serialization errors
+      if (!assessment) {
+        return NextResponse.json({ success: false, message: "Assessment not found" }, { status: 404 });
+      }
+  
+      // Safe serialization with error handling
+      try {
+        // Create a safe representation that won't trigger virtuals
+        const safeAssessment = {
+          ...assessment.toObject({ virtuals: true }),
+          coMapping: assessment.coMapping.map(item => {
+            // Only include safe fields from courseOutcome, avoiding problematic virtuals
+            if (item.courseOutcome) {
+              return {
+                ...item.toObject(),
+                courseOutcome: item.courseOutcome._id 
+                  ? {
+                      _id: item.courseOutcome._id,
+                      code: item.courseOutcome.code,
+                      description: item.courseOutcome.description,
+                      academicYear: item.courseOutcome.academicYear
+                    }
+                  : item.courseOutcome
+              };
+            }
+            return item;
+          })
+        };
+        
+        return NextResponse.json({ success: true, data: safeAssessment }, { status: 200 });
+      } catch (serializationError) {
+        console.error("Serialization error:", serializationError);
+        // Fallback to a simplified return format that avoids the problematic virtuals
+        return NextResponse.json({ 
+          success: true, 
+          data: {
+            _id: assessment._id,
+            name: assessment.name,
+            type: assessment.type,
+            subject: assessment.subject,
+            academicYear: assessment.academicYear,
+            sem: assessment.sem,
+            maxMarks: assessment.maxMarks,
+            assessmentDate: assessment.assessmentDate,
+            coMapping: assessment.coMapping.map(item => ({
+              _id: item._id,
+              courseOutcome: item.courseOutcome?._id,
+              coIndex: item.coIndex,
+              maxMarks: item.maxMarks,
+              courseOutcomeDetails: item.courseOutcome ? {
+                code: item.courseOutcome.code,
+                description: item.courseOutcome.description
+              } : null
+            }))
+          },
+          message: "Assessment retrieved with simplified structure due to serialization constraints"
+        }, { status: 200 });
+      }
+    } catch (error) {
+      console.error(`API Error fetching Assessment:`, error);
+      return NextResponse.json(
+        { success: false, message: "Internal Server Error", error: error.message },
+        { status: 500 },
+      );
     }
-
-    const assessment = await Assessment.findById(id)
-      .populate({
-        path: "coMapping.courseOutcome",
-        select: "code description academicYear", // Added academicYear, potentially useful
-      })
-      .populate("subject", "name code academicYear"); // Added academicYear, potentially useful
-
-    if (!assessment) {
-      return NextResponse.json({ success: false, message: "Assessment not found" }, { status: 404 });
-    }
-
-    // The error occurred during the serialization of the 'assessment' object here,
-    // specifically when accessing virtuals on the populated CourseOutcome documents.
-    // The fix is in the CourseOutcome model, not this GET handler.
-    return NextResponse.json({ success: true, data: assessment }, { status: 200 });
-  } catch (error) {
-    console.error(`API Error fetching Assessment:`, error);
-    // Check for Mongoose specific errors if needed, though the forEach error was a TypeError
-    return NextResponse.json(
-      { success: false, message: "Internal Server Error", error: error.message },
-      { status: 500 },
-    );
-  }
-}
+  } 
 
 export async function PUT(req, { params }) {
   try {
