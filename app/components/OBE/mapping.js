@@ -28,6 +28,9 @@ import {
   Progress,
   Input,
 } from '@nextui-org/react';
+
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@nextui-org/react";
+
 import {
   Calendar,
   HelpCircle,
@@ -62,7 +65,6 @@ const MappingPage = () => {
   const [courseOutcomeId, setCourseOutcomeId] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [activeFilter, setActiveFilter] = useState('all');
-  const [cognitiveFilter, setCognitiveFilter] = useState('all');
   const [correlationFilter, setCorrelationFilter] = useState('all');
   const [selectedMapping, setSelectedMapping] = useState(null);
   const [justification, setJustification] = useState('');
@@ -132,14 +134,19 @@ const MappingPage = () => {
   const saveJustification = () => {
     if (!selectedMapping) return;
     const { coId, poId } = selectedMapping;
-    setLocalMappings((prev) => ({
-      ...prev,
-      [coId]: {
-        ...prev[coId],
-        [poId]: { ...prev[coId]?.[poId], justification },
-      },
-    }));
+    setLocalMappings((prev) => {
+      const updatedMappings = {
+        ...prev,
+        [coId]: {
+          ...prev[coId],
+          [poId]: { ...prev[coId]?.[poId], justification },
+        },
+      };
+      return updatedMappings;
+    });
     setHasChanges(true);
+    setSelectedMapping(null);
+    setJustification('');
     onClose();
   };
 
@@ -177,14 +184,13 @@ const MappingPage = () => {
   const filteredCourseOutcomes = useMemo(() => {
     if (!mappingData) return [];
     return mappingData.courseOutcomes.filter((co) => {
-      if (cognitiveFilter !== 'all' && co.cognitiveLevel !== cognitiveFilter) return false;
       if (correlationFilter !== 'all') {
         const coMappings = localMappings[co.id] || {};
         return Object.values(coMappings).some((m) => m.level === parseInt(correlationFilter));
       }
       return true;
     });
-  }, [mappingData, cognitiveFilter, correlationFilter, localMappings]);
+  }, [mappingData, correlationFilter, localMappings]);
 
   const filteredProgramOutcomes = useMemo(() => {
     if (!mappingData) return { pos: [], psos: [] };
@@ -203,7 +209,7 @@ const MappingPage = () => {
           datasets: [
             {
               data: [stats.byLevel[1] || 0, stats.byLevel[2] || 0, stats.byLevel[3] || 0],
-              backgroundColor: ['#F59E0B', '#3B82F6', '#10B981'],
+              backgroundColor: ['#facc15', '#3b82f6', '#10b981'],
               borderWidth: 1,
             },
           ],
@@ -211,8 +217,8 @@ const MappingPage = () => {
         options: {
           responsive: true,
           plugins: {
-            legend: { position: 'top', labels: { color: '#1F2937' } },
-            tooltip: { backgroundColor: '#FFFFFF', bodyColor: '#1F2937', borderColor: '#E5E7EB' },
+            legend: { position: 'top', labels: { color: '#1e293b' } },
+            tooltip: { backgroundColor: '#ffffff', bodyColor: '#1e293b', borderColor: '#e2e8f0' },
           },
         },
       });
@@ -225,27 +231,44 @@ const MappingPage = () => {
 
   const getCellBackground = (level) => {
     switch (level) {
-      case 1: return 'bg-yellow-100';
-      case 2: return 'bg-blue-100';
-      case 3: return 'bg-green-100';
+      case 1: return 'bg-yellow-50';
+      case 2: return 'bg-blue-50';
+      case 3: return 'bg-emerald-50';
       default: return 'bg-gray-100';
     }
   };
 
+  const getDisplayText = () => {
+    if (correlationFilter === "all") return "All Correlations";
+
+    const selectedLevel = CORRELATION_LEVELS.find(
+      level => level.value.toString() === correlationFilter.toString()
+    );
+
+    return selectedLevel
+      ? `${selectedLevel.label} - ${selectedLevel.description}`
+      : "Select Correlation";
+  };
+  // Calculate total columns dynamically
+  const totalColumns = useMemo(() => {
+    if (!filteredProgramOutcomes) return 1;
+    return 1 + filteredProgramOutcomes.pos.length + filteredProgramOutcomes.psos.length;
+  }, [filteredProgramOutcomes]);
+
   return (
-    <div className="min-h-screen bg-white text-gray-800 p-6">
+    <div className="min-h-screen bg-slate-100 text-slate-900 p-4 md:p-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="max-w-7xl mx-auto"
       >
-        <Card className="shadow-lg border border-gray-200 rounded-2xl overflow-hidden">
-          <CardHeader className="bg-primary-200 text-slate-50 p-6">
+        <Card className="shadow-lg border border-slate-200 rounded-xl overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-800 p-6">
             <div className="flex justify-between w-full items-center">
               <div className="flex items-center gap-4">
-                <BookOpen size={28} />
-                <h1 className="text-2xl font-bold">CO-PO/PSO Mapping Matrix</h1>
+                <BookOpen size={28} className="text-white" />
+                <h1 className="text-2xl font-semibold">CO-PO/PSO Mapping Matrix</h1>
               </div>
               <Tooltip content="Learn how to map Course Outcomes to Program Outcomes">
                 <Button isIconOnly variant="light" size="sm" className="text-white">
@@ -257,19 +280,18 @@ const MappingPage = () => {
           <CardBody className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Select
-                label="Academic Year"
                 placeholder="Select Academic Year"
                 variant="bordered"
                 selectedKeys={academicYear ? [academicYear] : []}
                 onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
-                startContent={<Calendar size={18} className="text-gray-500" />}
+                startContent={<Calendar size={18} className="text-indigo-600" />}
                 classNames={{
-                  trigger: 'bg-white border-gray-200 rounded-lg shadow-sm',
-                  label: 'text-gray-700',
+                  trigger: 'bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all',
+                  label: 'text-slate-700 font-medium',
                 }}
               >
                 {getAcademicYears(10).map((year) => (
-                  <SelectItem key={year.value} value={year.value} className="text-gray-900">
+                  <SelectItem key={year.value} value={year.value} className="text-slate-900">
                     {year.label}
                   </SelectItem>
                 ))}
@@ -283,8 +305,8 @@ const MappingPage = () => {
                 selectedSubject={subject}
                 label="Subject"
                 classNames={{
-                  base: 'bg-white border-gray-200 rounded-lg shadow-sm',
-                  label: 'text-gray-700',
+                  base: 'bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all',
+                  label: 'text-slate-700 font-medium',
                 }}
               />
               <div className="flex gap-3">
@@ -293,7 +315,7 @@ const MappingPage = () => {
                   onClick={fetchMappingData}
                   isDisabled={!canLoad}
                   isLoading={isLoading}
-                  className="w-full bg-indigo-500 text-white hover:bg-indigo-600 transition-all shadow-md rounded-lg"
+                  className="w-full  text-white hover:bg-indigo-700 transition-all shadow-md rounded-lg"
                   startContent={<RefreshCw size={18} />}
                 >
                   Load Data
@@ -304,7 +326,7 @@ const MappingPage = () => {
                     variant="flat"
                     color="secondary"
                     onClick={() => downloadMapping(mappingData, localMappings, subject, academicYear)}
-                    className="bg-gray-100 text-gray-900 hover:bg-gray-200 rounded-lg shadow-md"
+                    className="bg-indigo-100 text-indigo-600 hover:bg-indigo-200 rounded-lg shadow-sm"
                     title="Download as CSV"
                   >
                     <Download size={18} />
@@ -324,14 +346,14 @@ const MappingPage = () => {
                 <Tabs
                   selectedKey={activeTab}
                   onSelectionChange={setActiveTab}
-                  className="border-b border-gray-200"
+                  className="border-b border-slate-200"
                   variant="underlined"
                   color="primary"
                 >
                   <Tab
                     key="matrix"
                     title={
-                      <div className="flex items-center gap-2 text-gray-700">
+                      <div className="flex items-center gap-2 text-slate-700">
                         <BookOpen size={18} />
                         <span>Mapping Matrix</span>
                       </div>
@@ -340,7 +362,7 @@ const MappingPage = () => {
                   <Tab
                     key="stats"
                     title={
-                      <div className="flex items-center gap-2 text-gray-700">
+                      <div className="flex items-center gap-2 text-slate-700">
                         <BarChart2 size={18} />
                         <span>Statistics</span>
                       </div>
@@ -355,68 +377,65 @@ const MappingPage = () => {
                     transition={{ duration: 0.3 }}
                     className="space-y-6"
                   >
-                    <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-xl shadow-md">
-                      <Select
-                        label="Outcome Type"
-                        size="sm"
-                        className="w-48"
-                        selectedKeys={[activeFilter]}
-                        onChange={(e) => setActiveFilter(e.target.value)}
-                        startContent={<Filter size={14} className="text-gray-500" />}
-                        classNames={{
-                          trigger: 'bg-white border-gray-200 rounded-lg',
-                          label: 'text-gray-700',
-                        }}
-                      >
-                        <SelectItem key="all" value="all">All Outcomes</SelectItem>
-                        <SelectItem key="po" value="po">Program Outcomes</SelectItem>
-                        <SelectItem key="pso" value="pso">Program Specific</SelectItem>
-                      </Select>
-                      <Select
-                        label="Cognitive Level"
-                        size="sm"
-                        className="w-48"
-                        selectedKeys={[cognitiveFilter]}
-                        onChange={(e) => setCognitiveFilter(e.target.value)}
-                        classNames={{
-                          trigger: 'bg-white border-gray-200 rounded-lg',
-                          label: 'text-gray-700',
-                        }}
-                      >
-                        <SelectItem key="all" value="all">All Levels</SelectItem>
-                        {Object.keys(COGNITIVE_LEVELS).map((level) => (
-                          <SelectItem key={level} value={level} className="text-gray-900">
-                            {level}
-                          </SelectItem>
-                        ))}
-                      </Select>
-                      <Select
-                        label="Correlation Level"
-                        size="sm"
-                        className="w-48"
-                        selectedKeys={[correlationFilter]}
-                        onChange={(e) => setCorrelationFilter(e.target.value)}
-                        classNames={{
-                          trigger: 'bg-white border-gray-200 rounded-lg',
-                          label: 'text-gray-700',
-                        }}
-                      >
-                        <SelectItem key="all" value="all">All Correlations</SelectItem>
-                        {CORRELATION_LEVELS.filter((l) => l.value > 0).map((level) => (
-                          <SelectItem key={level.value.toString()} value={level.value.toString()}>
-                            {level.label} - {level.description}
-                          </SelectItem>
-                        ))}
-                      </Select>
+                    <div className="flex flex-wrap gap-4 p-4 bg-white rounded-xl shadow-sm border border-slate-200">
+
+                      <Dropdown>
+                        <DropdownTrigger>
+                          <Button
+                            variant="bordered"
+                            size="sm"
+                            className="w-48 bg-white border-slate-200 rounded-lg hover:border-indigo-400 transition-all"
+                            startContent={<Filter size={14} className="text-indigo-600" />}
+                          >
+                            {activeFilter === "all"
+                              ? "All Outcomes"
+                              : activeFilter === "po"
+                                ? "Program Outcomes"
+                                : "Program Specific"}
+                          </Button>
+                        </DropdownTrigger>
+                        <DropdownMenu
+                          aria-label="Outcome Type"
+                          onAction={(key) => setActiveFilter(key)}
+                          selectedKeys={new Set([activeFilter])}
+                        >
+                          <DropdownItem key="all">All Outcomes</DropdownItem>
+                          <DropdownItem key="po">Program Outcomes</DropdownItem>
+                          <DropdownItem key="pso">Program Specific</DropdownItem>
+                        </DropdownMenu>
+                      </Dropdown>
+
+                      <Dropdown>
+                        <DropdownTrigger>
+                          <Button
+                            variant="bordered"
+                            className="w-48 bg-white border-slate-200 rounded-lg hover:border-indigo-400 transition-all"
+                            size="sm"
+                          >
+                            {getDisplayText()}
+                          </Button>
+                        </DropdownTrigger>
+                        <DropdownMenu
+                          aria-label="Correlation Levels"
+                          onAction={(key) => setCorrelationFilter(key)}
+                          selectedKeys={new Set([correlationFilter.toString()])}
+                        >
+                          <DropdownItem key="all">All Correlations</DropdownItem>
+                          {CORRELATION_LEVELS.filter((l) => l.value > 0).map((level) => (
+                            <DropdownItem key={level.value.toString()}>
+                              {level.label} - {level.description}
+                            </DropdownItem>
+                          ))}
+                        </DropdownMenu>
+                      </Dropdown>
                     </div>
 
-                    <div className="overflow-x-auto rounded-xl shadow-lg">
+                    <div className="overflow-x-auto rounded-xl shadow-lg border border-slate-200">
                       <Table
-                        isStriped
                         aria-label="CO-PO/PSO Mapping Matrix"
                         className="min-w-full bg-white"
                         classNames={{
-                          th: 'bg-gray-100 text-gray-700 py-4',
+                          th: 'bg-slate-50 text-slate-700 py-4 font-semibold',
                           td: 'py-3',
                         }}
                       >
@@ -425,9 +444,9 @@ const MappingPage = () => {
                           {filteredProgramOutcomes.pos.map((po) => (
                             <TableColumn key={po.id} className="text-center">
                               <div className="flex flex-col items-center">
-                                <span className="font-bold text-blue-600">PO{po.index}</span>
+                                <span className="font-bold text-indigo-600">PO{po.index}</span>
                                 <Tooltip content={po.description}>
-                                  <Info size={14} className="cursor-pointer mt-1 text-blue-500" />
+                                  <Info size={14} className="cursor-pointer mt-1 text-indigo-500" />
                                 </Tooltip>
                               </div>
                             </TableColumn>
@@ -435,9 +454,9 @@ const MappingPage = () => {
                           {filteredProgramOutcomes.psos.map((pso) => (
                             <TableColumn key={pso.id} className="text-center">
                               <div className="flex flex-col items-center">
-                                <span className="font-bold text-purple-600">PSO{pso.index}</span>
+                                <span className="font-bold text-indigo-600">PSO{pso.index}</span>
                                 <Tooltip content={pso.description}>
-                                  <Info size={14} className="cursor-pointer mt-1 text-purple-500" />
+                                  <Info size={14} className="cursor-pointer mt-1 text-indigo-500" />
                                 </Tooltip>
                               </div>
                             </TableColumn>
@@ -446,11 +465,11 @@ const MappingPage = () => {
                         <TableBody>
                           {filteredCourseOutcomes.length > 0 ? (
                             filteredCourseOutcomes.map((co) => (
-                              <TableRow key={co.id} className="hover:bg-gray-50 transition-colors">
+                              <TableRow key={co.id} className="hover:bg-slate-50 transition-colors">
                                 <TableCell className="text-left">
                                   <div className="space-y-2">
                                     <div className="flex items-center gap-2">
-                                      <span className="font-semibold text-gray-800">{co.code}</span>
+                                      <span className="font-semibold text-slate-800">{co.code}</span>
                                       <Chip
                                         size="sm"
                                         color={COGNITIVE_LEVELS[co.cognitiveLevel]?.color || 'default'}
@@ -460,7 +479,7 @@ const MappingPage = () => {
                                         {co.cognitiveLevel}
                                       </Chip>
                                     </div>
-                                    <p className="text-sm text-gray-600 line-clamp-2">{co.description}</p>
+                                    <p className="text-sm text-slate-600 line-clamp-2">{co.description}</p>
                                   </div>
                                 </TableCell>
                                 {[...filteredProgramOutcomes.pos, ...filteredProgramOutcomes.psos].map((outcome) => {
@@ -474,38 +493,52 @@ const MappingPage = () => {
                                       className={`${getCellBackground(correlationLevel)} transition-colors`}
                                     >
                                       <div className="flex flex-col items-center gap-1">
-                                        <Select
-                                          size="sm"
-                                          aria-label={`Set correlation for ${co.code} - ${outcome.type}${outcome.index}`}
-                                          selectedKeys={[correlationLevel.toString()]}
-                                          onChange={(e) => updateMapping(co.id, mappingKey, parseInt(e.target.value))}
-                                          className="w-24"
-                                          classNames={{
-                                            trigger: 'h-8 py-0 bg-white border-gray-200 rounded-md shadow-sm',
-                                          }}
-                                        >
-                                          {CORRELATION_LEVELS.map((level) => (
-                                            <SelectItem
-                                              key={level.value.toString()}
-                                              value={level.value.toString()}
-                                              className="text-gray-900"
+                                        <Dropdown>
+                                          <DropdownTrigger>
+                                            <Button
+                                              size="sm"
+                                              aria-label={`Set correlation for ${co.code} - ${outcome.type}${outcome.index}`}
+                                              className="w-24 h-8 py-0 bg-transperent border-slate-200 rounded-md shadow-sm"
                                             >
-                                              <div className="flex items-center gap-2">
-                                                <Chip size="sm" color={level.color} variant="flat">
-                                                  {level.label}
-                                                </Chip>
-                                                <span className="text-xs">{level.description}</span>
-                                              </div>
-                                            </SelectItem>
-                                          ))}
-                                        </Select>
+                                              {correlationLevel !== undefined && correlationLevel !== null ? (
+                                                <div className="flex items-center gap-2">
+                                                  <Chip
+                                                    size="sm"
+                                                    color={CORRELATION_LEVELS.find(level => level.value === correlationLevel)?.color || 'default'}
+                                                    variant="flat"
+                                                  >
+                                                    {CORRELATION_LEVELS.find(level => level.value === correlationLevel)?.label || 'N/A'}
+                                                  </Chip>
+                                                </div>
+                                              ) : (
+                                                "Select"
+                                              )}
+                                            </Button>
+                                          </DropdownTrigger>
+                                          <DropdownMenu
+                                            aria-label="Correlation Levels"
+                                            onAction={(key) => updateMapping(co.id, mappingKey, parseInt(key))}
+                                            selectedKeys={correlationLevel ? new Set([correlationLevel.toString()]) : new Set()}
+                                          >
+                                            {CORRELATION_LEVELS.map((level) => (
+                                              <DropdownItem key={level.value.toString()}>
+                                                <div className="flex items-center gap-2">
+                                                  <Chip size="sm" color={level.color} variant="flat">
+                                                    {level.label}
+                                                  </Chip>
+                                                  <span className="text-xs">{level.description}</span>
+                                                </div>
+                                              </DropdownItem>
+                                            ))}
+                                          </DropdownMenu>
+                                        </Dropdown>
                                         {correlationLevel > 0 && (
                                           <Button
                                             size="sm"
                                             isIconOnly
                                             variant="light"
                                             onClick={() => editJustification(co.id, mappingKey)}
-                                            className={`text-${mapping.justification ? 'blue-500' : 'gray-400'} hover:text-blue-600`}
+                                            className={`text-${mapping.justification ? 'indigo-600' : 'slate-400'} hover:text-indigo-700`}
                                             title={mapping.justification ? 'Edit justification' : 'Add justification'}
                                           >
                                             {mapping.justification ? <Edit size={14} /> : <Plus size={14} />}
@@ -513,7 +546,7 @@ const MappingPage = () => {
                                         )}
                                         {mapping.justification && (
                                           <Tooltip content={mapping.justification}>
-                                            <span className="text-xs text-blue-500 cursor-pointer hover:underline">
+                                            <span className="text-xs text-indigo-600 cursor-pointer hover:underline">
                                               View
                                             </span>
                                           </Tooltip>
@@ -526,10 +559,7 @@ const MappingPage = () => {
                             ))
                           ) : (
                             <TableRow>
-                              <TableCell
-                                colSpan={1 + filteredProgramOutcomes.pos.length + filteredProgramOutcomes.psos.length}
-                                className="text-center py-6 text-gray-500"
-                              >
+                              <TableCell colSpan={totalColumns} className="text-center py-6 text-slate-500">
                                 No results match the current filters.
                               </TableCell>
                             </TableRow>
@@ -547,56 +577,56 @@ const MappingPage = () => {
                     transition={{ duration: 0.3 }}
                     className="grid grid-cols-1 lg:grid-cols-2 gap-6"
                   >
-                    <Card className="p-6 bg-white shadow-lg rounded-xl">
-                      <h3 className="text-xl font-semibold text-gray-800 mb-4">Mapping Overview</h3>
+                    <Card className="p-6 bg-white shadow-md rounded-xl border border-slate-200">
+                      <h3 className="text-xl font-semibold text-slate-800 mb-4">Mapping Overview</h3>
                       <div className="space-y-6">
                         <div>
-                          <div className="flex justify-between mb-2 text-gray-700">
+                          <div className="flex justify-between mb-2 text-slate-700">
                             <span className="font-medium">Coverage</span>
                             <span className="font-semibold">{stats.coverage.toFixed(1)}%</span>
                           </div>
                           <Progress
                             value={stats.coverage}
                             color={stats.coverage > 60 ? 'success' : stats.coverage > 30 ? 'warning' : 'danger'}
-                            className="h-4"
+                            className="h-4 rounded-full"
                             showValueLabel
                           />
                         </div>
-                        <div className="grid grid-cols-3 gap-4 text-center">
-                          <div>
+                        <div className="grid grid-cols-3 gap-4 text-center mt-6">
+                          <div className="bg-slate-50 p-4 rounded-lg shadow-sm">
                             <span className="text-3xl font-bold text-indigo-600">{stats.total}</span>
-                            <p className="text-sm text-gray-500">Total Mappings</p>
+                            <p className="text-sm text-slate-500 mt-1">Total Mappings</p>
                           </div>
-                          <div>
+                          <div className="bg-slate Consciousness mapping 50 p-4 rounded-lg shadow-sm">
                             <span className="text-3xl font-bold text-indigo-600">{stats.byType.PO}</span>
-                            <p className="text-sm text-gray-500">PO Mappings</p>
+                            <p className="text-sm text-slate-500 mt-1">PO Mappings</p>
                           </div>
-                          <div>
+                          <div className="bg-slate-50 p-4 rounded-lg shadow-sm">
                             <span className="text-3xl font-bold text-indigo-600">{stats.byType.PSO}</span>
-                            <p className="text-sm text-gray-500">PSO Mappings</p>
+                            <p className="text-sm text-slate-500 mt-1">PSO Mappings</p>
                           </div>
                         </div>
-                        <div>
-                          <h4 className="font-medium text-gray-700 mb-3">Correlation Distribution</h4>
-                          <div className="relative w-full h-64">
+                        <div className="mt-6">
+                          <h4 className="font-medium text-slate-700 mb-3">Correlation Distribution</h4>
+                          <div className="relative w-full h-64 border border-slate-200 rounded-lg p-2 bg-white">
                             <canvas ref={chartRef} className="w-full h-full"></canvas>
                           </div>
                         </div>
                       </div>
                     </Card>
-                    <Card className="p-6 bg-white shadow-lg rounded-xl">
-                      <h3 className="text-xl font-semibold text-gray-800 mb-4">Course Outcome Analysis</h3>
-                      <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                    <Card className="p-6 bg-white shadow-md rounded-xl border border-slate-200">
+                      <h3 className="text-xl font-semibold text-slate-800 mb-4">Course Outcome Analysis</h3>
+                      <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                         {Object.entries(stats.byCO).map(([coId, count]) => {
                           const co = mappingData.courseOutcomes.find((c) => c.id === coId);
                           if (!co) return null;
                           const totalPossible = filteredProgramOutcomes.pos.length + filteredProgramOutcomes.psos.length;
                           const coveragePercent = totalPossible > 0 ? (count / totalPossible) * 100 : 0;
                           return (
-                            <div key={coId} className="bg-gray-50 p-3 rounded-lg shadow-inner">
+                            <div key={coId} className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 hover:border-indigo-300 transition-all">
                               <div className="flex justify-between items-center mb-2">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-semibold text-gray-800">{co.code}</span>
+                                  <span className="font-semibold text-slate-800">{co.code}</span>
                                   <Chip
                                     size="sm"
                                     color={COGNITIVE_LEVELS[co.cognitiveLevel]?.color || 'default'}
@@ -605,16 +635,16 @@ const MappingPage = () => {
                                     {co.cognitiveLevel}
                                   </Chip>
                                 </div>
-                                <span className="text-sm text-gray-600">
+                                <span className="text-sm text-slate-600 font-medium">
                                   {count}/{totalPossible} ({coveragePercent.toFixed(0)}%)
                                 </span>
                               </div>
                               <Progress
                                 value={coveragePercent}
                                 color={coveragePercent > 70 ? 'success' : coveragePercent > 40 ? 'warning' : 'danger'}
-                                className="h-2"
+                                className="h-2 rounded-full"
                               />
-                              <p className="text-xs text-gray-500 mt-1 line-clamp-2">{co.description}</p>
+                              <p className="text-sm text-slate-600 mt-2 line-clamp-2">{co.description}</p>
                             </div>
                           );
                         })}
@@ -623,9 +653,9 @@ const MappingPage = () => {
                   </motion.div>
                 )}
 
-                <div className="flex justify-between items-center mt-6 p-4 bg-gray-50 rounded-xl shadow-md">
+                <div className="flex justify-between items-center mt-6 p-4 bg-white rounded-xl shadow-md border border-slate-200">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <span className="text-sm font-medium text-gray-700">Correlation Levels:</span>
+                    <span className="text-sm font-medium text-slate-700">Correlation Levels:</span>
                     {CORRELATION_LEVELS.filter((l) => l.value > 0).map((level) => (
                       <Chip
                         key={level.value}
@@ -644,7 +674,7 @@ const MappingPage = () => {
                     isLoading={isSubmitting}
                     startContent={<Save size={18} />}
                     isDisabled={!hasChanges}
-                    className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 transition-all shadow-md rounded-lg px-6"
+                    className="bg-indigo-600 text-white hover:bg-indigo-700 transition-all shadow-md rounded-lg px-6"
                   >
                     Save Mappings
                   </Button>
@@ -657,30 +687,29 @@ const MappingPage = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
-                className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-8 text-center mt-6 shadow-lg"
+                className="bg-white border-2 border-dashed border-slate-300 rounded-xl p-8 text-center mt-6 shadow-lg"
               >
-                <BookOpen size={48} className="mx-auto mb-4 text-gray-400" />
-                <p className="text-lg font-semibold text-gray-700">
+                <BookOpen size={48} className="mx-auto mb-4 text-indigo-500" />
+                <p className="text-lg font-semibold text-slate-700">
                   Select an academic year and subject to begin mapping.
                 </p>
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-slate-500 mt-2">
                   Align course outcomes with program objectives for better curriculum planning.
                 </p>
               </motion.div>
             )}
-
             {!isLoading && mappingData?.courseOutcomes?.length === 0 && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
-                className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-8 text-center mt-6 shadow-lg"
+                className="bg-white border-2 border-dashed border-slate-300 rounded-xl p-8 text-center mt-6 shadow-lg"
               >
-                <Info size={48} className="mx-auto mb-4 text-gray-400" />
-                <p className="text-lg font-semibold text-gray-700">
+                <Info size={48} className="mx-auto mb-4 text-slate-400" />
+                <p className="text-lg font-semibold text-slate-700">
                   No course outcomes found for the selected subject and year.
                 </p>
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-slate-500 mt-2">
                   Ensure outcomes are defined or try a different subject.
                 </p>
               </motion.div>
@@ -690,8 +719,8 @@ const MappingPage = () => {
 
         <Modal isOpen={isOpen} onClose={onClose} size="2xl" className="bg-white">
           <ModalContent>
-            <ModalHeader className="border-b border-gray-200">
-              <h3 className="text-xl font-semibold text-gray-800">Mapping Justification</h3>
+            <ModalHeader className="border-b border-slate-200">
+              <h3 className="text-xl font-semibold text-slate-800">Mapping Justification</h3>
             </ModalHeader>
             <ModalBody className="p-6">
               {selectedMapping && mappingData && (
@@ -705,15 +734,15 @@ const MappingPage = () => {
                     <Chip
                       color="primary"
                       variant="flat"
-                      className="bg-indigo-500 text-white"
+                      className="bg-indigo-100 text-indigo-700"
                     >
                       {mappingData.courseOutcomes.find((co) => co.id === selectedMapping.coId)?.code || 'CO'}
                     </Chip>
-                    <span className="text-2xl text-gray-500">→</span>
+                    <span className="text-2xl text-slate-500">→</span>
                     <Chip
                       color="secondary"
                       variant="flat"
-                      className="bg-purple-500 text-white"
+                      className="bg-indigo-100 text-indigo-700"
                     >
                       {selectedMapping.poId.split('-')[0]}
                       {mappingData.programOutcomes.pos
@@ -733,20 +762,20 @@ const MappingPage = () => {
                     placeholder="Explain how this course outcome supports the program outcome..."
                     value={justification}
                     onChange={(e) => setJustification(e.target.value)}
-                    className="w-full bg-white border-gray-200 rounded-lg"
+                    className="w-full bg-white border-slate-200 rounded-lg"
                     rows={6}
                   />
                 </motion.div>
               )}
             </ModalBody>
-            <ModalFooter className="border-t border-gray-200">
-              <Button variant="light" onPress={onClose} className="text-gray-700">
+            <ModalFooter className="border-t border-slate-200">
+              <Button variant="light" onPress={onClose} className="text-slate-700">
                 Cancel
               </Button>
               <Button
                 color="primary"
                 onPress={saveJustification}
-                className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600"
+                className="bg-indigo-600 text-white hover:bg-indigo-700"
               >
                 Save
               </Button>

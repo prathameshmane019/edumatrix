@@ -1,8 +1,8 @@
 export const CORRELATION_LEVELS = [
     { value: 0, label: 'N/A', color: 'default', description: 'No correlation' },
-    { value: 1, label: '1', color: 'yellow', description: 'Slight correlation' },
-    { value: 2, label: '2', color: 'blue', description: 'Moderate correlation' },
-    { value: 3, label: '3', color: 'green', description: 'Strong correlation' },
+    { value: 1, label: '1', color: 'warning', description: 'Slight correlation' },
+    { value: 2, label: '2', color: 'primary', description: 'Moderate correlation' },
+    { value: 3, label: '3', color: 'success', description: 'Strong correlation' },
   ];
   
   export const COGNITIVE_LEVELS = {

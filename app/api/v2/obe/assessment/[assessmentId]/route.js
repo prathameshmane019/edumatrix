@@ -39,110 +39,114 @@ export async function GET(req, { params }) {
     }
 }
 
-// PUT handler for updating an Assessment
+ 
 export async function PUT(req, { params }) {
      try {
-        await connectMongoDB();
-        const { assessmentId } = params;
-        const body = await req.json();
-        // Don't allow changing subject easily
-        const { subject, ...updateData } = body;
+         await connectMongoDB();
+         const { id } = params; // Get ID from dynamic route segment
+         const body = await req.json();
+         const { name, type, subject, academicYear, sem, maxMarks, assessmentDate, coMapping } = body;
 
-
-        if (!assessmentId || !mongoose.Types.ObjectId.isValid(assessmentId)) {
-            return NextResponse.json({ message: "Invalid or missing Assessment ID" }, { status: 400 });
-        }
-
-        // --- Auth ---
-        // Check authorization
-        // ---
-
-        // Fetch existing assessment to get subject if needed for validation
-         const existingAssessment = await Assessment.findById(assessmentId).lean(); // Use lean for read-only
-         if (!existingAssessment) {
-             return NextResponse.json({ success: false, message: "Assessment not found" }, { status: 404 });
+         if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+             return NextResponse.json({ message: "Invalid Assessment ID format" }, { status: 400 });
          }
 
+         // Fetch existing assessment
+         const assessmentToUpdate = await Assessment.findById(id);
+         if (!assessmentToUpdate) {
+             return NextResponse.json({ success: false, message: "Assessment not found." }, { status: 404 });
+         }
 
-        // Validate coMapping if present in updateData
-        if (updateData.coMapping) {
-             if (!Array.isArray(updateData.coMapping)) {
-                 return NextResponse.json({ success: false, message: 'coMapping must be an array.' }, { status: 400 });
-             }
-             const coIds = updateData.coMapping.map(m => m.courseOutcome);
-              if (coIds.some(id => !mongoose.Types.ObjectId.isValid(id))) {
-                 return NextResponse.json({ success: false, message: 'One or more Course Outcome IDs in coMapping are invalid.' }, { status: 400 });
-             }
-              // Ensure updated COs belong to the original subject
-             const existingCosCount = await CourseOutcome.countDocuments({ _id: { $in: coIds }, subject: existingAssessment.subject });
-              if (existingCosCount !== coIds.length) {
-                 return NextResponse.json({ success: false, message: 'One or more Course Outcomes in coMapping not found or do not belong to this assessment\'s subject.' }, { status: 400 });
-             }
-              if (updateData.coMapping.some(m => typeof m.maxMarks !== 'number' || m.maxMarks < 0)) {
-                 return NextResponse.json({ success: false, message: 'maxMarks within coMapping must be a non-negative number.' }, { status: 400 });
-             }
-        }
+          // --- Validation (Similar to POST) ---
+          // You need to re-validate incoming fields and coMapping
+          // Ensure 'subject', 'academicYear', 'sem' are not changed if they are meant to be immutable after creation
+          // For this example, let's assume they might be updated, but you might restrict this.
 
-        // Perform update (Schema validation for marks sum will run)
-        // Important: findByIdAndUpdate doesn't trigger 'validate' middleware by default on paths *not* being updated
-        // if maxMarks is updated but coMapping is not, the validation might not run correctly.
-        // It's safer to fetch, modify, and save() or run validation manually if needed.
-        // For simplicity here, assuming `runValidators: true` works sufficiently for updates.
-        const updatedAssessment = await Assessment.findByIdAndUpdate(
-            assessmentId,
-            updateData,
-            { new: true, runValidators: true, context: 'query' }
-        ).populate({ path: 'coMapping.courseOutcome', select: 'code description' })
-         .populate('subject', 'name id');
+          if (!name || !type || !subject || !academicYear || !sem || maxMarks === undefined || !Array.isArray(coMapping)) {
+              console.error("Missing required fields for PUT:", body);
+              return NextResponse.json({ success: false, message: 'Missing required fields (name, type, subject, academicYear, sem, maxMarks, coMapping array) in update data.' }, { status: 400 });
+          }
+
+          if (!mongoose.Types.ObjectId.isValid(subject)) {
+              return NextResponse.json({ message: "Invalid Subject ID format in update data" }, { status: 400 });
+          }
+          if (typeof maxMarks !== 'number' || maxMarks < 0) {
+              return NextResponse.json({ success: false, message: 'maxMarks in update data must be a non-negative number.' }, { status: 400 });
+          }
+           if (assessmentDate && isNaN(new Date(assessmentDate).getTime())) {
+                return NextResponse.json({ success: false, message: 'Invalid assessmentDate format in update data.' }, { status: 400 });
+           }
+
+           const subjectExists = await Subject.findById(subject);
+           if (!subjectExists) {
+               return NextResponse.json({ success: false, message: `Subject with ID ${subject} in update data not found.` }, { status: 400 });
+           }
 
 
-        if (!updatedAssessment) {
-             // Should not happen if findById found it earlier, but check again
-            return NextResponse.json({ success: false, message: "Assessment not found during update." }, { status: 404 });
-        }
+          // Validate coMapping structure and content using the helper
+          // Note: We pass the *potentially updated* subject ID from the body for coMapping validation
+          const { isValid, errors } = await validateCoMapping(coMapping, subject, maxMarks);
+          if (!isValid) {
+              return NextResponse.json({ success: false, message: 'coMapping validation failed during update.', errors: errors }, { status: 400 });
+          }
 
-        return NextResponse.json({ success: true, data: updatedAssessment, message: "Assessment updated." }, { status: 200 });
+         // --- Update Fields ---
+         assessmentToUpdate.name = name;
+         assessmentToUpdate.type = type;
+         assessmentToUpdate.subject = subject; // Update subject if allowed
+         assessmentToUpdate.academicYear = academicYear; // Update year if allowed
+         assessmentToUpdate.sem = sem; // Update sem if allowed
+         assessmentToUpdate.maxMarks = maxMarks;
+         assessmentToUpdate.assessmentDate = assessmentDate ? new Date(assessmentDate) : null;
+         assessmentToUpdate.coMapping = coMapping.map(item => ({ // Map to schema format
+              courseOutcome: new mongoose.Types.ObjectId(item.courseOutcome),
+              coIndex: Number(item.coIndex),
+              maxMarks: Number(item.maxMarks)
+         }));
 
-    } catch (error) {
-        console.error(`API Error updating Assessment ${params.assessmentId}:`, error);
-        if (error.name === 'ValidationError') {
-            return NextResponse.json({ success: false, message: error.message, errors: error.errors }, { status: 400 });
-        }
-        return NextResponse.json({ success: false, message: "Internal Server Error", error: error.message }, { status: 500 });
-    }
+         await assessmentToUpdate.save(); // Mongoose schema validation runs here
+
+         // Populate before returning
+         await assessmentToUpdate.populate({
+              path: 'coMapping.courseOutcome',
+              select: 'outcomes institute department academicYear'
+         });
+
+
+         return NextResponse.json({ success: true, data: assessmentToUpdate, message: "Assessment updated successfully." }, { status: 200 });
+
+     } catch (error) {
+         console.error("API Error updating assessment:", error);
+         if (error.name === 'ValidationError') {
+              const errors = {};
+              for (const field in error.errors) {
+                  errors[field] = error.errors[field].message;
+              }
+             return NextResponse.json({ success: false, message: "Validation failed during update.", errors: errors }, { status: 400 });
+         }
+         return NextResponse.json({ success: false, message: "Internal Server Error during update", error: error.message }, { status: 500 });
+     }
 }
 
-// DELETE handler for an Assessment
 export async function DELETE(req, { params }) {
      try {
-        await connectMongoDB();
-        const { assessmentId } = params;
+         await connectMongoDB();
+         const { id } = params;
 
-        if (!assessmentId || !mongoose.Types.ObjectId.isValid(assessmentId)) {
-            return NextResponse.json({ message: "Invalid or missing Assessment ID" }, { status: 400 });
-        }
+         if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+             return NextResponse.json({ message: "Invalid Assessment ID format" }, { status: 400 });
+         }
 
-        // --- Auth ---
-        // Check authorization
-        // ---
+         const deletedAssessment = await Assessment.findByIdAndDelete(id);
 
-        // **Important Check**: Prevent deletion if student results exist for this assessment?
-        // const resultsExist = await StudentResult.exists({ assessment: assessmentId });
-        // if (resultsExist) {
-        //     return NextResponse.json({ success: false, message: 'Cannot delete: Student results exist for this assessment.' }, { status: 400 });
-        // }
+         if (!deletedAssessment) {
+             return NextResponse.json({ success: false, message: "Assessment not found." }, { status: 404 });
+         }
 
+         return NextResponse.json({ success: true, message: "Assessment deleted successfully." }, { status: 200 });
 
-        const deletedAssessment = await Assessment.findByIdAndDelete(assessmentId);
-
-        if (!deletedAssessment) {
-            return NextResponse.json({ success: false, message: "Assessment not found" }, { status: 404 });
-        }
-
-        return NextResponse.json({ success: true, message: "Assessment deleted successfully." }, { status: 200 });
-
-    } catch (error) {
-        console.error(`API Error deleting Assessment ${params.assessmentId}:`, error);
-        return NextResponse.json({ success: false, message: "Internal Server Error", error: error.message }, { status: 500 });
-    }
+     } catch (error) {
+         console.error("API Error deleting assessment:", error);
+         return NextResponse.json({ success: false, message: "Internal Server Error during deletion", error: error.message }, { status: 500 });
+     }
 }
