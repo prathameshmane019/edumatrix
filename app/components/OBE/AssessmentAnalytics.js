@@ -37,12 +37,13 @@ export default function AssessmentAnalytics({ assessment }) {
         params: { assessmentId: assessment._id },
       })
 
-      if (response.data.success && Array.isArray(response.data.data)) {
-        setStudentData(response.data.data)
-        calculateStats(response.data.data)
+      if (response.data.success && Array.isArray(response.data.data.studentMarks)) {
+        setStudentData(response.data.data.studentMarks)
+        calculateStats(response.data.data.studentMarks)
       } else {
         setStudentData([])
         resetStats()
+        toast.error("No student marks found for this assessment")
       }
     } catch (error) {
       console.error("Error fetching student marks:", error)
@@ -57,14 +58,14 @@ export default function AssessmentAnalytics({ assessment }) {
   // Calculate statistics from student marks
   const calculateStats = useCallback((data) => {
     // Filter out students with no marks
-    const evaluatedStudents = data.filter(student => student.marks !== null && student.marks !== "")
+    const evaluatedStudents = data.filter(student => student.totalMarks !== null)
     
     if (evaluatedStudents.length === 0) {
       resetStats()
       return
     }
 
-    const marks = evaluatedStudents.map(student => student.marks)
+    const marks = evaluatedStudents.map(student => student.totalMarks)
     const total = data.length
     const evaluated = evaluatedStudents.length
     const average = marks.reduce((sum, mark) => sum + mark, 0) / evaluated
@@ -73,7 +74,7 @@ export default function AssessmentAnalytics({ assessment }) {
     
     // Assume passing is 40% of max marks (adjust as needed)
     const passingMark = assessment?.maxMarks * 0.4 || 0
-    const passCount = evaluatedStudents.filter(student => student.marks >= passingMark).length
+    const passCount = evaluatedStudents.filter(student => student.totalMarks >= passingMark).length
     const passRate = evaluated > 0 ? (passCount / evaluated) * 100 : 0
 
     // Create distribution buckets (0-20%, 21-40%, etc.)
@@ -88,7 +89,7 @@ export default function AssessmentAnalytics({ assessment }) {
     ]
 
     evaluatedStudents.forEach(student => {
-      const percentage = (student.marks / maxMarks) * 100
+      const percentage = (student.totalMarks / maxMarks) * 100
       const bucketIndex = Math.min(Math.floor(percentage / 20), 4)
       distribution[bucketIndex].count++
     })

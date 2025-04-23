@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import {
   Button,
   Card,
@@ -27,8 +27,9 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
   const [isSaving, setIsSaving] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
+  const [coMapping, setCOMapping] = useState([])
+  const inputRefs = useRef(new Map())
 
-  // Fetch student marks for this assessment
   const fetchStudentMarks = useCallback(async () => {
     if (!assessment?._id) return
 
@@ -38,40 +39,88 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
         params: { assessmentId: assessment._id },
       })
 
-      if (response.data.success && Array.isArray(response.data.data)) {
-        setStudents(response.data.data)
+      if (response.data.success && response.data.data) {
+        const formattedStudents = (response.data.data.studentMarks || []).map(student => ({
+          internalId: `internal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          student: student.student || "",
+          rollNumber: student.rollNumber,
+          name: student.name,
+          totalMarks: student.totalMarks,
+          coMarks: student.coMarks || []
+        }))
+        setStudents(formattedStudents)
+        setCOMapping(response.data.data.coMapping || [])
       } else {
         setStudents([])
+        setCOMapping([])
       }
     } catch (error) {
       console.error("Error fetching student marks:", error)
       toast.error("Failed to load student marks")
       setStudents([])
+      setCOMapping([])
     } finally {
       setIsLoading(false)
     }
   }, [assessment])
 
-  // Load student marks when assessment changes
   useEffect(() => {
     if (assessment?._id) {
       fetchStudentMarks()
     } else {
       setStudents([])
+      setCOMapping([])
     }
   }, [assessment, fetchStudentMarks])
 
-  // Handle mark change for a student
-  const handleMarkChange = useCallback((studentId, value) => {
-    // Validate input - only allow numbers and decimal points
+  const validateStudentId = useCallback((studentId, currentInternalId) => {
+    if (!studentId) {
+      return "Student ID is required"
+    }
+    if (!/^[A-Za-z0-9-]+$/.test(studentId)) {
+      return "Student ID must be alphanumeric with hyphens"
+    }
+    const duplicate = students.some(
+      student => student.student === studentId && student.internalId !== currentInternalId
+    )
+    if (duplicate) {
+      return "Student ID already exists"
+    }
+    return null
+  }, [students])
+
+  const handleMarkChange = useCallback((internalId, coIndex, value) => {
     if (value !== "" && !/^\d*\.?\d*$/.test(value)) return
+
+    const activeElement = document.activeElement
+    const inputKey = activeElement ? activeElement.dataset.inputKey : null
 
     setStudents((prev) => {
       const newStudents = prev.map((student) => {
-        if (student._id === studentId) {
+        if (student.internalId === internalId) {
+          const updatedCOMarks = [...(student.coMarks || [])]
+          const coMarkIndex = updatedCOMarks.findIndex(co => co.coIndex === coIndex)
+          const coMappingEntry = coMapping.find(co => co.coIndex === coIndex)
+          const maxMarks = coMappingEntry ? coMappingEntry.maxMarks : Infinity
+
+          if (coMarkIndex >= 0) {
+            updatedCOMarks[coMarkIndex] = {
+              coIndex,
+              marks: value === "" ? 0 : Number(value)
+            }
+          } else {
+            updatedCOMarks.push({
+              coIndex,
+              marks: value === "" ? 0 : Number(value)
+            })
+          }
+
+          const totalMarks = updatedCOMarks.reduce((sum, co) => sum + (Number(co.marks) || 0), 0)
+
           return {
             ...student,
-            marks: value === "" ? "" : Number(value),
+            coMarks: updatedCOMarks,
+            totalMarks: totalMarks || null
           }
         }
         return student
@@ -80,35 +129,49 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
       setHasChanges(true)
       return newStudents
     })
-  }, [])
 
-  // Add a new student row
+    // Restore focus
+    if (inputKey) {
+      setTimeout(() => {
+        const input = inputRefs.current.get(inputKey)
+        if (input) input.focus()
+      }, 0)
+    }
+  }, [coMapping])
+
   const handleAddStudent = useCallback(() => {
+    const internalId = `internal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     setStudents((prev) => [
       ...prev,
       {
-        _id: "", // Temporary ID until saved
+        internalId,
+        student: "",
         rollNumber: "",
         name: "",
-        marks: "",
+        totalMarks: null,
+        coMarks: coMapping.map(co => ({
+          coIndex: co.coIndex,
+          marks: 0
+        })),
         isNew: true,
       },
     ])
 
     setHasChanges(true)
-  }, [])
+  }, [coMapping])
 
-  // Remove a student row
-  const handleRemoveStudent = useCallback((studentId) => {
-    setStudents((prev) => prev.filter((student) => student._id !== studentId))
+  const handleRemoveStudent = useCallback((internalId) => {
+    setStudents((prev) => prev.filter((student) => student.internalId !== internalId))
     setHasChanges(true)
   }, [])
 
-  // Update student info (name, roll number)
-  const handleStudentInfoChange = useCallback((studentId, field, value) => {
+  const handleStudentInfoChange = useCallback((internalId, field, value) => {
+    const activeElement = document.activeElement
+    const inputKey = activeElement ? activeElement.dataset.inputKey : null
+
     setStudents((prev) => {
       const newStudents = prev.map((student) => {
-        if (student._id === studentId) {
+        if (student.internalId === internalId) {
           return {
             ...student,
             [field]: value,
@@ -120,26 +183,40 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
       setHasChanges(true)
       return newStudents
     })
+
+    // Restore focus
+    if (inputKey) {
+      setTimeout(() => {
+        const input = inputRefs.current.get(inputKey)
+        if (input) input.focus()
+      }, 0)
+    }
   }, [])
 
-  // Save all student marks
+  const hasInvalidEntries = useCallback(() => {
+    return students.some((student) => {
+      if (!student.rollNumber || !student.student) return true
+      if (validateStudentId(student.student, student.internalId)) return true
+      if (!Array.isArray(student.coMarks)) return true
+
+      return student.coMarks.some((coMark) => {
+        const coMappingEntry = coMapping.find(co => co.coIndex === coMark.coIndex)
+        if (!coMappingEntry) return true
+        return (
+          coMark.marks !== 0 &&
+          (isNaN(coMark.marks) || coMark.marks < 0 || coMark.marks > coMappingEntry.maxMarks)
+        )
+      })
+    })
+  }, [students, coMapping, validateStudentId])
+
   const handleSaveMarks = useCallback(async () => {
     if (!assessment?._id) {
       toast.error("Assessment information is missing")
       return
     }
 
-    // Validate data before saving
-    const invalidEntries = students.filter((student) => {
-      return (
-        !student.rollNumber ||
-        (student.marks !== 0 &&
-          student.marks !== "" &&
-          (isNaN(student.marks) || student.marks < 0 || student.marks > assessment.maxMarks))
-      )
-    })
-
-    if (invalidEntries.length > 0) {
+    if (hasInvalidEntries()) {
       toast.error("Please fix invalid entries before saving")
       return
     }
@@ -149,10 +226,13 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
       const payload = {
         assessmentId: assessment._id,
         students: students.map((student) => ({
-          _id: student._id ,
+          student: student.student,
           rollNumber: student.rollNumber,
           name: student.name,
-          marks: student.marks === "" ? null : Number(student.marks),
+          coMarks: student.coMarks.map(coMark => ({
+            coIndex: coMark.coIndex,
+            marks: coMark.marks === "" ? 0 : Number(coMark.marks)
+          }))
         })),
       }
 
@@ -161,11 +241,19 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
       if (response.data.success) {
         toast.success("Student marks saved successfully")
         setHasChanges(false)
-
-        // Refresh data to get server-generated IDs for new entries
-        fetchStudentMarks()
-
-        // Notify parent component if needed
+        if (response.data.data) {
+          const formattedStudents = response.data.data.map(student => ({
+            internalId: `internal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            student: student.student,
+            rollNumber: student.rollNumber,
+            name: student.name,
+            totalMarks: student.totalMarks,
+            coMarks: student.coMarks
+          }))
+          setStudents(formattedStudents)
+        } else {
+          fetchStudentMarks()
+        }
         if (typeof onMarksUpdated === "function") {
           onMarksUpdated()
         }
@@ -174,13 +262,17 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
       }
     } catch (error) {
       console.error("Error saving student marks:", error)
-      toast.error(error.response?.data?.message || "Failed to save student marks")
+      const errorMessage = error.response?.data?.message || "Failed to save student marks"
+      const errors = error.response?.data?.errors || []
+      toast.error(errorMessage)
+      if (errors.length > 0) {
+        errors.forEach(err => toast.error(err))
+      }
     } finally {
       setIsSaving(false)
     }
-  }, [assessment, students, fetchStudentMarks, onMarksUpdated])
+  }, [assessment, students, coMapping, fetchStudentMarks, onMarksUpdated, hasInvalidEntries])
 
-  // Export marks to Excel
   const handleExportToExcel = useCallback(() => {
     if (!assessment || students.length === 0) {
       toast.error("No data to export")
@@ -188,27 +280,24 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
     }
 
     try {
-      // Prepare data for export
-      const exportData = students.map((student) => ({
-        "Student ID": student._id || "",
-        "Roll Number": student.rollNumber,
-        "Student Name": student.name,
-        Marks: student.marks === "" ? "Not Evaluated" : student.marks,
-      }))
+      const exportData = students.map((student) => {
+        const row = {
+          "Student ID": student.student || "",
+          "Roll Number": student.rollNumber,
+          "Student Name": student.name,
+          "Total Marks": student.totalMarks === null ? "Not Evaluated" : student.totalMarks,
+        }
+        student.coMarks.forEach((coMark) => {
+          row[`CO${coMark.coIndex} Marks`] = coMark.marks === 0 ? "Not Evaluated" : coMark.marks
+        })
+        return row
+      })
 
-      // Create worksheet
       const ws = XLSX.utils.json_to_sheet(exportData)
-
-      // Create workbook and add the worksheet
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, ws, "Student Marks")
-
-      // Generate file name
       const fileName = `${assessment.name.replace(/\s+/g, "_")}_Marks.xlsx`
-
-      // Save file
       XLSX.writeFile(wb, fileName)
-
       toast.success("Marks exported successfully")
     } catch (error) {
       console.error("Error exporting marks:", error)
@@ -216,7 +305,6 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
     }
   }, [assessment, students])
 
-  // Import marks from Excel
   const handleImportFromExcel = useCallback((e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -228,12 +316,8 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
       try {
         const data = new Uint8Array(event.target.result)
         const workbook = XLSX.read(data, { type: "array" })
-
-        // Get first worksheet
         const worksheetName = workbook.SheetNames[0]
         const worksheet = workbook.Sheets[worksheetName]
-
-        // Convert to JSON
         const jsonData = XLSX.utils.sheet_to_json(worksheet)
 
         if (jsonData.length === 0) {
@@ -242,44 +326,63 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
           return
         }
 
-        // Map Excel data to our format
+        const validCOIndices = coMapping.map(co => co.coIndex)
         const importedStudents = jsonData.map((row, index) => {
-          // Try to find matching columns - be flexible with column names
-          const _idKey = Object.keys(row).find(
-            (key) => key.toLowerCase().includes("student") || key.toLowerCase().includes("id"),
+          const studentIdKey = Object.keys(row).find(
+            (key) => key.toLowerCase().includes("student") || key.toLowerCase().includes("id")
           )
           const rollNumberKey = Object.keys(row).find(
-            (key) => key.toLowerCase().includes("roll") || key.toLowerCase().includes("rollNumber"),
+            (key) => key.toLowerCase().includes("roll") || key.toLowerCase().includes("rollnumber")
           )
-
           const nameKey = Object.keys(row).find(
-            (key) => key.toLowerCase().includes("name"),
+            (key) => key.toLowerCase().includes("name")
           )
 
-          const marksKey = Object.keys(row).find(
-            (key) => key.toLowerCase().includes("mark") || key.toLowerCase().includes("score"),
-          )
-
-          // Extract values or use defaults
-          const _id = _idKey ? row[_idKey] : `Student_${index + 1}` // Temporary ID
+          const student = studentIdKey ? row[studentIdKey] : ""
           const rollNumber = rollNumberKey ? row[rollNumberKey] : `Student ${index + 1}`
           const name = nameKey ? row[nameKey] : ""
-          const marks = marksKey
-            ? row[marksKey] === "Not Evaluated" || row[marksKey] === ""
-              ? ""
-              : Number(row[marksKey])
-            : ""
+
+          const coMarks = validCOIndices.map((coIndex) => {
+            const marksKey = Object.keys(row).find(
+              (key) => key.toLowerCase().includes(`co${coIndex}`)
+            )
+            const marks = marksKey
+              ? row[marksKey] === "Not Evaluated" || row[marksKey] === ""
+                ? 0
+                : Number(row[marksKey])
+              : 0
+            return {
+              coIndex,
+              marks
+            }
+          })
+
+          const totalMarks = coMarks.reduce((sum, coMark) => sum + (Number(coMark.marks) || 0), 0)
 
           return {
-            _id: String(_id),
+            internalId: `internal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            student: String(student),
             rollNumber: String(rollNumber),
             name: String(name),
-            marks: marks,
+            totalMarks: totalMarks || null,
+            coMarks,
             isNew: true,
           }
         })
 
-        // Update state with imported data
+        const idErrors = importedStudents.map((student, index) => ({
+          index,
+          error: validateStudentId(student.student, student.internalId)
+        })).filter(item => item.error)
+
+        if (idErrors.length > 0) {
+          idErrors.forEach(({ index, error }) => {
+            toast.error(`Row ${index + 2}: ${error}`)
+          })
+          setIsUploading(false)
+          return
+        }
+
         setStudents(importedStudents)
         setHasChanges(true)
         toast.success(`Imported ${importedStudents.length} student records`)
@@ -297,46 +400,42 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
     }
 
     reader.readAsArrayBuffer(file)
-
-    // Reset file input
     e.target.value = null
-  }, [])
+  }, [coMapping, validateStudentId])
 
-  // Prepare template for download
   const handleDownloadTemplate = useCallback(() => {
     try {
-      // Create template data
       const templateData = [
         {
           "Student ID": "EN12345",
           "Roll Number": "12345",
           "Student Name": "John Doe",
-          Marks: 85,
+          ...coMapping.reduce((acc, co) => ({
+            ...acc,
+            [`CO${co.coIndex} Marks`]: co.maxMarks / 2
+          }), {})
         },
         {
           "Student ID": "EN67890",
           "Roll Number": "67890",
           "Student Name": "Jane Smith",
-          Marks: 92,
+          ...coMapping.reduce((acc, co) => ({
+            ...acc,
+            [`CO${co.coIndex} Marks`]: co.maxMarks / 2
+          }), {})
         },
       ]
 
-      // Create worksheet
       const ws = XLSX.utils.json_to_sheet(templateData)
-
-      // Create workbook and add the worksheet
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, ws, "Template")
-
-      // Save file
       XLSX.writeFile(wb, "student_marks_template.xlsx")
-
       toast.success("Template downloaded successfully")
     } catch (error) {
       console.error("Error creating template:", error)
       toast.error("Failed to create template")
     }
-  }, [])
+  }, [coMapping])
 
   if (!assessment) {
     return (
@@ -363,7 +462,6 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
               <Download size={18} />
             </Button>
           </Tooltip>
-
           <Tooltip content="Import from Excel">
             <Button
               isIconOnly
@@ -385,7 +483,6 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
               />
             </Button>
           </Tooltip>
-
           <Tooltip content="Export to Excel">
             <Button
               isIconOnly
@@ -398,20 +495,18 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
               <FileSpreadsheet size={18} />
             </Button>
           </Tooltip>
-
           <Button
             color="primary"
             startContent={<Save size={18} />}
             onClick={handleSaveMarks}
             isLoading={isSaving}
-            isDisabled={!hasChanges || isSaving}
+            isDisabled={!hasChanges || isSaving || hasInvalidEntries()}
             size="sm"
           >
             Save Changes
           </Button>
         </div>
       </CardHeader>
-
       <CardBody>
         {isLoading ? (
           <div className="flex justify-center py-8">
@@ -429,88 +524,110 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
               >
                 Add Student
               </Button>
-
               <div className="text-sm text-gray-500">
                 {students.length} student{students.length !== 1 ? "s" : ""}
               </div>
             </div>
-
             <Table aria-label="Student Marks Table" selectionMode="none">
               <TableHeader>
                 <TableColumn>Student ID</TableColumn>
                 <TableColumn>Roll Number</TableColumn>
                 <TableColumn>Name</TableColumn>
-                <TableColumn>Marks</TableColumn>
+                {coMapping.map((co) => (
+                  <TableColumn key={`co-${co.coIndex}`}>
+                    CO{co.coIndex} ({co.maxMarks})
+                  </TableColumn>
+                ))}
+                <TableColumn>Total Marks</TableColumn>
                 <TableColumn width={100}>Actions</TableColumn>
               </TableHeader>
               <TableBody emptyContent="No students added yet. Add students or import from Excel.">
-                {students.map((student) => (
-                  <TableRow key={student._id}>
-                    <TableCell>  
+                {students.map((student) => {
+                  const idError = validateStudentId(student.student, student.internalId)
+                  return (
+                    <TableRow key={student.internalId}>
+                      <TableCell>
                         <Input
                           size="sm"
-                          value={student._id}
-                          onChange={(e) => handleStudentInfoChange(student._id, "_id", e.target.value)}
-                          placeholder="Enter student ID"
+                          value={student.student}
+                          onChange={(e) => handleStudentInfoChange(student.internalId, "student", e.target.value)}
+                          placeholder="Enter student ID (e.g., EN12345)"
                           variant="bordered"
                           className="max-w-[150px]"
-                        /> 
-                    </TableCell>
-
-                    <TableCell>
-                      <Input
-                        size="sm"
-                        value={student.rollNumber}
-                        onChange={(e) => handleStudentInfoChange(student._id, "rollNumber", e.target.value)}
-                        placeholder="Enter roll number"
-                        variant="bordered"
-                        className="max-w-[150px]"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        size="sm"
-                        value={student.name}
-                        onChange={(e) => handleStudentInfoChange(student._id, "name", e.target.value)}
-                        placeholder="Enter student name"
-                        variant="bordered"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        size="sm"
-                        value={student.marks === null ? "" : student.marks}
-                        onChange={(e) => handleMarkChange(student._id, e.target.value)}
-                        placeholder="Enter marks"
-                        variant="bordered"
-                        className="max-w-[100px]"
-                        status={
-                          student.marks !== "" &&
-                          (isNaN(student.marks) || student.marks < 0 || student.marks > assessment.maxMarks)
-                            ? "danger"
-                            : "default"
-                        }
-                      />
-                      {student.marks !== "" && student.marks > assessment.maxMarks && (
-                        <span className="text-danger text-xs">Exceeds max marks</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        isIconOnly
-                        variant="light"
-                        color="danger"
-                        size="sm"
-                        onClick={() => handleRemoveStudent(student._id)}
-                      >
-                        <Trash size={16} />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          isInvalid={!!idError}
+                          errorMessage={idError}
+                          data-input-key={`student-${student.internalId}`}
+                          ref={el => inputRefs.current.set(`student-${student.internalId}`, el)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          size="sm"
+                          value={student.rollNumber}
+                          onChange={(e) => handleStudentInfoChange(student.internalId, "rollNumber", e.target.value)}
+                          placeholder="Enter roll number"
+                          variant="bordered"
+                          className="max-w-[150px]"
+                          data-input-key={`rollNumber-${student.internalId}`}
+                          ref={el => inputRefs.current.set(`rollNumber-${student.internalId}`, el)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          size="sm"
+                          value={student.name}
+                          onChange={(e) => handleStudentInfoChange(student.internalId, "name", e.target.value)}
+                          placeholder="Enter student name"
+                          variant="bordered"
+                          data-input-key={`name-${student.internalId}`}
+                          ref={el => inputRefs.current.set(`name-${student.internalId}`, el)}
+                        />
+                      </TableCell>
+                      {coMapping.map((co) => {
+                        const coMark = student.coMarks.find(cm => cm.coIndex === co.coIndex) || { marks: 0 }
+                        return (
+                          <TableCell key={`co-${co.coIndex}`}>
+                            <Input
+                              size="sm"
+                              value={coMark.marks === 0 ? "" : coMark.marks}
+                              onChange={(e) => handleMarkChange(student.internalId, co.coIndex, e.target.value)}
+                              placeholder="Enter marks"
+                              variant="bordered"
+                              className="max-w-[100px]"
+                              isInvalid={
+                                coMark.marks !== 0 &&
+                                (isNaN(coMark.marks) || coMark.marks < 0 || coMark.marks > co.maxMarks)
+                              }
+                              errorMessage={
+                                coMark.marks !== 0 && coMark.marks > co.maxMarks
+                                  ? `Max ${co.maxMarks}`
+                                  : null
+                              }
+                              data-input-key={`co-${co.coIndex}-${student.internalId}`}
+                              ref={el => inputRefs.current.set(`co-${co.coIndex}-${student.internalId}`, el)}
+                            />
+                          </TableCell>
+                        )
+                      })}
+                      <TableCell>
+                        {student.totalMarks === null ? "Not Evaluated" : student.totalMarks}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          isIconOnly
+                          variant="light"
+                          color="danger"
+                          size="sm"
+                          onClick={() => handleRemoveStudent(student.internalId)}
+                        >
+                          <Trash size={16} />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
-
             {hasChanges && (
               <div className="mt-4 flex justify-end">
                 <Chip color="warning" variant="flat">

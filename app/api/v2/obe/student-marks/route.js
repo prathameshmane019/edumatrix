@@ -1,4 +1,3 @@
-// app/api/v2/obe/student-marks/route.js
 import { NextResponse } from "next/server";
 import Assessment from "@/models/OBE/Assessment";
 import { connectMongoDB } from "@/lib/connectDb";
@@ -14,40 +13,35 @@ export async function GET(request) {
 
         await connectMongoDB();
 
-        // Find the assessment and get its student marks
-        // Select only studentMarks and maxMarks for efficiency if needed, but populating student might be useful later
         const assessment = await Assessment.findById(assessmentId)
-            .select('studentMarks maxMarks') // Select necessary fields
-            .lean(); // Use lean() for faster reads if no Mongoose methods are needed on the result
+            .select('studentMarks maxMarks coMapping')
+            .lean();
 
         if (!assessment) {
             return NextResponse.json({ success: false, message: "Assessment not found" }, { status: 404 });
         }
 
-        // Sort student marks by roll number (client can do this, but backend can pre-sort)
-        // If using lean(), studentMarks is a plain array
         const studentMarks = assessment.studentMarks.sort((a, b) =>
             a.rollNumber.localeCompare(b.rollNumber)
         );
 
-        // Transform to match the desired frontend structure (which used _id,
-        // but we should align with the backend's 'student' field as the identifier)
-        // However, the original frontend code *was* using _id as a local key,
-        // let's map backend's 'student' to frontend's '_id' for minimal frontend changes
-        // while being mindful the backend stores it as 'student'.
-        // A better approach would be to change the frontend to use 'student' as the key,
-        // but let's match the original client's expected _id structure for now,
-        // mapping it from the backend's 'student' field.
-
         const formattedMarks = studentMarks.map(mark => ({
-            _id: mark.student, // Map backend's 'student' field to frontend's '_id'
+            student: mark.student,
             rollNumber: mark.rollNumber,
             name: mark.name,
-            marks: mark.marks,
-            assessment: assessmentId // Include assessment ID as in the original client's expected format
+            totalMarks: mark.totalMarks,
+            coMarks: mark.coMarks || [],
+            assessment: assessmentId
         }));
 
-        return NextResponse.json({ success: true, data: formattedMarks });
+        return NextResponse.json({
+            success: true,
+            data: {
+                studentMarks: formattedMarks,
+                coMapping: assessment.coMapping,
+                maxMarks: assessment.maxMarks
+            }
+        });
     } catch (error) {
         console.error("Error fetching student marks:", error);
         return NextResponse.json(
@@ -61,7 +55,8 @@ export async function POST(request) {
     try {
         const body = await request.json();
         const { assessmentId, students } = body;
-        console.log("Received data:", body); // Debugging line to check incoming data
+        console.log("Received data:", JSON.stringify(body, null, 2));
+
         if (!assessmentId || !Array.isArray(students)) {
             return NextResponse.json(
                 { success: false, message: "Assessment ID and students array are required" },
@@ -71,103 +66,128 @@ export async function POST(request) {
 
         await connectMongoDB();
 
-        // Find the assessment by ID
         const assessment = await Assessment.findById(assessmentId);
         if (!assessment) {
             return NextResponse.json({ success: false, message: "Assessment not found" }, { status: 404 });
         }
 
-        // Extract all student IDs from the incoming data
-        const incomingStudentIds = students.map(s => s._id).filter(id => id); // Filter out empty IDs
-        
-        // IMPORTANT: Remove students that are not in the incoming list
-        // This ensures deleted students stay deleted
-        assessment.studentMarks = assessment.studentMarks.filter(mark => {
-            // Keep only marks whose student ID is in the incoming list
-            return incomingStudentIds.includes(String(mark.student));
-        });
+        const incomingStudentIds = students.map(s => String(s.student)).filter(id => id);
+        console.log("Incoming student IDs:", incomingStudentIds);
 
-        const updatedStudentMarks = [];
+        // Replace studentMarks with incoming students, removing any not in the payload
         const errors = [];
+        const validCOMappingIndices = assessment.coMapping.map(co => co.coIndex);
+        const newStudentMarks = [];
 
-        // Process student marks updates
-        for (const student of students) {
-            // Use 'student' as the identifier, falling back to _id if present for compatibility
-            // but the backend model uses 'student' field.
-            const studentIdentifier = student.student || student._id; // Prioritize 'student' from updated frontend
-
-            if (!student.rollNumber || !studentIdentifier) {
-                errors.push(`Missing roll number or student identifier for an entry.`);
-                continue; // Skip this student but continue processing others
-            }
-
-            // Validate marks
-            if (
-                student.marks !== null && student.marks !== "" &&
-                (isNaN(student.marks) || student.marks < 0 || student.marks > assessment.maxMarks)
-            ) {
-                errors.push(`Invalid marks for student ${student.rollNumber}. Marks must be between 0 and ${assessment.maxMarks}.`);
-                continue; // Skip this student but continue processing others
-            }
-
-            // Find existing mark by the 'student' identifier
-            const existingMarkIndex = assessment.studentMarks.findIndex(
-                mark => String(mark.student) === String(studentIdentifier)
+        // Validate for duplicates in incoming data
+        const incomingStudentIdSet = new Set(incomingStudentIds);
+        if (incomingStudentIdSet.size !== incomingStudentIds.length) {
+            return NextResponse.json(
+                { success: false, message: "Duplicate student IDs found in the input data." },
+                { status: 400 }
             );
+        }
 
-            if (existingMarkIndex >= 0) {
-                // Update existing student mark
-                assessment.studentMarks[existingMarkIndex] = {
-                    student: studentIdentifier, // Use the identifier sent from the frontend
-                    rollNumber: student.rollNumber,
-                    name: student.name,
-                    marks: student.marks === "" ? null : Number(student.marks) // Save "" as null
-                };
-            } else {
-                // Add new student mark
-                assessment.studentMarks.push({
-                    student: studentIdentifier, // Use the identifier sent from the frontend
-                    rollNumber: student.rollNumber,
-                    name: student.name,
-                    marks: student.marks === "" ? null : Number(student.marks) // Save "" as null
-                });
+        for (const student of students) {
+            const studentIdentifier = String(student.student);
+            if (!student.rollNumber || !studentIdentifier) {
+                errors.push(`Missing roll number or student ID for an entry.`);
+                continue;
             }
+
+            // Validate student ID format
+            if (!/^[A-Za-z0-9-]+$/.test(studentIdentifier)) {
+                errors.push(`Invalid student ID format for ${student.rollNumber}. Use alphanumeric characters and hyphens only.`);
+                continue;
+            }
+
+            if (!Array.isArray(student.coMarks)) {
+                errors.push(`CO marks must be an array for student ${student.rollNumber}.`);
+                continue;
+            }
+
+            const coMarksErrors = [];
+            const studentCOMarks = student.coMarks.filter(coMark => {
+                if (!validCOMappingIndices.includes(coMark.coIndex)) {
+                    coMarksErrors.push(`Invalid CO index ${coMark.coIndex} for student ${student.rollNumber}.`);
+                    return false;
+                }
+                const coMapping = assessment.coMapping.find(co => co.coIndex === coMark.coIndex);
+                if (
+                    coMark.marks !== null &&
+                    coMark.marks !== "" &&
+                    (isNaN(coMark.marks) || coMark.marks < 0 || coMark.marks > coMapping.maxMarks)
+                ) {
+                    coMarksErrors.push(
+                        `Marks for CO${coMark.coIndex} for student ${student.rollNumber} must be between 0 and ${coMapping.maxMarks}.`
+                    );
+                    return false;
+                }
+                return true;
+            });
+
+            if (coMarksErrors.length > 0) {
+                errors.push(...coMarksErrors);
+                continue;
+            }
+
+            const totalMarks = studentCOMarks.reduce((sum, coMark) => sum + (Number(coMark.marks) || 0), 0);
+
+            newStudentMarks.push({
+                student: studentIdentifier,
+                rollNumber: student.rollNumber,
+                name: student.name || "",
+                totalMarks: totalMarks || null,
+                coMarks: studentCOMarks.map(coMark => ({
+                    coIndex: coMark.coIndex,
+                    marks: coMark.marks === "" ? 0 : Number(coMark.marks)
+                }))
+            });
         }
 
         if (errors.length > 0) {
-            // It might be better to return a partial success or ask the user to fix errors,
-            // but for now, let's report the errors and still attempt to save valid entries.
-            // Or, return a 400 with errors and don't save anything if any error exists.
-            // Let's go with returning 400 if any errors are found to force fixing.
+            console.log("Validation errors:", errors);
             return NextResponse.json(
-                { success: false, message: "Validation errors occurred:", errors: errors },
+                { success: false, message: "Validation errors occurred", errors },
                 { status: 400 }
             );
         }
 
+        // Update studentMarks with new data
+        assessment.studentMarks = newStudentMarks;
+        console.log("Updated studentMarks:", JSON.stringify(assessment.studentMarks, null, 2));
 
-        // Before saving, check for duplicate 'student' identifiers in the incoming data
-        const studentIdentifiers = students.map(s => s._id).filter(id => id);
-        const uniqueIdentifiers = new Set(studentIdentifiers);
-        if (uniqueIdentifiers.size !== studentIdentifiers.length) {
-            return NextResponse.json(
-                { success: false, message: "Duplicate student identifiers found in the input data." },
-                { status: 400 }
-            );
-        }
-
-        // Save the updated assessment
-        // Mongoose will handle subdocument validation (like marks range and student duplicate check) on save
         await assessment.save();
 
-        return NextResponse.json({ success: true, message: "Student marks saved successfully" });
+        const updatedAssessment = await Assessment.findById(assessmentId)
+            .select('studentMarks')
+            .lean();
+        const updatedStudentMarks = updatedAssessment.studentMarks.map(mark => ({
+            student: mark.student,
+            rollNumber: mark.rollNumber,
+            name: mark.name,
+            totalMarks: mark.totalMarks,
+            coMarks: mark.coMarks || [],
+            assessment: assessmentId
+        }));
+
+        return NextResponse.json({
+            success: true,
+            message: "Student marks saved successfully",
+            data: updatedStudentMarks
+        });
     } catch (error) {
         console.error("Error saving student marks:", error);
-        // Handle Mongoose validation errors specifically
         if (error.name === 'ValidationError') {
             const validationErrors = Object.keys(error.errors).map(key => error.errors[key].message);
             return NextResponse.json(
-                { success: false, message: "Validation failed:", errors: validationErrors },
+                { success: false, message: "Validation failed", errors: validationErrors },
+                { status: 400 }
+            );
+        }
+        if (error.code === 11000) {
+            return NextResponse.json(
+                { success: false, message: "Duplicate student ID detected in the database." },
                 { status: 400 }
             );
         }
