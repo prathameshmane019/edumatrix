@@ -81,11 +81,11 @@ export default function AssessmentAnalytics({ assessment }) {
     const maxMarks = assessment?.maxMarks || 100
     const bucketSize = maxMarks / 5
     const distribution = [
-      { name: '0-20%', count: 0, color: '#ef4444' },
-      { name: '21-40%', count: 0, color: '#f97316' },
-      { name: '41-60%', count: 0, color: '#facc15' },
-      { name: '61-80%', count: 0, color: '#84cc16' },
-      { name: '81-100%', count: 0, color: '#22c55e' }
+      { name: '0-20%', count: 0, color: '#B6A6E9' },
+      { name: '21-40%', count: 0, color: '#876FD4' },
+      { name: '41-60%', count: 0, color: '#5E40BE' },
+      { name: '61-80%', count: 0, color: '#3D2785' },
+      { name: '81-100%', count: 0, color: '#21134D' }
     ]
 
     evaluatedStudents.forEach(student => {
