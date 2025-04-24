@@ -245,7 +245,7 @@ export default function ViewAttainmentPage() {
                 <p className="text-gray-500 py-8 text-center">Please select a Subject.</p>
             ) : coAttainmentData.length === 0 && poAttainmentData.length === 0 && !isLoadingAttainment ? (
                 <p className="text-center text-gray-500 mt-10">
-                    Click "Calculate Attainment" to view results for the selected subject.
+                    Click &#34;Calculate Attainment&#34; to view results for the selected subject.
                 </p>
             ) : (
                 <>
