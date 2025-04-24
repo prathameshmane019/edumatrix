@@ -1,4 +1,4 @@
-"use client"; 
+"use client";
 import React, { useState, useCallback, useMemo } from 'react';
 import {
     Button,
@@ -213,7 +213,7 @@ export default function ViewAttainmentPage() {
             <Card className="mb-6 shadow-sm">
                 <CardBody className="flex  flex-col gap-4   p-6">
                     <div className="flex gap-4">
-                        <Select 
+                        <Select
                             placeholder="Select Academic Year"
                             variant="bordered"
                             selectedKeys={academicYear ? new Set([academicYear]) : new Set()}
@@ -233,12 +233,12 @@ export default function ViewAttainmentPage() {
                             ))}
                         </Select>
 
-                        <Select 
+                        <Select
                             placeholder="Filter by Semester"
                             selectedKeys={filterSem ? new Set([filterSem]) : new Set()}
                             onSelectionChange={handleFilterSemChange}
                             className="max-w-xs"
-                            variant='bordered' 
+                            variant='bordered'
                             classNames={{
                                 trigger: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-500 transition-all duration-200",
                                 label: "text-slate-700 font-medium",
@@ -254,8 +254,8 @@ export default function ViewAttainmentPage() {
                             department={user?.department}
                             academicYear={academicYear}
                             onSelect={handleSubjectChange}
-                            
-                            facultyId={(academicYear && filterSem) && user?._id}
+
+                            facultyId={ user?._id}
                             selectedSubject={subject}
                             label="Subject"
                             semester={filterSem}
@@ -325,17 +325,13 @@ export default function ViewAttainmentPage() {
             )}
 
             {/* Content */}
-            {!academicYear ? ( 
-                        <p className="text-slate-600 text-center">Please select an Academic Year.</p>  
-            ) : !subject ? (  
-                        <p className="text-slate-600 text-center">Please select a Subject.</p> 
+            {!academicYear ? (
+                <p className="text-slate-600 text-center">Please select an Academic Year.</p>
+            ) : !subject ? (
+                <p className="text-slate-600 text-center">Please select a Subject.</p>
             ) : coAttainmentData.length === 0 && poAttainmentData.length === 0 && !isLoading ? (
-                <Card className="shadow-md">
-                    <CardBody>
-                        <p className="text-slate-600 text-center">Click "Calculate Attainment" to view results.</p>
-                    </CardBody>
-                </Card>
-      ) : (
+                <p className="text-slate-600 text-center">Click "Calculate Attainment" to view results.</p>
+            ) : (
                 <div className="space-y-8">
                     {/* CO Attainment */}
                     {coAttainmentData.length > 0 && (

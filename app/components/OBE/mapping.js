@@ -264,10 +264,10 @@ const MappingPage = () => {
         className="max-w-7xl mx-auto"
       >
         <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm overflow-hidden">
-          <CardHeader className=" text-indigo-800 p-6">
+          <CardHeader className="   p-6">
             <div className="flex justify-between w-full items-center">
               <div className="flex items-center gap-4">
-                <BookOpen size={28} className="text-white" />
+                <BookOpen size={28} className=" " />
                 <h1 className="text-2xl font-semibold">CO-PO/PSO Mapping Matrix</h1>
               </div>
               <Tooltip content="Learn how to map Course Outcomes to Program Outcomes">
