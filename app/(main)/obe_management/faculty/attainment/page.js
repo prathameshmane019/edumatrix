@@ -342,7 +342,7 @@ export default function ViewAttainmentPage() {
             ) : coAttainmentData.length === 0 && poAttainmentData.length === 0 && !isLoading ? (
                 <Card className="shadow-md">
                     <CardBody>
-                        <p className="text-slate-600 text-center">Click "Calculate Attainment" to view results.</p>
+                        <p className="text-slate-600 text-center">Click &#34;Calculate Attainment&#34; to view results.</p>
                     </CardBody>
                 </Card>
       ) : (
