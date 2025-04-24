@@ -263,8 +263,8 @@ const MappingPage = () => {
         transition={{ duration: 0.5 }}
         className="max-w-7xl mx-auto"
       >
-        <Card className="shadow-lg border border-slate-200 rounded-xl overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-800 p-6">
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm overflow-hidden">
+          <CardHeader className=" text-indigo-800 p-6">
             <div className="flex justify-between w-full items-center">
               <div className="flex items-center gap-4">
                 <BookOpen size={28} className="text-white" />
@@ -335,6 +335,10 @@ const MappingPage = () => {
               </div>
             </div>
 
+            </CardBody>
+        </Card>
+        <Card className='mt-10 shadow-sm '>
+          <CardBody>
             {isLoading && (
               <div className="flex justify-center items-center py-12">
                 <Spinner size="lg" color="primary" />
@@ -703,7 +707,7 @@ const MappingPage = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
-                className="bg-white border-2 border-dashed border-slate-300 rounded-xl p-8 text-center mt-6 shadow-lg"
+                className="bg-white border-2   rounded-xl p-8 text-center mt-6 shadow-lg"
               >
                 <Info size={48} className="mx-auto mb-4 text-slate-400" />
                 <p className="text-lg font-semibold text-slate-700">
