@@ -328,10 +328,13 @@ export default function ViewAttainmentPage() {
             {!academicYear ? ( 
                         <p className="text-slate-600 text-center">Please select an Academic Year.</p>  
             ) : !subject ? (  
-                        <p className="text-slate-600 text-center">Please select a Subject.</p>
-                     
-            ) : coAttainmentData.length === 0 && poAttainmentData.length === 0 && !isLoading ? ( 
-                        <p className="text-slate-600 text-center">Click "Calculate Attainment" to view results.</p> 
+                        <p className="text-slate-600 text-center">Please select a Subject.</p> 
+            ) : coAttainmentData.length === 0 && poAttainmentData.length === 0 && !isLoading ? (
+                <Card className="shadow-md">
+                    <CardBody>
+                        <p className="text-slate-600 text-center">Click "Calculate Attainment" to view results.</p>
+                    </CardBody>
+                </Card>
       ) : (
                 <div className="space-y-8">
                     {/* CO Attainment */}
