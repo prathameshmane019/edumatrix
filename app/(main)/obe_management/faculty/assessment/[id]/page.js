@@ -71,7 +71,7 @@ export default function AssessmentPage({ params }) {
             <Card className="m-10">
                 <CardBody className="py-8">
                     <div className="text-center">
-                        <p className="text-danger mb-4">Assessment not found or you don't have permission to view it.</p>
+                        <p className="text-danger mb-4">Assessment not found or you don&#39;t have permission to view it.</p>
                         <Button color="primary" variant="light" onClick={handleBackClick}>
                             Back to Assessments
                         </Button>
