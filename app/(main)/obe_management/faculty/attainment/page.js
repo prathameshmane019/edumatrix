@@ -330,7 +330,7 @@ export default function ViewAttainmentPage() {
             ) : !subject ? (
                 <p className="text-slate-600 text-center">Please select a Subject.</p>
             ) : coAttainmentData.length === 0 && poAttainmentData.length === 0 && !isLoading ? (
-                <p className="text-slate-600 text-center">Click "Calculate Attainment" to view results.</p>
+                <p className="text-slate-600 text-center">Click &quot;Calculate Attainment&quot; to view results.</p>
             ) : (
                 <div className="space-y-8">
                     {/* CO Attainment */}
