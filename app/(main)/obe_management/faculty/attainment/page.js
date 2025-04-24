@@ -333,7 +333,7 @@ export default function ViewAttainmentPage() {
                         <p className="text-slate-600 text-center">Please select an Academic Year.</p>
                     </CardBody>
                 </Card>
-            ) : !subject ? (
+            ) : !subject ? ( 
                 <Card className="shadow-md">
                     <CardBody>
                         <p className="text-slate-600 text-center">Please select a Subject.</p>
@@ -345,7 +345,7 @@ export default function ViewAttainmentPage() {
                         <p className="text-slate-600 text-center">Click "Calculate Attainment" to view results.</p>
                     </CardBody>
                 </Card>
-            ) : (
+      ) : (
                 <div className="space-y-8">
                     {/* CO Attainment */}
                     {coAttainmentData.length > 0 && (

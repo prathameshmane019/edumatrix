@@ -79,7 +79,7 @@ const Sidebar = () => {
           { name: "Course Outcomes", href: "/obe_management/faculty/co", icon: MdPortrait },
           { name: "CO Mapping", href: "/obe_management/faculty/mapping", icon:MdMap },
           { name: "Assessment", href: "/obe_management/faculty/assessment", icon: MdPortrait },
-          { name: "Marks Entry", href: "/obe_management/faculty/marks-entry", icon: MdPortrait },
+
           { name: "Attainment", href: "/obe_management/faculty/attainment", icon: MdPortrait },
         ],
 
