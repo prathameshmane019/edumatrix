@@ -76,6 +76,15 @@ const MappingPage = () => {
 
   const canLoad = user && academicYear && subject;
 
+  // Set the current academic year as default when component mounts
+  useEffect(() => {
+    const years = getAcademicYears(10);
+    const currentYear = years[0]?.value; // Get the most recent year
+    if (currentYear) {
+      setAcademicYear(currentYear);
+    }
+  }, []);
+
   const fetchMappingData = useCallback(async () => {
     if (!canLoad) return;
     try {
@@ -105,6 +114,11 @@ const MappingPage = () => {
   useEffect(() => {
     fetchMappingData();
   }, [fetchMappingData]);
+
+  // Reset subject when academic year changes
+  useEffect(() => {
+    setSubject('');
+  }, [academicYear]);
 
   const updateMapping = useCallback(
     debounce((coId, poId, level) => {
@@ -267,12 +281,12 @@ const MappingPage = () => {
           <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-800 p-6">
             <div className="flex justify-between w-full items-center">
               <div className="flex items-center gap-4">
-                <BookOpen size={28} className="text-white" />
+                <BookOpen size={28} className="text-indigo-600" />
                 <h1 className="text-2xl font-semibold">CO-PO/PSO Mapping Matrix</h1>
               </div>
               <Tooltip content="Learn how to map Course Outcomes to Program Outcomes">
-                <Button isIconOnly variant="light" size="sm" className="text-white">
-                  <HelpCircle size={20} />
+                <Button isIconOnly variant="light" size="sm">
+                  <HelpCircle size={20} className="text-indigo-600" />
                 </Button>
               </Tooltip>
             </div>
@@ -289,6 +303,7 @@ const MappingPage = () => {
                   trigger: 'bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all',
                   label: 'text-slate-700 font-medium',
                 }}
+                defaultSelectedKeys={[academicYear]}
               >
                 {getAcademicYears(10).map((year) => (
                   <SelectItem key={year.value} value={year.value} className="text-slate-900">
@@ -304,8 +319,9 @@ const MappingPage = () => {
                 facultyId={user?._id}
                 selectedSubject={subject}
                 label="Subject"
+                isDisabled={!academicYear}
                 classNames={{
-                  base: 'bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all',
+                  base: `bg-white border-slate-200 rounded-lg shadow-sm ${academicYear ? 'hover:border-indigo-400' : 'opacity-70 cursor-not-allowed'} transition-all`,
                   label: 'text-slate-700 font-medium',
                 }}
               />
