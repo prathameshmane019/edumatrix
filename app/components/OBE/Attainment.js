@@ -39,8 +39,9 @@ export default function ViewAttainmentPage() {
     const [poAttainmentData, setPoAttainmentData] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [selectedDept, setSelectedDept] = useState('');
-
+    const [selectedDept, setSelectedDept] = useState(''); 
+  // State for the full subject document
+  const [subjectDocument, setSubjectDocument] = useState(null);
     const handleDepartmentSelect = (departmentId) => {
         setSelectedDept(departmentId.target.value);
     };
@@ -55,6 +56,11 @@ export default function ViewAttainmentPage() {
         })),
         []
     );
+    const handleSubjectDocChange = (fullSubjectDoc) => {
+        setSubjectDocument(fullSubjectDoc);
+        console.log('Full subject document:', fullSubjectDoc);
+         
+      };
 
     // Handle academic year change
     const handleAcademicYearChange = useCallback((keys) => {
@@ -204,7 +210,7 @@ export default function ViewAttainmentPage() {
                 <CardBody className="p-6">
                     {subject && academicYear && (
                         <p className="text-slate-600 text-sm">
-                            Year: {academicYear} | Semester: {filterSem || "All"} | Subject: {subject?.name || subject}
+                            Year: {academicYear} | Semester: {filterSem || "All"} | Subject: {subjectDocument?.label || subject}
                         </p>
                     )}
                     {!subject && academicYear && (
@@ -279,6 +285,7 @@ export default function ViewAttainmentPage() {
                             />)}
                         <SubjectDropdown
                             instituteId={user?.role === "superadmin" ? user?._id : user?.institute?._id}
+                            onSubjectDocChange={handleSubjectDocChange}
                             department={user?.role === "superadmin" ? selectedDept : user?.id}
                             academicYear={academicYear}
                             onSelect={handleSubjectChange}

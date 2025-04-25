@@ -1,8 +1,6 @@
-
 import React, { useEffect, useState } from 'react'
 import { Select, SelectItem } from '@nextui-org/react'
 import axios from 'axios'
-
 
 export function SubjectDropdown({
   instituteId,
@@ -13,6 +11,7 @@ export function SubjectDropdown({
   className = '',
   academicYear = '',
   onSubjectTypeChange,
+  onSubjectDocChange, // New prop to send full subject document to parent
   fetchBy = 'facultyId',
   semester = '',
   label = '',
@@ -21,9 +20,10 @@ export function SubjectDropdown({
   subType
 }) 
 {
-  console.log(instituteId,facultyId,semester,academicYear,selectedClass,department,subType,fetchBy);
+  console.log(instituteId, facultyId, semester, academicYear, selectedClass, department, subType, fetchBy);
   
   const [subjects, setSubjects] = useState([])
+  const [selectedSubjectDoc, setSelectedSubjectDoc] = useState(null) // New state for full subject document
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -58,6 +58,17 @@ export function SubjectDropdown({
         setSubjects(response.data)
         console.log(response.data);
         
+        // If selectedSubject exists, set the selectedSubjectDoc for it
+        if (selectedSubject) {
+          const subjectDoc = response.data.find(subject => subject.value === selectedSubject)
+          if (subjectDoc) {
+            setSelectedSubjectDoc(subjectDoc)
+            // Send to parent if callback exists
+            if (onSubjectDocChange) {
+              onSubjectDocChange(subjectDoc)
+            }
+          }
+        }
       } catch (error) {
         console.error('Error fetching subjects:', error)
         setError('Failed to load subjects')
@@ -75,17 +86,31 @@ export function SubjectDropdown({
     semester, 
     department, 
     subType, 
-    fetchBy
+    fetchBy,
+    selectedSubject
   ])
 
   const handleSelectChange = (e) => {
-    onSelect(e.target.value)
-    const selectedSubjectDetails = subjects.find(subject => subject.value === e.target.value)
-    // If onSubjectTypeChange is provided, pass the full subject details
-    if (onSubjectTypeChange && selectedSubjectDetails) {
-      onSubjectTypeChange(selectedSubjectDetails.type || '')
+    const selectedValue = e.target.value
+    onSelect(selectedValue)
+    
+    const selectedSubjectDetails = subjects.find(subject => subject.value === selectedValue)
+    
+    if (selectedSubjectDetails) {
+      // Update the subject document state
+      setSelectedSubjectDoc(selectedSubjectDetails)
+      
+      // Send the full subject document to parent if callback exists
+      if (onSubjectDocChange) {
+        onSubjectDocChange(selectedSubjectDetails.subject)
+      }
+      
+      // If onSubjectTypeChange is provided, pass the subject type
+      if (onSubjectTypeChange) {
+        onSubjectTypeChange(selectedSubjectDetails.type || '')
+      }
     }
-}
+  }
 
   return (
     <Select
@@ -93,14 +118,10 @@ export function SubjectDropdown({
       variant="bordered"
       size={size}
       label={label}
-
       value={selectedSubject}
-      selectedKeys={selectedSubject ? [selectedSubject] : []}
-
-    
-      
+      selectedKeys={selectedSubject ? [selectedSubject] : []} 
       onChange={handleSelectChange}
-      className={`w-full max-w-xs  ${className}`}
+      className={`w-full max-w-xs ${className}`}
       isDisabled={isLoading || subjects.length === 0}
     >
       {subjects.map((subject) => (
