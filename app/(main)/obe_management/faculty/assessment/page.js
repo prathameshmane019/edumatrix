@@ -127,24 +127,32 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
   const handleSubjectChange = useCallback((selectedSubject) => {
     console.log("Subject changed:", selectedSubject);
     setSubject(selectedSubject);
-    setFilterSem("");
   }, []);
 
   const handleAcademicYearChange = useCallback((keys) => {
     const selectedYear = keys.size > 0 ? Array.from(keys)[0].toString() : "";
     console.log("Academic year changed:", selectedYear);
     setAcademicYear(selectedYear);
+    // Clear dependent selections
+    setFilterSem("");
+    setSubject(null);
+    setAssessments([]);
+    setCourseOutcomes([]);
   }, []);
 
   const handleFilterSemChange = useCallback((keys) => {
     const selectedSem = keys.size > 0 ? Array.from(keys)[0].toString() : "";
     console.log("Semester filter changed:", selectedSem);
     setFilterSem(selectedSem);
+    // Clear subject when semester changes
+    setSubject(null);
+    setAssessments([]);
+    setCourseOutcomes([]);
   }, []);
 
   const handleAddAssessment = useCallback(() => {
-    if (!subject || !academicYear) {
-      toast.info("Please select Academic Year and Subject first.");
+    if (!subject || !academicYear || !filterSem) {
+      toast.info("Please select Academic Year, Semester, and Subject first.");
       return;
     }
     if (isLoadingCOs) {
@@ -154,7 +162,7 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
     console.log("Opening add assessment form");
     setSelectedAssessment(null);
     onFormOpen();
-  }, [onFormOpen, subject, academicYear, isLoadingCOs]);
+  }, [onFormOpen, subject, academicYear, filterSem, isLoadingCOs]);
 
   const handleEditAssessment = useCallback(
     (assessment) => {
@@ -178,8 +186,8 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
 
   const handleSaveAssessment = useCallback(
     async (assessmentData) => {
-      if (!subject || !academicYear) {
-        toast.error("Subject or Academic Year is missing.");
+      if (!subject || !academicYear || !filterSem) {
+        toast.error("Subject, Academic Year, or Semester is missing.");
         return;
       }
       console.log("Saving assessment:", assessmentData);
@@ -224,8 +232,8 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
 
   const handleDeleteAssessment = useCallback(
     async (assessmentId) => {
-      if (!subject || !academicYear) {
-        toast.error("Subject or Academic Year context is missing.");
+      if (!subject || !academicYear || !filterSem) {
+        toast.error("Subject, Academic Year, or Semester context is missing.");
         return;
       }
       console.log("Deleting assessment:", assessmentId);
@@ -264,24 +272,30 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
     { key: "actions", label: "Actions" },
   ];
 
+  // Helper function to check if subject dropdown should be enabled
+  const isSubjectDropdownEnabled = academicYear && filterSem;
+
   return (
     <div className="m-10">
       <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm overflow-hidden">
         <CardBody >
         <div>
           <h2 className="text-2xl font-semibold">Manage Assessments</h2>
-          {subject && academicYear && (
+          {subject && academicYear && filterSem && (
             <p className="text-gray-500">
               Year: {academicYear} | Semester: {filterSem || "All"}
             </p>
           )}
-          {!subject && academicYear && (
+          {!subject && academicYear && filterSem && (
             <p className="text-gray-500">
-              Year: {academicYear} | Semester: {filterSem || "All"} | Please select a subject.
+              Year: {academicYear} | Semester: {filterSem} | Please select a subject.
             </p>
           )}
-          {!academicYear && !subject && (
-            <p className="text-gray-500">Select Academic Year and Subject to view assessments.</p>
+          {!academicYear && (
+            <p className="text-gray-500">Please select Academic Year to begin.</p>
+          )}
+          {academicYear && !filterSem && (
+            <p className="text-gray-500">Year: {academicYear} | Please select Semester.</p>
           )}
         </div>
         <div className="mb-4 flex justify-end">
@@ -289,13 +303,14 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
           color="primary"
           startContent={<PlusIcon />}
           onClick={handleAddAssessment}
-          isDisabled={!subject || isLoadingCOs || !academicYear}
+          isDisabled={!subject || isLoadingCOs || !academicYear || !filterSem}
         >
           Add Assessment
         </Button> 
         </div>
       <div className="mb-4 flex gap-4 items-center flex-wrap">
         <Select
+          label="Academic Year"
           placeholder="Select Academic Year"
           variant="bordered"
           selectedKeys={academicYear ? new Set([academicYear]) : new Set()}
@@ -313,13 +328,23 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
             </SelectItem>
           ))}
         </Select>
+<<<<<<< HEAD
+        <Select
+          label="Semester"
+          placeholder="Select Semester"
+=======
         <Select 
           variant="bordered"
           placeholder="Filter by Semester"
+>>>>>>> 0e2187b028d72b246cdc381c47df0704ae3e9edf
           selectedKeys={filterSem ? new Set([filterSem]) : new Set()}
           onSelectionChange={handleFilterSemChange}
           className="max-w-xs"
           isDisabled={!academicYear}
+          classNames={{
+            trigger: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all",
+            label: "text-slate-700 font-medium",
+          }}
         >
           <SelectItem key="sem1" value="sem1">
             Semester 1
@@ -338,7 +363,11 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
           label="Subject"
           // semester={filterSem}
           className="max-w-xs"
+<<<<<<< HEAD
+          isDisabled={!isSubjectDropdownEnabled}
+=======
           // isDisabled={!academicYear}
+>>>>>>> 0e2187b028d72b246cdc381c47df0704ae3e9edf
           classNames={{
             base: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all",
             label: "text-slate-700 font-medium",
@@ -371,6 +400,8 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
       )}
       {!academicYear ? (
         <p className="text-gray-500 py-8 text-center">Please select an Academic Year.</p>
+      ) : !filterSem ? (
+        <p className="text-gray-500 py-8 text-center">Please select a Semester.</p>
       ) : !subject ? (
         <p className="text-gray-500 py-8 text-center">Please select a Subject.</p>
       ) : isLoadingAssessments ? (

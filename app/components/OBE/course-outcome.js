@@ -57,6 +57,37 @@ const ManageCourseOutcomesPage = () => {
     const [currentCourseOutcomeId, setCurrentCourseOutcomeId] = useState(null); // _id of the document being edited
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [academicYears, setAcademicYears] = useState([]);
+    const [currentAcademicYear, setCurrentAcademicYear] = useState('');
+
+    // Initialize academic years and set default current year
+    useEffect(() => {
+        const years = getAcademicYears(10);
+        setAcademicYears(years);
+        
+        // Set current academic year as default
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth() + 1; // JavaScript months are 0-based
+        
+        // If we're in the latter half of the year (July onwards), use current-next year format
+        // Otherwise use previous-current year format
+        let defaultAcademicYear;
+        if (currentMonth >= 7) {
+            defaultAcademicYear = `${currentYear}-${currentYear + 1}`;
+        } else {
+            defaultAcademicYear = `${currentYear - 1}-${currentYear}`;
+        }
+        
+        // Find the closest match in our academic years list
+        const matchingYear = years.find(year => year.value === defaultAcademicYear);
+        if (matchingYear) {
+            setCurrentAcademicYear(matchingYear.value);
+            setFilters(prev => ({
+                ...prev,
+                academicYear: matchingYear.value
+            }));
+        }
+    }, []);
 
     // Initialize user data
     useEffect(() => {
@@ -65,10 +96,10 @@ const ManageCourseOutcomesPage = () => {
                 ...prev,
                 instituteId: user.institute?._id,
                 department: user.department,
-                academicYear: filters.academicYear
+                academicYear: prev.academicYear || currentAcademicYear
             }));
         }
-    }, [user]);
+    }, [user, currentAcademicYear]);
 
     // Fetch course outcomes when filters change
     useEffect(() => {
@@ -209,6 +240,7 @@ const ManageCourseOutcomesPage = () => {
                         color="primary"
                         onPress={handleOpenAddDialog}
                         endContent={<PlusIcon size={16} />}
+                        isDisabled={!filters.subject || !filters.academicYear}
                     >
                         Add Outcome
                     </Button>
@@ -220,10 +252,11 @@ const ManageCourseOutcomesPage = () => {
                             placeholder="Select academic year"
                             variant='bordered'
                             selectedKeys={filters.academicYear ? [filters.academicYear] : []}
-                            onSelectionChange={(keys) => setFilters(prev => ({ ...prev, academicYear: Array.from(keys)[0] }))}
+                            onSelectionChange={(keys) => setFilters(prev => ({ ...prev, academicYear: Array.from(keys)[0], subject: '' }))}
                             startContent={<Calendar size={16} className="text-default-400" />}
+                            defaultSelectedKeys={currentAcademicYear ? [currentAcademicYear] : []}
                         >
-                            {getAcademicYears(10).map(year => (
+                            {academicYears.map(year => (
                                 <SelectItem key={year.value} value={year.value}>
                                     {year.label}
                                 </SelectItem>
@@ -238,6 +271,7 @@ const ManageCourseOutcomesPage = () => {
                                 onSelect={(value) => setFilters(prev => ({ ...prev, subject: value }))}
                                 facultyId={user?._id}
                                 selectedSubject={filters.subject}
+                                isDisabled={!filters.academicYear}
                             />
                         </div>
                     </div>
@@ -325,9 +359,11 @@ const ManageCourseOutcomesPage = () => {
                             <AlertCircle size={36} className="text-default-400 mb-2" />
                             <h3 className="text-lg font-medium">No course outcomes found</h3>
                             <p className="text-default-500">
-                                {!filters.subject && !filters.academicYear
-                                    && "Select a subject and academic year to view outcomes."}
-                                {filters.subject && courseOutcomes.length === 0 && "No outcomes found for the selected subject and academic year."}
+                                {!filters.subject && filters.academicYear 
+                                    ? "Please select a subject to view outcomes."
+                                    : !filters.academicYear 
+                                    ? "Please select an academic year to continue."
+                                    : "No outcomes found for the selected subject and academic year."}
                             </p>
                         </div>
                     )}
