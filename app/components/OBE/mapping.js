@@ -56,6 +56,7 @@ import { CORRELATION_LEVELS, COGNITIVE_LEVELS, initializeLocalMappings, calculat
 
 const MappingPage = () => {
   const { user } = useUser();
+  const [academicYears, setAcademicYears] = useState([]);
   const [academicYear, setAcademicYear] = useState('');
   const [subject, setSubject] = useState('');
   const [mappingData, setMappingData] = useState(null);
@@ -79,12 +80,18 @@ const MappingPage = () => {
   // Set the current academic year as default when component mounts
   useEffect(() => {
     const years = getAcademicYears(10);
-    const currentYear = years[0]?.value; // Get the most recent year
-    if (currentYear) {
-      setAcademicYear(currentYear);
+    setAcademicYears(years);
+
+    // Set current academic year as default
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+    let defaultAcademicYear = currentMonth >= 7 ? `${currentYear}-${currentYear + 1}` : `${currentYear - 1}-${currentYear}`;
+    const matchingYear = years.find(year => year.value === defaultAcademicYear);
+    if (matchingYear) {
+      setAcademicYear(matchingYear.value);
     }
   }, []);
-
+ 
   const fetchMappingData = useCallback(async () => {
     if (!canLoad) return;
     try {
@@ -295,19 +302,15 @@ const MappingPage = () => {
           </CardHeader>
           <CardBody className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Select
+            <Select
                 placeholder="Select Academic Year"
                 variant="bordered"
                 selectedKeys={academicYear ? [academicYear] : []}
                 onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
                 startContent={<Calendar size={18} className="text-indigo-600" />}
-                classNames={{
-                  trigger: 'bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all',
-                  label: 'text-slate-700 font-medium',
-                }}
-                defaultSelectedKeys={[academicYear]}
+                defaultSelectedKeys={academicYear ? [academicYear] : []}
               >
-                {getAcademicYears(10).map((year) => (
+                {academicYears.map((year) => (
                   <SelectItem key={year.value} value={year.value} className="text-slate-900">
                     {year.label}
                   </SelectItem>
@@ -333,7 +336,7 @@ const MappingPage = () => {
                   onClick={fetchMappingData}
                   isDisabled={!canLoad}
                   isLoading={isLoading}
-                  className="w-full  text-white hover:bg-indigo-700 transition-all shadow-md rounded-lg"
+                  className="w-full text-white hover:bg-indigo-700 transition-all shadow-md rounded-lg"
                   startContent={<RefreshCw size={18} />}
                 >
                   Load Data
@@ -350,6 +353,7 @@ const MappingPage = () => {
                     <Download size={18} />
                   </Button>
                 )}
+            
               </div>
             </div>
 

@@ -45,8 +45,10 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
   const [isLoadingAssessments, setIsLoadingAssessments] = useState(false);
   const [courseOutcomes, setCourseOutcomes] = useState([]);
   const [isLoadingCOs, setIsLoadingCOs] = useState(false);
+  const [academicYears, setAcademicYears] = useState([]);
+  const [academicYear, setAcademicYear] = useState('');
+
   const [filterSem, setFilterSem] = useState("");
-  const [academicYear, setAcademicYear] = useState("");
   const { user } = useUser();
 
   const academicYearOptions = useMemo(
@@ -109,7 +111,21 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
       setIsLoadingCOs(false);
     }
   }, []);
-
+  useEffect(() => {
+    const years = getAcademicYears(10);
+    setAcademicYears(years);
+  
+    // Set current academic year as default
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+    let defaultAcademicYear =
+      currentMonth >= 7
+        ? `${currentYear}-${currentYear + 1}`
+        : `${currentYear - 1}-${currentYear}`;
+  
+    const matchingYear = years.find((y) => y.value === defaultAcademicYear);
+    if (matchingYear) setAcademicYear(matchingYear.value);
+  }, []);
   useEffect(() => {
     console.log("Filter changed, fetching data:", { subject, academicYear, filterSem });
     if (subject && academicYear) {
@@ -131,15 +147,14 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
 
   const handleAcademicYearChange = useCallback((keys) => {
     const selectedYear = keys.size > 0 ? Array.from(keys)[0].toString() : "";
-    console.log("Academic year changed:", selectedYear);
     setAcademicYear(selectedYear);
-    // Clear dependent selections
+    // Reset other filters
     setFilterSem("");
     setSubject(null);
     setAssessments([]);
     setCourseOutcomes([]);
   }, []);
-
+  
   const handleFilterSemChange = useCallback((keys) => {
     const selectedSem = keys.size > 0 ? Array.from(keys)[0].toString() : "";
     console.log("Semester filter changed:", selectedSem);
@@ -252,6 +267,7 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
     [subject, fetchAssessments, academicYear, filterSem]
   );
 
+  
   // New function to open delete modal
   const openDeleteModal = useCallback((assessment) => {
     console.log("Opening delete modal for assessment:", assessment);
@@ -309,64 +325,60 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
         </Button> 
         </div>
       <div className="mb-4 flex gap-4 items-center flex-wrap">
-        <Select
-          label="Academic Year"
-          placeholder="Select Academic Year"
-          variant="bordered"
-          selectedKeys={academicYear ? new Set([academicYear]) : new Set()}
-          onSelectionChange={handleAcademicYearChange}
-          startContent={<CalendarIcon size={18} className="text-indigo-600" />}
-          className="max-w-xs"
-          classNames={{
-            trigger: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all",
-            label: "text-slate-700 font-medium",
-          }}
-        >
-          {academicYearOptions.map((year) => (
-            <SelectItem key={year.key} value={year.value} className="text-slate-900">
-              {year.label}
-            </SelectItem>
-          ))}
-        </Select>
+      <Select
+  label="Academic Year"
+  placeholder="Select Academic Year"
+  variant="bordered"
+  selectedKeys={academicYear ? new Set([academicYear]) : new Set()}
+  onSelectionChange={handleAcademicYearChange}
+  startContent={<CalendarIcon size={18} className="text-indigo-600" />}
+  className="max-w-xs"
+  classNames={{
+    trigger: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all",
+    label: "text-slate-700 font-medium",
+  }}
+>
+  {academicYears.map((year) => (
+    <SelectItem key={year.value} value={year.value} className="text-slate-900">
+      {year.label}
+    </SelectItem>
+  ))}
+</Select>
 
-        <Select 
-          variant="bordered"
-          placeholder="Filter by Semester"
+<Select
+  variant="bordered"
+  placeholder="Filter by Semester"
+  selectedKeys={filterSem ? new Set([filterSem]) : new Set()}
+  onSelectionChange={handleFilterSemChange}
+  className="max-w-xs"
+  isDisabled={!academicYear}
+  classNames={{
+    trigger: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all",
+    label: "text-slate-700 font-medium",
+  }}
+>
+  <SelectItem key="sem1" value="sem1">
+    Semester 1
+  </SelectItem>
+  <SelectItem key="sem2" value="sem2">
+    Semester 2
+  </SelectItem>
+</Select>
 
-          selectedKeys={filterSem ? new Set([filterSem]) : new Set()}
-          onSelectionChange={handleFilterSemChange}
-          className="max-w-xs"
-          isDisabled={!academicYear}
-          classNames={{
-            trigger: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all",
-            label: "text-slate-700 font-medium",
-          }}
-        >
-          <SelectItem key="sem1" value="sem1">
-            Semester 1
-          </SelectItem>
-          <SelectItem key="sem2" value="sem2">
-            Semester 2
-          </SelectItem>
-        </Select>
-        <SubjectDropdown
-          instituteId={user?.institute?._id}
-          // department={user?.department}
-          academicYear={academicYear}
-          onSelect={handleSubjectChange}
-          facultyId={academicYear && user?._id}
-          selectedSubject={subject}
-          label="Subject"
-          // semester={filterSem}
-          className="max-w-xs"
-
-          // isDisabled={!academicYear}
-
-          classNames={{
-            base: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all",
-            label: "text-slate-700 font-medium",
-          }}
-        />
+<SubjectDropdown
+  instituteId={user?.institute?._id}
+  academicYear={academicYear}
+  onSelect={handleSubjectChange}
+  facultyId={user?._id}
+  selectedSubject={subject}
+  label="Subject"
+  isDisabled={!academicYear || !filterSem}
+  className="max-w-xs"
+  classNames={{
+    base: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all",
+    label: "text-slate-700 font-medium",
+  }}
+/>
         {(academicYear || filterSem || subject) && (
           <Button
             size="sm"

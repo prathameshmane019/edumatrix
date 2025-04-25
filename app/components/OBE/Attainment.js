@@ -32,6 +32,7 @@ import { DepartmentDropdown } from '@/app/components/department/DepartmentDropDo
 export default function ViewAttainmentPage() {
     const { user } = useUser();
     const [subject, setSubject] = useState(null);
+    const [academicYears, setAcademicYears] = useState([]);
     const [academicYear, setAcademicYear] = useState("");
     const [filterSem, setFilterSem] = useState("");
     const [coAttainmentData, setCoAttainmentData] = useState([]);
@@ -61,8 +62,20 @@ export default function ViewAttainmentPage() {
         console.log('Full subject document:', fullSubjectDoc);
          
       };
+      React.useEffect(() => {
+        const years = getAcademicYears(10);
+        setAcademicYears(years);
+    
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth() + 1;
+        let defaultAcademicYear =
+            currentMonth >= 7
+                ? `${currentYear}-${currentYear + 1}`
+                : `${currentYear - 1}-${currentYear}`;
+        const matchingYear = years.find((y) => y.value === defaultAcademicYear);
+        if (matchingYear) setAcademicYear(matchingYear.value);
+    }, []);
 
-    // Handle academic year change
     const handleAcademicYearChange = useCallback((keys) => {
         const selectedYear = keys.size > 0 ? Array.from(keys)[0].toString() : "";
         setAcademicYear(selectedYear);
@@ -71,22 +84,19 @@ export default function ViewAttainmentPage() {
         setCoAttainmentData([]);
         setPoAttainmentData([]);
     }, []);
-
-    // Handle semester filter change
     const handleFilterSemChange = useCallback((keys) => {
         const selectedSem = keys.size > 0 ? Array.from(keys)[0].toString() : "";
         setFilterSem(selectedSem);
+        setSubject(null);
         setCoAttainmentData([]);
         setPoAttainmentData([]);
     }, []);
-
-    // Handle subject change
     const handleSubjectChange = useCallback((selectedSubject) => {
         setSubject(selectedSubject);
         setCoAttainmentData([]);
         setPoAttainmentData([]);
     }, []);
-
+    
     // Calculate attainment
     const calculateAttainment = useCallback(async () => {
         if (!subject && !academicYear && (!user?.institute?._id || !user._id) && (!user?.department|| !selectedDept)) {
@@ -236,70 +246,62 @@ export default function ViewAttainmentPage() {
                                 size='md'
                                 selectedDepartment={selectedDept}
                             />)}
+<Select
+    placeholder="Select Academic Year"
+    variant="bordered"
+    selectedKeys={academicYear ? new Set([academicYear]) : new Set()}
+    onSelectionChange={handleAcademicYearChange}
+    startContent={<CalendarIcon size={18} className="text-indigo-600" />}
+    className="max-w-xs"
+    classNames={{
+        trigger: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-500 transition-all duration-200",
+        label: "text-slate-700 font-medium",
+        value: "text-slate-900",
+    }}
+>
+    {academicYears.map((year) => (
+        <SelectItem key={year.value} value={year.value} className="text-slate-900">
+            {year.label}
+        </SelectItem>
+    ))}
+</Select>
 
-                        <Select
-                            placeholder="Select Academic Year"
-                            variant="bordered"
-                            selectedKeys={academicYear ? new Set([academicYear]) : new Set()}
-                            onSelectionChange={handleAcademicYearChange}
-                            startContent={<CalendarIcon size={18} className="text-indigo-600" />}
-                            className="max-w-xs"
-                            classNames={{
-                                trigger: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-500 transition-all duration-200",
-                                label: "text-slate-700 font-medium",
-                                value: "text-slate-900",
-                            }}
-                        >
-                            {academicYearOptions.map((year) => (
-                                <SelectItem key={year.key} value={year.value} className="text-slate-900">
-                                    {year.label}
-                                </SelectItem>
-                            ))}
-                        </Select>
+<Select
+    placeholder="Filter by Semester"
+    selectedKeys={filterSem ? new Set([filterSem]) : new Set()}
+    onSelectionChange={handleFilterSemChange}
+    className="max-w-xs"
+    variant="bordered"
+    isDisabled={!academicYear}
+    classNames={{
+        trigger: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-500 transition-all duration-200",
+        label: "text-slate-700 font-medium",
+        value: "text-slate-900",
+    }}
+>
+    <SelectItem key="sem1" value="sem1">Semester 1</SelectItem>
+    <SelectItem key="sem2" value="sem2">Semester 2</SelectItem>
+</Select>
 
-                        <Select
-                            placeholder="Filter by Semester"
-                            selectedKeys={filterSem ? new Set([filterSem]) : new Set()}
-                            onSelectionChange={handleFilterSemChange}
-                            className="max-w-xs"
-                            variant='bordered'
-                            classNames={{
-                                trigger: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-500 transition-all duration-200",
-                                label: "text-slate-700 font-medium",
-                                value: "text-slate-900",
-                            }}
-                        >
-                            <SelectItem key="sem1" value="sem1">Semester 1</SelectItem>
-                            <SelectItem key="sem2" value="sem2">Semester 2</SelectItem>
-                        </Select>
-                        {user?.role !== "faculty" && (
-                            <ClassDropdown
-                                id="class-select"
-                                instituteId={user?.role === "superadmin" ? user?._id : user?.institute?._id}
-                                onSelect={handleClassSelect}
-                                selectedClass={selectedClass}
-                                acadmicYear={academicYear}
-                                size='md'
-                                selectedDepartment={selectedDept}
-                                className="my-4 max-w-60"
-                            />)}
-                        <SubjectDropdown
-                            instituteId={user?.role === "superadmin" ? user?._id : user?.institute?._id}
-                            onSubjectDocChange={handleSubjectDocChange}
-                            department={user?.role === "superadmin" ? selectedDept : user?.id}
-                            academicYear={academicYear}
-                            onSelect={handleSubjectChange}
-                            facultyId={user?.role === "faculty" && user?._id}
-                            size='md'
-                            selectedSubject={subject}
-                            selectedClass={selectedClass}
-                            semester={filterSem}
-                            fetchBy={user?.role === "faculty" ? "facultyId" : "classId"}
-                            classNames={{
-                                base: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-500 transition-all duration-200",
-                                label: "text-slate-700 font-medium",
-                            }}
-                        />
+<SubjectDropdown
+    instituteId={user?.role === "superadmin" ? user?._id : user?.institute?._id}
+    onSubjectDocChange={handleSubjectDocChange}
+    department={user?.role === "superadmin" ? selectedDept : user?.id}
+    academicYear={academicYear}
+    onSelect={handleSubjectChange}
+    facultyId={user?.role === "faculty" && user?._id}
+    size='md'
+    selectedSubject={subject}
+    selectedClass={selectedClass}
+    semester={filterSem}
+    fetchBy={user?.role === "faculty" ? "facultyId" : "classId"}
+    isDisabled={!academicYear || !filterSem}
+    classNames={{
+        base: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-500 transition-all duration-200",
+        label: "text-slate-700 font-medium",
+    }}
+/>
+
                     </div>
                     <div className="flex items-center gap-4 mt-5">
                         <Button
