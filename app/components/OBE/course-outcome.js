@@ -232,8 +232,8 @@ const ManageCourseOutcomesPage = () => {
     };
 
     return (
-        <div className="gap-4 flex flex-col">
-            <Card>
+        <div className="gap-4 flex flex-col m-10">
+            <Card className='bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm'>
                 <CardHeader className="flex justify-between">
                     <h2 className="text-xl font-bold">Course Outcomes Management</h2>
                     <Button
@@ -275,7 +275,10 @@ const ManageCourseOutcomesPage = () => {
                             />
                         </div>
                     </div>
-
+                    </CardBody>
+                    </Card>
+                    <Card>
+                        <CardBody>
                     {/* Course Outcomes List */}
                     {isLoading ? (
                         <div className="flex justify-center items-center py-12">

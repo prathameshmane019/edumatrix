@@ -17,6 +17,8 @@ import {
   Spinner,
   Tooltip,
   Chip,
+  CardBody,
+  Card,
 } from "@nextui-org/react";
 import { PlusIcon, EditIcon, TrashIcon, CalendarIcon, Users, FileText } from "lucide-react";
 import { useDisclosure } from "@nextui-org/react";
@@ -275,7 +277,8 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
 
   return (
     <div className="m-10">
-      <div className="mb-4 flex items-center justify-between">
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm overflow-hidden">
+        <CardBody >
         <div>
           <h2 className="text-2xl font-semibold">Manage Assessments</h2>
           {subject && academicYear && filterSem && (
@@ -295,6 +298,7 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
             <p className="text-gray-500">Year: {academicYear} | Please select Semester.</p>
           )}
         </div>
+        <div className="mb-4 flex justify-end">
         <Button
           color="primary"
           startContent={<PlusIcon />}
@@ -302,8 +306,8 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
           isDisabled={!subject || isLoadingCOs || !academicYear || !filterSem}
         >
           Add Assessment
-        </Button>
-      </div>
+        </Button> 
+        </div>
       <div className="mb-4 flex gap-4 items-center flex-wrap">
         <Select
           label="Academic Year"
@@ -324,9 +328,15 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
             </SelectItem>
           ))}
         </Select>
+<<<<<<< HEAD
         <Select
           label="Semester"
           placeholder="Select Semester"
+=======
+        <Select 
+          variant="bordered"
+          placeholder="Filter by Semester"
+>>>>>>> 0e2187b028d72b246cdc381c47df0704ae3e9edf
           selectedKeys={filterSem ? new Set([filterSem]) : new Set()}
           onSelectionChange={handleFilterSemChange}
           className="max-w-xs"
@@ -345,15 +355,19 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
         </Select>
         <SubjectDropdown
           instituteId={user?.institute?._id}
-          department={user?.department}
+          // department={user?.department}
           academicYear={academicYear}
           onSelect={handleSubjectChange}
-          facultyId={user?._id}
+          facultyId={academicYear && user?._id}
           selectedSubject={subject}
           label="Subject"
-          semester={filterSem}
+          // semester={filterSem}
           className="max-w-xs"
+<<<<<<< HEAD
           isDisabled={!isSubjectDropdownEnabled}
+=======
+          // isDisabled={!academicYear}
+>>>>>>> 0e2187b028d72b246cdc381c47df0704ae3e9edf
           classNames={{
             base: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all",
             label: "text-slate-700 font-medium",
@@ -375,7 +389,10 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
             Clear Filters
           </Button>
         )}
-      </div>
+        </div> 
+      </CardBody>
+      </Card>
+      <div className="flex flex-col justify-between items-center mb-4">
       {isLoadingCOs && !isLoadingAssessments && subject && academicYear && (
         <div className="flex justify-center py-4">
           <Spinner label="Loading Course Outcomes..." />
@@ -518,7 +535,8 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
         onClose={onDeleteClose}
         onConfirmDelete={handleDeleteAssessment}
         assessment={assessmentToDelete}
-      />
+      /> 
+      </div>
     </div>
   );
 }
