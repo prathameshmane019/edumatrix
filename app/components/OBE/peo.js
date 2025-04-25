@@ -215,11 +215,11 @@ export default function ManagePEOsPage() {
                         <Select
                             placeholder="Select Academic Year"
                             variant="bordered"
-                            size="sm"
+                            size="md"
                             selectedKeys={selectedYear ? [selectedYear] : []}
                             onSelectionChange={(keys) => setSelectedYear(Array.from(keys)[0])}
                             startContent={<Calendar className="w-4 h-4 text-default-400" />}
-                            className="w-full sm:w-[40%] my-2 sm:my-4"
+                            className="  sm:w-[30%] my-2 sm:my-4"
                         >
                             {getAcademicYears(10).map((year) => (
                                 <SelectItem key={year.value} value={year.value}>
@@ -228,9 +228,11 @@ export default function ManagePEOsPage() {
                             ))}
                         </Select>
                         <Input
-                            size='sm' variant="bordered" isClearable
+                            size='md' 
+                            variant="bordered" isClearable
                             placeholder="Search Descriptions..."
-                            value={searchTerm} onValueChange={setSearchTerm}
+                            value={searchTerm} 
+                            onValueChange={setSearchTerm}
                             startContent={<SearchIcon size={18} className="text-gray-400"/>}
                             className="max-w-xs flex-grow sm:w-[40%] my-2 sm:my-4"
                             isDisabled={!selectedYear}

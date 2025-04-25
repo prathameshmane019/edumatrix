@@ -305,9 +305,10 @@ export default function ManageProgramOutcomesPage() {
                         {isSuperAdmin && ` (Superadmin View)`}
                     </p>
                     {/* Filters */}
-                    <div className="flex flex-wrap gap-4 items-end">
+                    <div className="flex flex-wrap items-center gap-4  ">
                         <DepartmentDropdown
                             instituteId={user?.role === "superadmin" ? user?._id : user?.institute?._id}
+                            size='md'
                             onSelect={handleDepartmentSelect}
                             className="w-full sm:w-[40%] my-2 sm:my-4"
                             selectedDepartment={selectedDept}
@@ -315,19 +316,32 @@ export default function ManageProgramOutcomesPage() {
                         <Select
                             placeholder="Select Academic Year"
                             variant="bordered"
-                            size="sm"
+                            size="md"
                             selectedKeys={selectedYear ? [selectedYear] : []}
                             onSelectionChange={(keys) => setSelectedYear(Array.from(keys)[0])}
-                            startContent={<Calendar className="w-4 h-4 text-default-400" />}
-                            className="w-full sm:w-[40%] my-2 sm:my-4"
+                            startContent={<Calendar className="  h-4 text-default-400" />}
+                            className=" sm:w-[30%] my-2 sm:my-4"
+                            
                         >
                             {getAcademicYears(10).map((year) => (
                                 <SelectItem key={year.value} value={year.value}>
                                     {year.label}
                                 </SelectItem>
                             ))}
-                        </Select>
-                    </div>
+                        </Select> 
+                    
+                    <Input
+                    startContent={<SearchIcon className="h-4 text-default-400" />}
+                        placeholder="Search outcomes..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 max-w-xs"
+                        size="md"
+                        variant='bordered'
+                        isClearable
+                        onClear={() => setSearchTerm("")}
+                    />
+                </div> 
                 </CardBody>
             </Card>
 
@@ -342,18 +356,7 @@ export default function ManageProgramOutcomesPage() {
                 </div>
 
                 {/* Search Box */}
-                <div className="relative max-w-xs mb-2">
-                    <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-                    <Input
-                        placeholder="Search outcomes..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 max-w-xs"
-                        size="sm"
-                        isClearable
-                        onClear={() => setSearchTerm("")}
-                    />
-                </div>
+                
             </div>
 
             {/* Tabs for PO and PSO */}

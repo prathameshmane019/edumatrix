@@ -152,7 +152,7 @@ export default function ManagePOsPage() {
                              instituteId={user?.institute?._id}
                              selectedValue={selectedDept}
                              onSelect={(value) => setSelectedDept(value || '')}
-                             size="sm"
+                             size="md"
                              variant="bordered"
                              isDisabled={!isSuperAdmin && !user?.institute?._id} // Disabled if not superadmin
                              readOnly={!!departmentScope} // ReadOnly if admin is scoped to one dept
@@ -161,8 +161,9 @@ export default function ManagePOsPage() {
                          />
                          <Select
                              label="Select Academic Year"
-                             size="sm" variant="bordered"
+                              variant="bordered"
                              selectedKeys={selectedYear ? [selectedYear] : []}
+                             size="md"
                              onSelectionChange={(keys) => setSelectedYear(Array.from(keys)[0] || '')}
                              placeholder="Choose Year"
                              className="min-w-[180px]"
@@ -172,7 +173,8 @@ export default function ManagePOsPage() {
                              {academicYears.map(year => <SelectItem key={year.value} value={year.value}>{year.label}</SelectItem>)}
                          </Select>
                          <Input
-                            size='sm' variant="bordered" isClearable
+                            size='md' 
+                            variant="bordered" isClearable
                             placeholder="Search Descriptions..."
                             value={searchTerm} onValueChange={setSearchTerm}
                             startContent={<SearchIcon size={18} className="text-gray-400"/>}
