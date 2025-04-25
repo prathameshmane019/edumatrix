@@ -25,6 +25,9 @@ import {
   Select,
   SelectItem,
   Spinner,
+  Card,
+  CardHeader,
+  CardBody,
 } from "@nextui-org/react";
 import { capitalize } from "@/app/utils/utils";
 import { PlusIcon } from "@/public/PlusIcon";
@@ -494,77 +497,181 @@ export default function FacultyTable() {
   
   return (
     <>
-      <div className="flex flex-col gap-4">
-        {profile?.role !== "admin" && (
-          <DepartmentDropdown
-            instituteId={profile?.role === "superadmin" ? profile?._id : profile?.institute}
-            onSelect={handleDepartmentSelect}
-            className="w-full"
-            selectedDepartment={selectedDepartment}
-          />
-        )}
-      </div>
-
-      <Table
-        isCompact
-        removeWrapper
-        aria-label="Faculty table with custom cells, pagination and sorting"
-        bottomContent={bottomContent}
-        bottomContentPlacement="outside"
-        checkboxesProps={{
-          classNames: {
-            wrapper: "after:bg-foreground after:text-background text-background ",
-          },
-        }}
-        classNames={classNames}
-        selectedKeys={selectedKeys}
-        sortDescriptor={sortDescriptor}
-        topContent={topContent}
-        topContentPlacement="outside"
-        onSelectionChange={setSelectedKeys}
-        onSortChange={setSortDescriptor}
-      >
-        <TableHeader columns={headerColumns}>
-          {(column) => (
-            <TableColumn
-              key={column.uid}
-              align={column.uid === "actions" ? "center" : "start"}
-              allowsSorting={column.sortable}
-            >
-              {column.name}
-            </TableColumn>
-          )}
-        </TableHeader>
-        <TableBody
-          isLoading={isLoading}
-          loadingContent={<Spinner label="Please wait...fetching Faculty Data" />}
-          emptyContent={
-            <div className="flex justify-center items-center w-full h-full">
-              <Image src="/faculty.svg" alt="No Content" width={600} height={600} />
+      <Card className='bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm mb-6'>
+        <CardHeader className="flex justify-between">
+          <h2 className="text-xl font-bold">Faculty Management</h2>
+          <Button
+            color="primary"
+            startContent="Add New"
+            endContent={<PlusIcon />}
+            size="sm"
+            onClick={() => {
+              setModalMode("add");
+              setModalOpen(true);
+            }}
+          >
+            Add Faculty
+          </Button>
+        </CardHeader>
+        <CardBody>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {profile?.role !== "admin" && (
+              <DepartmentDropdown
+                instituteId={profile?.role === "superadmin" ? profile?._id : profile?.institute}
+                onSelect={handleDepartmentSelect}
+                className="w-full"
+                selectedDepartment={selectedDepartment}
+              />
+            )}
+            <Input
+              isClearable
+              classNames={{
+                base: "w-full",
+                inputWrapper: "border-1",
+              }}
+              placeholder="Search by name, email, faculty ID, contact, or designation..."
+              size="sm"
+              startContent={<SearchIcon className="text-default-300" />}
+              value={filterValue}
+              variant="bordered"
+              onClear={() => setFilterValue("")}
+              onValueChange={onSearchChange}
+            />
+          </div>
+          
+          <div className="flex justify-between gap-3 mb-4">
+            <span className="text-default-600 text-small">Total {faculty.length} faculty members</span>
+            <div className="flex gap-3">
+              <Dropdown>
+                <DropdownTrigger className="hidden sm:flex">
+                  <Button
+                    endContent={<ChevronDownIcon className="text-small" />}
+                    size="sm"
+                    variant="flat"
+                  >
+                    Columns
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  disallowEmptySelection
+                  aria-label="Table Columns"
+                  closeOnSelect={false}
+                  selectedKeys={visibleColumns}
+                  selectionMode="multiple"
+                  onSelectionChange={setVisibleColumns}
+                >
+                  {columns.map((column) => (
+                    <DropdownItem key={column.uid} className="capitalize">
+                      {capitalize(column.name)}
+                    </DropdownItem>
+                  ))}
+                </DropdownMenu>
+              </Dropdown>
+              <Button
+                color="primary"
+                variant="ghost"
+                size="sm"
+                onClick={() => document.getElementById('upload-input').click()}
+                endContent={<FaFileUpload />}
+              >
+                Upload File
+              </Button>
+              <input
+                id="upload-input"
+                type="file"
+                accept=".xlsx, .xls"
+                onChange={handleFileUpload}
+                style={{ display: 'none' }}
+              />
+              <Button
+                color="primary"
+                size="sm"
+                variant="ghost"
+                onClick={downloadExcel}
+                endContent={<FaFileDownload />}
+              >
+                Download
+              </Button>
             </div>
-          }
-          items={sortedItems}
-        >
-          {(facultyMember) => (
-            <TableRow 
-              key={facultyMember?._id}
-              className="cursor-pointer hover:bg-gray-100 dark:hover:bg-violet-200 transition-colors"
-              onClick={() => handleRowClick(facultyMember)}
-            >
-              {(columnKey) => 
-                columnKey === "actions" ? (
-                  // Don't trigger navigation when clicking on actions column
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    {renderCell(facultyMember, columnKey)}
-                  </TableCell>
-                ) : (
-                  <TableCell>{renderCell(facultyMember, columnKey)}</TableCell>
-                )
+          </div>
+          </CardBody>
+          </Card>
+          
+          <Table
+            isCompact
+            removeWrapper
+            aria-label="Faculty table with custom cells, pagination and sorting"
+            bottomContent={bottomContent}
+            bottomContentPlacement="outside"
+            checkboxesProps={{
+              classNames: {
+                wrapper: "after:bg-foreground after:text-background text-background ",
+              },
+            }}
+            classNames={classNames}
+            selectedKeys={selectedKeys}
+            sortDescriptor={sortDescriptor}
+            onSelectionChange={setSelectedKeys}
+            onSortChange={setSortDescriptor}
+          >
+            <TableHeader columns={headerColumns}>
+              {(column) => (
+                <TableColumn
+                  key={column.uid}
+                  align={column.uid === "actions" ? "center" : "start"}
+                  allowsSorting={column.sortable}
+                >
+                  {column.name}
+                </TableColumn>
+              )}
+            </TableHeader>
+            <TableBody
+              isLoading={isLoading}
+              loadingContent={<Spinner label="Please wait...fetching Faculty Data" />}
+              emptyContent={
+                <div className="flex justify-center items-center w-full h-full">
+                  <Image src="/faculty.svg" alt="No Content" width={600} height={600} />
+                </div>
               }
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+              items={sortedItems}
+            >
+              {(facultyMember) => (
+                <TableRow 
+                  key={facultyMember?._id}
+                  className="cursor-pointer hover:bg-gray-100 dark:hover:bg-violet-200 transition-colors"
+                  onClick={() => handleRowClick(facultyMember)}
+                >
+                  {(columnKey) => 
+                    columnKey === "actions" ? (
+                      // Don't trigger navigation when clicking on actions column
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        {renderCell(facultyMember, columnKey)}
+                      </TableCell>
+                    ) : (
+                      <TableCell>{renderCell(facultyMember, columnKey)}</TableCell>
+                    )
+                  }
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+          
+          <div className="flex items-center justify-between mt-4">
+            <label className="flex items-center text-default-600 text-small">
+              Rows per page:
+              <select
+                className="bg-transparent outline-none text-default-600 ml-2 text-small"
+                onChange={onRowsPerPageChange}
+              >
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+              </select>
+            </label>
+          </div>
+     
+      
       <FacultyModal
         isOpen={modalOpen}
         onClose={handleModalClose}

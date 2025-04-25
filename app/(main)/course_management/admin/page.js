@@ -19,6 +19,7 @@ import { Select, SelectItem, Spinner } from "@nextui-org/react";
 import { DepartmentDropdown } from '@/app/components/department/DepartmentDropDowns';
 import { useUser } from '@/app/context/UserContext';
 import { getCurrentAcademicYear, getAcademicYears } from '@/app/utils/acadmicYears';
+import { Card, CardHeader, CardBody } from "@nextui-org/react";
 
 const Dashboard = () => {
   const { user, loading: userLoading } = useUser();
@@ -27,6 +28,7 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
+  const [data, setData] = useState([]);
 
   // Set up institute ID based on user role
   const instituteId = useMemo(() => {
@@ -49,7 +51,7 @@ const Dashboard = () => {
     if (user) {
       if (user.role !== "superadmin") {
         // For regular admin, lock to their assigned department
-        setSelectedDepartment( user.id|| user.department);
+        setSelectedDepartment(user.id || user.department);
       } else {
         // Super admin can view all by default
         setSelectedDepartment('all');
@@ -100,6 +102,21 @@ const Dashboard = () => {
     }
   }, [instituteId, selectedDepartment, academicYear, userLoading]);
 
+  // This is the fixed useEffect hook that was causing errors
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await window.fs.readFile('monthly-profits.csv');
+        const text = new TextDecoder().decode(response);
+        const parsedData = parseCSV(text);
+        setData(parsedData);
+      } catch (error) {
+        console.error('Error reading file:', error);
+      }
+    };
+    fetchData();
+  }, []);
+
   if (userLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -140,65 +157,66 @@ const Dashboard = () => {
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-800">Academic Dashboard</h1>
-          <div className="text-sm text-slate-500 mt-2 md:mt-0">
-            {academicYear ? `Viewing data for: ${academicYear}` : ''}
-          </div>
-        </div>
-
-        {/* Filters section */}
-        <div className="bg-white p-5 rounded-xl shadow-sm mb-8">
-          <div className="flex flex-col md:flex-row gap-4 items-end">
-            {/* Academic Year Selection */}
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Academic Year</label>
-              <Select
-                placeholder="Select Year"
-                variant="bordered"
-                size="sm"
-                selectedKeys={academicYear ? [academicYear] : []}
-                onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
-                startContent={<Calendar className="w-4 h-4 text-default-400" />}
-                className="max-w-72 my-4"
-              >
-                {getAcademicYears(10).map((year) => (
-                  <SelectItem key={year.value} value={year.value}>
-                    {year.label}
-                  </SelectItem>
-                ))}
-              </Select>
+       <div className="mb-8">
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm">
+          <CardHeader className="flex justify-between">
+            <h1 className="text-3xl font-bold text-slate-800">Academic Dashboard</h1>
+            <div className="text-sm text-slate-500">
+              {academicYear ? `Viewing data for: ${academicYear}` : ""}
             </div>
-
-            {/* Department selection - only for superadmin */}
-            {user?.role === "superadmin" && (
+          </CardHeader>
+          <CardBody>
+            {/* Filters Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="flex-1">
-                <label className="block text-sm font-medium text-slate-700  ">Department</label>
-                <div className="flex gap-2">
-                  <DepartmentDropdown
-                    instituteId={instituteId}
-                    onSelect={handleDepartmentSelect}
-                    className="flex-1"
-                    selectedDepartment={selectedDepartment}
-                  />
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Academic Year</label>
-                    <Select
-                      size="sm"
-                      variant="bordered"
-                      className="w-32 "
-                      value={selectedDepartment}
-                      onChange={(e) => setSelectedDepartment(e.target.value)}
-                    >
-                      <SelectItem key="all" value="all">All Depts</SelectItem>
-                    </Select>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Academic Year</label>
+                <Select
+                  placeholder="Select Year"
+                  variant="bordered"
+                  size="sm"
+                  selectedKeys={academicYear ? [academicYear] : []}
+                  onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
+                  startContent={<Calendar className="w-4 h-4 text-default-400" />}
+                  className="max-w-72 my-4"
+                >
+                  {getAcademicYears(10).map((year) => (
+                    <SelectItem key={year.value} value={year.value}>
+                      {year.label}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </div>
+              
+              {user?.role === "superadmin" && (
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-slate-700">Department</label>
+                  <div className="flex gap-2">
+                    <DepartmentDropdown
+                      instituteId={instituteId}
+                      onSelect={handleDepartmentSelect}
+                      className="flex-1"
+                      selectedDepartment={selectedDepartment}
+                    />
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Academic Year</label>
+                      <Select
+                        size="sm"
+                        variant="bordered"
+                        className="w-32"
+                        value={selectedDepartment}
+                        onChange={(e) => setSelectedDepartment(e.target.value)}
+                      >
+                        <SelectItem key="all" value="all">All Depts</SelectItem>
+                      </Select>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
+              )}
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+      
 
         {loading ? (
           <div className="bg-white rounded-xl shadow-sm p-10 flex items-center justify-center h-64">
@@ -409,7 +427,6 @@ const Dashboard = () => {
             </div>
           </>
         )}
-      </div>
     </div>
   );
 };

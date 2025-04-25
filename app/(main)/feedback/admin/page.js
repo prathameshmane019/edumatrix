@@ -1,5 +1,8 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
+
+import { Card, CardHeader, CardBody } from "@nextui-org/react";
+
 import axios from "axios";
 import {
   BarChart,
@@ -131,66 +134,71 @@ const FeedbackDashboard = () => {
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-800">Feedback Dashboard</h1>
-          <div className="text-sm text-slate-500 mt-2 md:mt-0">
-            {academicYear ? `Viewing data for: ${academicYear}` : ""}
-          </div>
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm">
+  <CardHeader className="flex justify-between">
+    <h1 className="text-xl font-bold text-slate-800">Feedback Dashboard</h1>
+    <div className="text-sm text-slate-500">
+      {academicYear ? `Viewing data for: ${academicYear}` : ""}
+    </div>
+  </CardHeader>
+  <CardBody>
+    {/* Filters Section */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1">Academic Year</label>
+        <Select
+          placeholder="Select Year"
+          variant="bordered"
+          size="sm"
+          selectedKeys={academicYear ? [academicYear] : []}
+          onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
+          startContent={<Calendar className="w-4 h-4 text-default-400" />}
+          className="w-full"
+        >
+          {getAcademicYears(10).map((year) => (
+            <SelectItem key={year.value} value={year.value}>
+              {year.label}
+            </SelectItem>
+          ))}
+        </Select>
+      </div>
+      
+      {user.role === "superadmin" && (
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
+          <DepartmentDropdown
+            instituteId={instituteId}
+            onSelect={handleDepartmentSelect}
+            selectedDepartment={selectedDepartment}
+            variant="bordered"
+            size="sm"
+            className="w-full"
+          />
         </div>
-
-        {/* Filters */}
-        <div className="bg-white p-5 rounded-xl shadow-sm mb-8">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Academic Year</label>
-              <Select
-                placeholder="Select Year"
-                variant="bordered"
-                size="sm"
-                selectedKeys={academicYear ? [academicYear] : []}
-                onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
-                startContent={<Calendar className="w-4 h-4 text-default-400" />}
-                className="max-w-72"
-              >
-                {getAcademicYears(10).map((year) => (
-                  <SelectItem key={year.value} value={year.value}>
-                    {year.label}
-                  </SelectItem>
-                ))}
-              </Select>
-            </div>
-            {user.role === "superadmin" && (
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
-                <DepartmentDropdown
-                  instituteId={instituteId}
-                  onSelect={handleDepartmentSelect}
-                  selectedDepartment={selectedDepartment}
-                />
-              </div>
-            )}
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Feedback Type</label>
-              <Select
-                size="sm"
-                variant="bordered"
-                value={feedbackType}
-                onChange={(e) => setFeedbackType(e.target.value)}
-                placeholder="Select Feedback Type"
-              >
-                <SelectItem key="all" value="all">All Types</SelectItem>
-                <SelectItem key="academic" value="academic">Academic</SelectItem>
-                <SelectItem key="event" value="event">Event</SelectItem>
-              </Select>
-            </div>
-          </div>
-        </div>
-
+      )}
+      
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1">Feedback Type</label>
+        <Select
+          size="sm"
+          variant="bordered"
+          value={feedbackType}
+          onChange={(e) => setFeedbackType(e.target.value)}
+          placeholder="Select Feedback Type"
+          className="w-full"
+        >
+          <SelectItem key="all" value="all">All Types</SelectItem>
+          <SelectItem key="academic" value="academic">Academic</SelectItem>
+          <SelectItem key="event" value="event">Event</SelectItem>
+        </Select>
+      </div>
+    </div>
+  </CardBody>
+</Card>
         {loading ? (
-          <div className="bg-white rounded-xl shadow-sm p-10 flex items-center justify-center h-64">
-            <Spinner size="lg" color="primary" />
-            <span className="ml-3 text-slate-600">Loading feedback data...</span>
-          </div>
+          <div className="flex justify-center items-center py-12">
+                       <Spinner size="lg" color="primary" />
+                     </div>
         ) : error || !dashboardData ? (
           <div className="bg-white rounded-xl shadow-sm p-10 flex items-center justify-center h-64">
             <div className="text-xl font-medium text-red-600">{error || "Failed to load feedback data"}</div>

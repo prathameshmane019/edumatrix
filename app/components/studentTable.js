@@ -6,6 +6,13 @@ import { toast } from 'sonner';
 import { FaFileDownload, FaFileUpload } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import {
+
+  Card,
+  CardBody,
+  CardHeader
+  
+} from "@nextui-org/react"
+import {
   Table, Tooltip, TableHeader, TableColumn, TableBody, TableRow, TableCell,
   Input, Button, DropdownTrigger, Dropdown, DropdownMenu, DropdownItem,
   Pagination, Select, SelectItem, Spinner, Modal, ModalContent, ModalHeader,
@@ -544,8 +551,27 @@ export default function StudentTable() {
   };
 
   return (
-    <div>
+   
       <div className="flex flex-row gap-2 flex-wrap">
+  <Card className='bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm w-full max-w-7xl mx-auto'>
+  <CardHeader className="flex justify-between">
+    <h2 className="text-xl font-bold">Student Management</h2>
+    <Button
+      color="primary"
+      endContent={<PlusIcon />}
+      size="sm"
+      onClick={() => {
+        setModalMode("add");
+        setModalOpen(true);
+      }}
+    >
+      Add New
+    </Button>
+  </CardHeader>
+  <CardBody>
+    {/* Filters Section */}
+    <div className="flex flex-col gap-4 mb-6 w-full">
+      <div className="flex flex-row gap-4 w-full">
         <Select
           placeholder="Select Year"
           variant="bordered"
@@ -553,20 +579,13 @@ export default function StudentTable() {
           selectedKeys={academicYear ? [academicYear] : []}
           onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
           startContent={<Calendar className="w-4 h-4 text-default-400" />}
-          className="max-w-60 my-4"
+          className="flex-1"
         >
           {getAcademicYears(10).map((year) => (
             <SelectItem key={year.value} value={year.value}>{year.label}</SelectItem>
           ))}
         </Select>
-        {profile?.role === "superadmin" && (
-          <DepartmentDropdown
-            instituteId={institute}
-            onSelect={handleDepartmentSelect}
-            className="max-w-60"
-            selectedDepartment={selectedDepartment}
-          />
-        )}
+        
         <ClassDropdown
           id="class-select"
           instituteId={institute}
@@ -574,15 +593,16 @@ export default function StudentTable() {
           selectedClass={selectedClass}
           acadmicYear={academicYear}
           selectedDepartment={selectedDepartment}
-          className="my-4 max-w-60"
+          className="flex-1"
         />
+        
         <Select
           placeholder="Status"
           variant="bordered"
           size="sm"
           selectedKeys={[statusFilter]}
           onSelectionChange={(keys) => setStatusFilter(Array.from(keys)[0])}
-          className="max-w-60 my-4"
+          className="flex-1"
         >
           <SelectItem key="all" value="all">All</SelectItem>
           <SelectItem key="active" value="active">Active</SelectItem>
@@ -590,60 +610,56 @@ export default function StudentTable() {
           <SelectItem key="alumni" value="alumni">Alumni</SelectItem>
         </Select>
       </div>
-      <div className="flex justify-between gap-3 items-end">
-        <Input
-          isClearable
-          classNames={{ base: "w-full sm:max-w-[44%]", inputWrapper: "border-1" }}
-          placeholder="Search by name, roll number, or admission number..."
-          size="sm"
-          startContent={<SearchIcon className="text-default-300" />}
-          value={filterValue}
-          variant="bordered"
-          onClear={() => setFilterValue("")}
-          onValueChange={onSearchChange}
-        />
-        <div className="flex gap-3 flex-wrap">
-          <Dropdown>
-            <DropdownTrigger className="hidden sm:flex">
-              <Button endContent={<ChevronDownIcon className="text-small" />} size="sm" variant="flat">Columns</Button>
-            </DropdownTrigger>
-            <DropdownMenu
-              disallowEmptySelection
-              aria-label="Table Columns"
-              closeOnSelect={false}
-              selectedKeys={visibleColumns}
-              selectionMode="multiple"
-              onSelectionChange={setVisibleColumns}
-            >
-              {columns.map((column) => (
-                <DropdownItem key={column.uid} className="capitalize">{capitalize(column.name)}</DropdownItem>
-              ))}
-            </DropdownMenu>
-          </Dropdown>
-          <Button
-            color="primary"
-            startContent="Add New"
-            endContent={<PlusIcon />}
+      
+      <div className="flex justify-between items-center w-full">
+        <div className="flex-grow mr-2">
+          <Input
+            isClearable
+            className="w-full"
+            placeholder="Search by name, roll number, or admission number..."
             size="sm"
-            onClick={() => {
-              setModalMode("add");
-              setModalOpen(true);
-            }}
-          >
-            Add New
-          </Button>
-          <Button color="primary" variant="ghost" size="sm" onClick={openFileDialog} endContent={<FaFileUpload />}>
-            Upload File
-          </Button>
-          <input id="upload-input" type="file" accept=".xlsx, .xls" onChange={handleFileUpload} style={{ display: 'none' }} />
-          <Button color="primary" size="sm" variant="ghost" onClick={downloadExcel} endContent={<FaFileDownload />}>
-            Download
-          </Button>
-          <Button color="secondary" size="sm" variant="ghost" onClick={downloadSampleExcel} endContent={<FaFileDownload />}>
-            Sample Excel
-          </Button>
+            startContent={<SearchIcon className="text-default-300" />}
+            value={filterValue}
+            variant="bordered"
+            onClear={() => setFilterValue("")}
+            onValueChange={onSearchChange}
+          />
         </div>
+        
+        <Dropdown>
+          <DropdownTrigger className="hidden sm:flex">
+            <Button size="sm" variant="flat">Columns</Button>
+          </DropdownTrigger>
+          <DropdownMenu
+            disallowEmptySelection
+            aria-label="Table Columns"
+            closeOnSelect={false}
+            selectedKeys={visibleColumns}
+            selectionMode="multiple"
+            onSelectionChange={setVisibleColumns}
+          >
+            {columns.map((column) => (
+              <DropdownItem key={column.uid} className="capitalize">{capitalize(column.name)}</DropdownItem>
+            ))}
+          </DropdownMenu>
+        </Dropdown>
+        
+        <Button color="primary" size="sm" className="ml-2" onClick={openFileDialog} startContent={<FaFileUpload />}>
+          Upload File
+        </Button>
+        <input id="upload-input" type="file" accept=".xlsx, .xls" onChange={handleFileUpload} style={{ display: 'none' }} />
+        
+        <Button color="primary" size="sm" className="ml-2" onClick={downloadExcel} startContent={<FaFileDownload />}>
+          Download
+        </Button>
+        
+        <Button color="primary" size="sm" className="ml-2" onClick={downloadSampleExcel}>
+          Sample Excel
+        </Button>
       </div>
+    </div>
+  </CardBody>
+</Card>
       <Table
         isCompact
         removeWrapper

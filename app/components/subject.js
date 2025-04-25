@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
+import { Card, CardHeader, CardBody} from '@nextui-org/react';
+// import { Calendar, Search as SearchIcon, Plus as PlusIcon } from 'lucide-react';
 import axios from 'axios';
 import { ChevronDownIcon } from "@/public/ChevronDownIcon";
 import {
@@ -243,73 +245,98 @@ export default function SubjectTable({ user }) {
   
   return (
     <>
-      <div className="flex justify-between my-4 gap-3 items-end">
-        <Select
-          placeholder="Select Year"
-          selectedKeys={academicYear ? [academicYear] : []}
-          onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
-          startContent={<Calendar className="w-4 h-4 text-default-400" />}
-          variant="bordered"
+     <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm">
+      <CardHeader className="flex justify-between">
+        <h2 className="text-xl font-bold">Course Outcomes Management</h2>
+        <Button 
+          color="primary" 
           size="sm"
-          className="max-w-52"
+          endContent={<PlusIcon size={16} />}
+          isDisabled={!selectedClass || !academicYear}
+          onClick={() => {
+            setModalMode("add");
+            setSelectedSubject(null);
+            setModalOpen(true);
+          }}
         >
-          {getAcademicYears(10).map((year) => (
-            <SelectItem key={year.value} value={year.value}>
-              {year.label}
-            </SelectItem>
-          ))}
-        </Select>
-        <ClassDropdown
-          id="class-select"
-          instituteId={institute}
-          onSelect={handleClassSelect}
-          selectedClass={selectedClass}
-          acadmicYear={academicYear}
-          selectedDepartment={selectedDepartment}
-
-        />
-        <Select
-          placeholder="Select Semester"
-          selectedKeys={[selectedSemester]}
-          onSelectionChange={(keys) => setSelectedSemester(Array.from(keys)[0])}
-          variant="bordered"
-          size="sm"
-          className="max-w-52"
-        >
-          <SelectItem key="sem1" value="sem1">
-            Semester 1
-          </SelectItem>
-          <SelectItem key="sem2" value="sem2">
-            Semester 2
-          </SelectItem>
-        </Select>
-        <Input
-          isClearable
-          classNames={{ base: "w-full sm:max-w-[44%]", inputWrapper: "border-1" }}
-          placeholder="Search by Subject name,"
-          size="sm"
-          startContent={<SearchIcon className="text-default-300" />}
-          value={filterValue}
-          variant="bordered"
-          onClear={() => setFilterValue("")}
-          onChange={(e) => setFilterValue(e.target.value)}
-        />
-        <div className="gap-4 items-center flex">
-          <Button
-            color="primary"
-            startContent="Add New"
+          Add Outcome
+        </Button>
+      </CardHeader>
+      
+      <CardBody>
+        <div className="flex flex-wrap gap-3 mb-6 items-end">
+          <Select
+            placeholder="Select Year"
+            selectedKeys={academicYear ? [academicYear] : []}
+            onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
+            startContent={<Calendar className="w-4 h-4 text-default-400" />}
+            variant="bordered"
             size="sm"
-            auto
-            onClick={() => {
-              setModalMode("add");
-              setSelectedSubject(null);
-              setModalOpen(true);
-            }}
+            className="max-w-52"
           >
-            <PlusIcon /> Add Subject
-          </Button>
+            {getAcademicYears(10).map((year) => (
+              <SelectItem key={year.value} value={year.value}>
+                {year.label}
+              </SelectItem>
+            ))}
+          </Select>
+          
+          <ClassDropdown
+            id="class-select"
+            instituteId={institute}
+            onSelect={handleClassSelect}
+            selectedClass={selectedClass}
+            acadmicYear={academicYear}
+            selectedDepartment={selectedDepartment}
+          />
+          
+          <Select
+            placeholder="Select Semester"
+            selectedKeys={[selectedSemester]}
+            onSelectionChange={(keys) => setSelectedSemester(Array.from(keys)[0])}
+            variant="bordered"
+            size="sm"
+            className="max-w-52"
+          >
+            <SelectItem key="sem1" value="sem1">
+              Semester 1
+            </SelectItem>
+            <SelectItem key="sem2" value="sem2">
+              Semester 2
+            </SelectItem>
+          </Select>
+          
+          <Input
+            isClearable
+            classNames={{ base: "w-full sm:max-w-[44%]", inputWrapper: "border-1" }}
+            placeholder="Search by Subject name"
+            size="sm"
+            startContent={<SearchIcon className="text-default-300" />}
+            value={filterValue}
+            variant="bordered"
+            onClear={() => setFilterValue("")}
+            onChange={(e) => setFilterValue(e.target.value)}
+          />
+          
+          <div className="gap-4 items-center flex">
+            <Button
+              color="primary"
+              startContent={<PlusIcon size={16} />}
+              size="sm"
+              onClick={() => {
+                setModalMode("add");
+                setSelectedSubject(null);
+                setModalOpen(true);
+              }}
+            >
+              Add Subject
+            </Button>
+          </div>
         </div>
-      </div>
+        
+        {/* You can add your subjects list or other content here */}
+      </CardBody>
+    </Card>
       {sortedItems.length > 0 && !isLoading ? (
         <Table aria-label="Subject Table" sortDescriptor={sortDescriptor} onSortChange={setSortDescriptor}>
           <TableHeader columns={headerColumns}>

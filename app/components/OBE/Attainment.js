@@ -235,7 +235,7 @@ export default function ViewAttainmentPage() {
             </Card>
 
             {/* Filters */}
-            <Card className="mb-6 shadow-sm">
+            <Card className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm">
                 <CardBody className="flex  flex-col gap-4   p-6">
                     <div className="flex gap-4 items-center">
                         {user?.role === "superadmin" && (

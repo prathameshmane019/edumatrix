@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -26,10 +25,12 @@ import {
 } from "@nextui-org/react";
 import { Calendar, RefreshCcw, Download, AlertCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { motion } from 'framer-motion';
 import { getCurrentAcademicYear, getAcademicYears } from '@/app/utils/acadmicYears';
 import { DepartmentDropdown } from '../department/DepartmentDropDowns';
 import { ClassDropdown } from '../Class/ClassDropdown';
 import { SubjectDropdown } from '../subject/SubjectDropdown';
+
 export default function AdminAttendance({ adminId = '', institute = '', department = '', role = '', year, sem }) {
   const [attendanceData, setAttendanceData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -44,10 +45,9 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
   const [selectedSubjectType, setSelectedSubjectType] = useState('');
 
   useEffect(() => {
-    if (year) setAcademicYear(year)
-    if (sem) setSelectedSemester(sem)
-
-  }, [year])
+    if (year) setAcademicYear(year);
+    if (sem) setSelectedSemester(sem);
+  }, [year, sem]);
 
   const transformAttendanceData = useCallback((data) => {
     if (!data) {
@@ -86,14 +86,12 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
   };
 
   const handleClassSelect = (value) => {
-    setSelectedClass(value)
-  }
+    setSelectedClass(value);
+  };
 
-
-  const handleDepartmentSelect = (departmentId) => {
-    console.log(departmentId.target.value);
-    setSelectedDepartment(departmentId.target.value)
-  }
+  const handleDepartmentSelect = (e) => {
+    setSelectedDepartment(e.target.value);
+  };
 
   const handleApiError = useCallback((error, customMessage) => {
     console.error(customMessage, error);
@@ -101,11 +99,6 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
     setError(errorMessage);
     setLoading(false);
   }, []);
-
-  // useEffect(() => {
-  //   setSelectedSubject('');
-  //   fetchClasses();
-  // }, [fetchClasses, selectedSemester, academicYear]);
 
   const fetchAttendance = useCallback(async () => {
     if (!selectedClass) {
@@ -122,7 +115,7 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
     setError(null);
 
     try {
-      setAttendanceData(null)
+      setAttendanceData(null);
       const params = {
         classId: selectedClass,
         semester: selectedSemester,
@@ -152,7 +145,7 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
     } finally {
       setLoading(false);
     }
-  }, [selectedClass, selectedSemester, selectedDepartment, viewType, selectedSubject, transformAttendanceData, handleApiError]);
+  }, [selectedClass, selectedSemester, selectedDepartment, institute, viewType, selectedSubject, transformAttendanceData, handleApiError]);
 
   const getAttendanceColor = (percentage) => {
     if (typeof percentage !== 'number') return "text-gray-500";
@@ -171,36 +164,48 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
     );
 
     return (
-      <Table aria-label="Attendance Summary Table">
-        <TableHeader>
-          <TableColumn>Roll Number</TableColumn>
-          <TableColumn>Student Name</TableColumn>
-          <TableColumn>Total Lectures</TableColumn>
-          <TableColumn>Present</TableColumn>
-          <TableColumn>Attendance %</TableColumn>
-        </TableHeader>
-        <TableBody>
-          {sortedAttendance.map((record) => (
-            <TableRow key={record._id}>
-              <TableCell>{record.student.rollNumber}</TableCell>
-              <TableCell>{record.student.name}</TableCell>
-              <TableCell>{record.totalLectures}</TableCell>
-              <TableCell>{record.presentCount}</TableCell>
-              <TableCell>
-                <Chip
-                  color={record.percentage >= 75 ? "success" : "danger"}
-                  variant="flat"
-                >
-                  {record.percentage.toFixed(2)}%
-                </Chip>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Table aria-label="Attendance Summary Table">
+          <TableHeader>
+            <TableColumn>Roll Number</TableColumn>
+            <TableColumn>Student Name</TableColumn>
+            <TableColumn>Total Lectures</TableColumn>
+            <TableColumn>Present</TableColumn>
+            <TableColumn>Attendance %</TableColumn>
+          </TableHeader>
+          <TableBody>
+            {sortedAttendance.map((record, index) => (
+              <motion.div
+                key={record._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.3 }}
+              >
+                <TableRow>
+                  <TableCell>{record.student.rollNumber}</TableCell>
+                  <TableCell>{record.student.name}</TableCell>
+                  <TableCell>{record.totalLectures}</TableCell>
+                  <TableCell>{record.presentCount}</TableCell>
+                  <TableCell>
+                    <Chip
+                      color={record.percentage >= 75 ? "success" : "danger"}
+                      variant="flat"
+                    >
+                      {record.percentage.toFixed(2)}%
+                    </Chip>
+                  </TableCell>
+                </TableRow>
+              </motion.div>
+            ))}
+          </TableBody>
+        </Table>
+      </motion.div>
     );
   };
-
 
   const renderAttendanceTable = () => {
     if (!attendanceData?.attendance?.length) return null;
@@ -209,7 +214,12 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
     const practicalSubjects = attendanceData.subjects?.filter(s => s.subType === 'practical') || [];
 
     return (
-      <div className="overflow-x-auto">
+      <motion.div 
+        className="overflow-x-auto"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
         <table className="min-w-full bg-white border border-gray-300">
           <thead>
             <tr>
@@ -236,8 +246,8 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
             </tr>
             <tr>
               <th className="border px-4 py-2" colSpan={2}></th>
-              {[...theorySubjects, ...practicalSubjects].map(() => (
-                <React.Fragment key={`header-${Math.random()}`}>
+              {[...theorySubjects, ...practicalSubjects].map((_, index) => (
+                <React.Fragment key={`header-${index}`}>
                   <th className="border px-4 py-2">Total</th>
                   <th className="border px-4 py-2">Present</th>
                   <th className="border px-4 py-2">Hours</th>
@@ -248,8 +258,13 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
             </tr>
           </thead>
           <tbody>
-            {attendanceData.attendance.map((student) => (
-              <tr key={student._id}>
+            {attendanceData.attendance.map((student, index) => (
+              <motion.tr 
+                key={student._id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03, duration: 0.3 }}
+              >
                 <td className="border px-4 py-2">{student.student.rollNumber}</td>
                 <td className="border px-4 py-2">{student.student.name}</td>
                 {theorySubjects.map(subject => {
@@ -285,20 +300,21 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
                 <td className={`border px-4 py-2 ${getAttendanceColor(student.overallPercentage)}`}>
                   {student.overallPercentage ? student.overallPercentage.toFixed(2) : '0.00'}%
                 </td>
-              </tr>
+              </motion.tr>
             ))}
           </tbody>
         </table>
-      </div>
+      </motion.div>
     );
   };
 
   const handleSubjectSelection = (e) => {
-    console.log(e);
-    setSelectedSubject(e)
-  }
+    setSelectedSubject(e);
+  };
+
   const generateExcelReport = useCallback(() => {
     if (!attendanceData?.attendance) return;
+    
     if (viewType === 'individual') {
       const wb = XLSX.utils.book_new();
       const subjectType = attendanceData.subjectInfo?.subType;
@@ -381,16 +397,16 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
         const summaryData = [
           ['Subject', subjectName],
           ['Type', 'THEORY'],
-          ['Total Students', attendance.length],
-          ['Average Attendance', `${(attendance.reduce((acc, curr) => acc + curr.percentage, 0) / attendance.length).toFixed(2)}%`],
-          ['Below Threshold', attendance.filter(student => student.percentage < 75).length],
+          ['Total Students', attendanceData.attendance.length],
+          ['Average Attendance', `${(attendanceData.attendance.reduce((acc, curr) => acc + curr.percentage, 0) / attendanceData.attendance.length).toFixed(2)}%`],
+          ['Below Threshold', attendanceData.attendance.filter(student => student.percentage < 75).length],
           [''],  // Empty row for spacing
         ];
 
         // Create attendance data
         const attendanceData = [
           ['Roll Number', 'Student Name', 'Total Lectures', 'Present', 'Attendance %'],
-          ...attendance.map(student => [
+          ...attendanceData.attendance.map(student => [
             student.student.rollNumber,
             student.student.name,
             student.totalLectures,
@@ -543,181 +559,287 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
 
     XLSX.utils.book_append_sheet(wb, ws, "Attendance Report");
     XLSX.writeFile(wb, `Attendance_Report_${attendanceData.classInfo?.name || selectedClass}_${selectedSemester}_${new Date().toISOString().split('T')[0]}.xlsx`);
-  }, [attendanceData, selectedClass, selectedSemester]);
+  }, [attendanceData, selectedClass, selectedSemester, viewType]);
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        duration: 0.5,
+        when: "beforeChildren",
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { duration: 0.3 }
+    }
+  };
 
   return (
-    <Card className="w-full">
-      <CardHeader className="flex flex-col gap-4">
-        <div className="flex justify-between items-center w-full">
-          <h1 className="text-2xl font-bold">Attendance Dashboard</h1>
-          {error && (
-            <div className="text-red-500 flex items-center">
-              <AlertCircle className="w-4 h-4 mr-2" />
-              {error}
-            </div>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 items-center md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {role === "superadmin" && (
-            <DepartmentDropdown
-              instituteId={institute}
-              onSelect={handleDepartmentSelect}
-              className="w-full"
-              size='md'
-              selectedDepartment={department}
-              // label='Department'
-            />
-          )}
-          <Dropdown>
-            <DropdownTrigger>
-              <Button
-                variant="bordered"
-                startContent={<Calendar className="w-4 h-4" />}
-                className="w-full"
-              >
-                {academicYear || "Select Year"}
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu
-              items={getAcademicYears(10)}
-              selectedKeys={new Set([academicYear])}
-              onAction={(key) => setAcademicYear(key)}
-            >
-              {(item) => (
-                <DropdownItem key={item.value}>
-                  {item.label}
-                </DropdownItem>
-              )}
-            </DropdownMenu>
-          </Dropdown>
-          <Dropdown>
-            <DropdownTrigger>
-              <Button variant="bordered" className="w-full">
-                {selectedSemester === 'sem1' ? 'Semester 1' : 'Semester 2'}
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu
-              aria-label="Semester selection"
-              onAction={(key) => setSelectedSemester(key)}
-              selectedKeys={new Set([selectedSemester])}
-            >
-              <DropdownItem key="sem1">Semester 1</DropdownItem>
-              <DropdownItem key="sem2">Semester 2</DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
-          <ClassDropdown
-            id="class-select"
-            instituteId={institute}
-            onSelect={handleClassSelect}
-            selectedClass={selectedClass}
-            acadmicYear={academicYear}
-
-            size="md"
-            className='my-4'
-            selectedDepartment={selectedDepartment}
-          />
-          <Dropdown>
-            <DropdownTrigger>
-              <Button
-                variant="bordered"
-                className="w-full"
-              >
-                {viewType === 'cumulative' ? 'Cumulative View' : 'Individual Subject'}
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu
-              selectedKeys={new Set([viewType])}
-              onAction={(key) => setViewType(key)}
-            >
-              <DropdownItem key="cumulative">Cumulative View</DropdownItem>
-              <DropdownItem key="individual">Individual Subject</DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
-          {viewType === 'individual' && (
-            <>
-              <SubjectDropdown
-                instituteId={institute}
-                selectedClass={selectedClass}
-                onSelect={handleSubjectSelection}
-                fetchBy="classId"
-                selectedSubject={selectedSubject}
-                className=''
-              />
-            </>
-          )}
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      <motion.div variants={itemVariants}>
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm mb-6">
+  <CardHeader className="flex justify-between">
+    <h2 className="text-xl font-bold">Attendance Filters</h2>
+  </CardHeader>
+  <CardBody>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {/* Step 1: Select Department (shown only for superadmins) */}
+      {role === "superadmin" && (
+        <DepartmentDropdown
+          instituteId={institute}
+          onSelect={handleDepartmentSelect}
+          className="w-full"
+          size="md"
+          selectedDepartment={selectedDepartment}
+        />
+      )}
+      
+      {/* Step 2: Select Academic Year */}
+      <Dropdown>
+        <DropdownTrigger>
           <Button
-            color="primary"
-            onClick={fetchAttendance}
-            isDisabled={!selectedClass || (viewType === 'individual' && !selectedSubject)}
-            startContent={<RefreshCcw className="w-4 h-4" />}
+            variant="bordered"
+            startContent={<Calendar className="w-4 h-4" />}
+            className="w-full"
           >
-            Fetch Attendance
+            {academicYear || "Select Year"}
           </Button>
-          <Button
-            color="secondary"
-            onClick={generateExcelReport}
-            isDisabled={!attendanceData?.attendance}
-            startContent={<Download className="w-4 h-4" />}
-          >
-            Download Report
+        </DropdownTrigger>
+        <DropdownMenu
+          items={getAcademicYears(10)}
+          selectedKeys={new Set([academicYear])}
+          onAction={(key) => setAcademicYear(key)}
+        >
+          {(item) => (
+            <DropdownItem key={item.value}>
+              {item.label}
+            </DropdownItem>
+          )}
+        </DropdownMenu>
+      </Dropdown>
+      
+      {/* Step 3: Select Semester */}
+      <Dropdown>
+        <DropdownTrigger>
+          <Button variant="bordered" className="w-full">
+            {selectedSemester === "sem1" ? "Semester 1" : "Semester 2"}
           </Button>
-        </div>
-      </CardHeader>
+        </DropdownTrigger>
+        <DropdownMenu
+          aria-label="Semester selection"
+          onAction={(key) => setSelectedSemester(key)}
+          selectedKeys={new Set([selectedSemester])}
+        >
+          <DropdownItem key="sem1">Semester 1</DropdownItem>
+          <DropdownItem key="sem2">Semester 2</DropdownItem>
+        </DropdownMenu>
+      </Dropdown>
+      
+      {/* Step 4: Select Class */}
+      <ClassDropdown
+        id="class-select"
+        instituteId={institute}
+        onSelect={handleClassSelect}
+        selectedClass={selectedClass}
+        acadmicYear={academicYear}
+        size="md"
+        className="w-full"
+        selectedDepartment={selectedDepartment}
+      />
+      
+      {/* Step 5: Select View Type */}
+      <Dropdown>
+        <DropdownTrigger>
+          <Button variant="bordered" className="w-full">
+            {viewType === "cumulative" ? "Cumulative View" : "Individual Subject"}
+          </Button>
+        </DropdownTrigger>
+        <DropdownMenu
+          selectedKeys={new Set([viewType])}
+          onAction={(key) => setViewType(key)}
+        >
+          <DropdownItem key="cumulative">Cumulative View</DropdownItem>
+          <DropdownItem key="individual">Individual Subject</DropdownItem>
+        </DropdownMenu>
+      </Dropdown>
+      
+      {/* Step 6: Select Subject (only if individual view is selected) */}
+      {viewType === "individual" && (
+        <SubjectDropdown
+          instituteId={institute}
+          selectedClass={selectedClass}
+          onSelect={handleSubjectSelection}
+          fetchBy="classId"
+          selectedSubject={selectedSubject}
+          className="w-full"
+        />
+      )}
+    </div>
+    
+    {/* Action Buttons - Placed separately for better visibility */}
+    <div className="flex flex-wrap gap-4 mt-4">
+      <motion.div
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <Button
+          color="primary"
+          onClick={fetchAttendance}
+          isDisabled={!selectedClass || (viewType === "individual" && !selectedSubject)}
+          startContent={<RefreshCcw className="w-4 h-4" />}
+        >
+          Fetch Attendance
+        </Button>
+      </motion.div>
+      
+      <motion.div
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <Button
+          color="secondary"
+          onClick={generateExcelReport}
+          isDisabled={!attendanceData?.attendance}
+          startContent={<Download className="w-4 h-4" />}
+        >
+          Download Report
+        </Button>
+      </motion.div>
+    </div>
+    
+    {/* Error Display */}
+    {error && (
+      <motion.div 
+        className="text-red-500 flex items-center mt-3"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <AlertCircle className="w-4 h-4 mr-2" />
+        {error}
+      </motion.div>
+    )}
+  </CardBody>
+</Card>
+      </motion.div>
 
-      <CardBody>
-        {loading ? (
-          <div className="flex justify-center items-center min-h-[200px]">
-            <Spinner size="lg" />
-          </div>
-        ) : attendanceData?.attendance ? (
-          <>
-            {attendanceData.summary && (
-              <Card className="mb-4 bg-primary-50">
-                <CardBody>
-                  <div className="flex gap-4 justify-around">
-                    <div className="text-center">
-                      <div className="text-sm text-default-600">Total Students</div>
-                      <div className="text-xl font-bold">{attendanceData.summary.totalStudents}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-sm text-default-600">Average Attendance</div>
-                      <div className="text-xl font-bold">{attendanceData.summary.averageAttendance}%</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-sm text-default-600">Below Threshold</div>
-                      <div className="text-xl font-bold">{attendanceData.summary.belowThreshold}</div>
-                    </div>
-                  </div>
-                </CardBody>
-              </Card>
-            )}
-
-            {viewType === 'cumulative' ? (
-              renderAttendanceTable()
+      <motion.div variants={itemVariants}>
+        <Card className="w-full">
+          <CardHeader>
+            <h1 className="text-2xl font-bold">Attendance Dashboard</h1>
+          </CardHeader>
+          <CardBody>
+            {loading ? (
+              <div className="flex justify-center items-center min-h-[200px]">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  
+                  transition={{ duration: 0.5 }}
+                >
+                  <Spinner size="lg" />
+                </motion.div>
+              </div>
             ) : (
               <>
-                {attendanceData.subjectInfo?.subType === 'theory' ? (
-                  renderSummaryTable(attendanceData.attendance)
-                ) : (
-                  <Tabs>
-                    {Object.entries(attendanceData.attendance || {}).map(([batchName, batchData]) => (
-                      <Tab key={batchName} title={`Batch ${batchName}`}>
-                        {renderSummaryTable(batchData)}
-                      </Tab>
-                    ))}
-                  </Tabs>
+                {attendanceData && (
+                  <>
+                    {viewType === 'individual' ? (
+                      <div>
+                        <Card className="mb-4">
+                          <CardHeader>
+                            <h2 className="text-xl font-bold">
+                              {attendanceData.subjectInfo?.name} {attendanceData.subjectInfo?.subType === 'practical' ? '(Practical)' : '(Theory)'}
+                            </h2>
+                          </CardHeader>
+                          <CardBody>
+                            {attendanceData.subjectInfo?.subType === 'practical' || attendanceData.subjectInfo?.subType === 'tg' ? (
+                              <Tabs>
+                                {Object.keys(attendanceData.attendance).map((batchName) => (
+                                  <Tab key={batchName} title={`Batch ${batchName}`}>
+                                    {renderSummaryTable(attendanceData.attendance[batchName])}
+                                  </Tab>
+                                ))}
+                              </Tabs>
+                            ) : (
+                              renderSummaryTable(attendanceData.attendance)
+                            )}
+                          </CardBody>
+                        </Card>
+                      </div>
+                    ) : (
+                      <div>
+                        {renderAttendanceTable()}
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             )}
-          </>
-        ) : (
-          <div className="text-center p-8 text-gray-500">
-            Select filters and click Fetch Attendance to view data
-          </div>
-        )}
-      </CardBody>
-    </Card>
+          </CardBody>
+        </Card>
+      </motion.div>
+
+      {attendanceData && viewType === 'cumulative' && (
+        <motion.div 
+          variants={itemVariants}
+          className="mt-6"
+        >
+          <Card>
+            <CardHeader>
+              <h2 className="text-xl font-bold">Attendance Summary</h2>
+            </CardHeader>
+            <CardBody>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <Tooltip content="Total number of students in the class">
+                  <Card className="bg-blue-50">
+                    <CardBody>
+                      <p className="text-sm text-gray-500">Total Students</p>
+                      <p className="text-2xl font-bold">{attendanceData.attendance.length}</p>
+                    </CardBody>
+                  </Card>
+                </Tooltip>
+                
+                <Tooltip content="Average attendance percentage across all students">
+                  <Card className="bg-green-50">
+                    <CardBody>
+                      <p className="text-sm text-gray-500">Average Attendance</p>
+                      <p className="text-2xl font-bold">
+                        {(attendanceData.attendance.reduce((acc, student) => acc + (student.overallPercentage || 0), 0) / attendanceData.attendance.length).toFixed(2)}%
+                      </p>
+                    </CardBody>
+                  </Card>
+                </Tooltip>
+                
+                <Tooltip content="Number of students with attendance below 75%">
+                  <Card className="bg-red-50">
+                    <CardBody>
+                      <p className="text-sm text-gray-500">Below Threshold</p>
+                      <p className="text-2xl font-bold">
+                        {attendanceData.attendance.filter(student => (student.overallPercentage || 0) < 75).length}
+                      </p>
+                    </CardBody>
+                  </Card>
+                </Tooltip>
+              </div>
+            </CardBody>
+          </Card>
+        </motion.div>
+      )}
+    </motion.div>
   );
 }

@@ -516,26 +516,27 @@ export default function FacultyAttendance({ facultyId = '', institute = '', sele
   );
 
   return (
-    <Card className="w-full">
-      <CardHeader className="flex flex-col gap-4">
-        <div className="flex justify-between items-center w-full">
-          <h1 className="text-2xl font-bold">Faculty Attendance Report</h1>
-          {attendanceData?.subjectInfo && (
-            <div className="flex gap-2 items-center">
-              <Chip color="primary" variant="flat">
-                {attendanceData.subjectInfo.name}
-              </Chip>
+  <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm mb-6">
+      <CardHeader className="flex justify-between">
+        <h1 className="text-2xl font-bold">Faculty Attendance Report</h1>
+      </CardHeader>
+      <CardBody>
+        {attendanceData?.subjectInfo && (
+          <div className="flex gap-2 items-center">
+            <Chip color="primary" variant="flat">
+              {attendanceData.subjectInfo.name}
+            </Chip>
+            <Chip variant="flat">
+              Semester {selectedSemester?.toUpperCase()}
+            </Chip>
+            {userProfile && userProfile.department && (
               <Chip variant="flat">
-                Semester {selectedSemester?.toUpperCase()}
+                {userProfile.department}
               </Chip>
-              {userProfile && userProfile.department && (
-                <Chip variant="flat">
-                  {userProfile.department}
-                </Chip>
-              )}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
+      
         <div className="mb-4 flex flex-wrap gap-4">
           {renderDropdown(
             "Academic Year",
@@ -601,8 +602,7 @@ export default function FacultyAttendance({ facultyId = '', institute = '', sele
             Download Report
           </Button>
         </div>
-      </CardHeader>
-      <CardBody>
+
         {loading ? (
           <div className="flex justify-center p-8">
             <Spinner size="lg" />
@@ -650,4 +650,3 @@ export default function FacultyAttendance({ facultyId = '', institute = '', sele
     </Card>
   );
 }
-

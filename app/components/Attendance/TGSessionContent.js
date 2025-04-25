@@ -31,10 +31,12 @@ const TGSessionContent = React.memo(({
   }, [tgSessions]);
 
   return (
-    <Card>
-      <CardHeader>
-        <h2 className="text-xl font-bold">TG Session Details</h2>
-      </CardHeader>
+    <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm mb-6">
+           <CardHeader className="flex justify-between">
+          
+             <h2 className="text-xl font-bold">TG Session</h2>
+           </CardHeader>
+         
       <CardBody className="space-y-4">
         <div className="flex items-center gap-2">
           <Calendar size={20} />

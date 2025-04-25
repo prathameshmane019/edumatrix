@@ -267,8 +267,8 @@ const AbsentStudentsPage = () => {
 
   return (
     <div className="container mx-auto p-4 space-y-6">
-      <Card>
-        <CardHeader>
+   <Card className='bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm'>
+         <CardHeader className="flex justify-between">
           <h2 className="text-2xl font-bold">Absent Students Report</h2>
         </CardHeader>
         <CardBody>

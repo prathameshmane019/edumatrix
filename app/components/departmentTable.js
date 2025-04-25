@@ -17,6 +17,9 @@ import {
   Pagination,
   Spinner,
   Tooltip,
+  Card,
+  CardHeader,
+  CardBody,
 } from "@nextui-org/react";
 import { toast } from "sonner";
 import { ChevronDownIcon } from "@/public/ChevronDownIcon";
@@ -53,6 +56,7 @@ export default function DepartmentTable() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState(null);
   const [profile, setProfile] = useState(null);
+  
   useEffect(() => {
     if (profile?._id) {
       fetchDepartments();
@@ -217,79 +221,6 @@ export default function DepartmentTable() {
     }
   };
 
-  const topContent = useMemo(() => {
-    return (
-      <div className="flex flex-col gap-4">
-        <div className="flex justify-between gap-3 items-end">
-          <Input
-            isClearable
-            className="w-full sm:max-w-[44%]"
-            placeholder="Search by department..."
-            startContent={<SearchIcon />}
-            value={filterValue}
-            onClear={() => setFilterValue("")}
-            onValueChange={onSearchChange}
-          />
-          <div className="flex gap-3">
-            <Dropdown>
-              <DropdownTrigger className="hidden sm:flex">
-                <Button endContent={<ChevronDownIcon />} variant="flat">
-                  Columns
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu
-                disallowEmptySelection
-                aria-label="Table Columns"
-                closeOnSelect={false}
-                selectedKeys={visibleColumns}
-                selectionMode="multiple"
-                onSelectionChange={setVisibleColumns}
-              >
-                {columns.map((column) => (
-                  <DropdownItem key={column.uid} className="capitalize">
-                    {capitalize(column.name)}
-                  </DropdownItem>
-                ))}
-              </DropdownMenu>
-            </Dropdown>
-            <Button
-              color="primary"
-              endContent={<PlusIcon />}
-              onClick={() => {
-                setEditingDepartment(null);
-                setModalOpen(true);
-              }}
-            >
-              Add New
-            </Button>
-          </div>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-default-400 text-small">
-            Total {departments.length} departments
-          </span>
-          <label className="flex items-center text-default-400 text-small">
-            Rows per page:
-            <select
-              className="bg-transparent outline-none text-default-400 text-small"
-              onChange={onRowsPerPageChange}
-            >
-              <option value="5">5</option>
-              <option value="10">10</option>
-              <option value="15">15</option>
-            </select>
-          </label>
-        </div>
-      </div>
-    );
-  }, [
-    filterValue,
-    visibleColumns,
-    onSearchChange,
-    onRowsPerPageChange,
-    departments.length,
-  ]);
-
   const bottomContent = useMemo(() => {
     return (
       <div className="py-2 px-2 flex justify-between items-center">
@@ -311,8 +242,67 @@ export default function DepartmentTable() {
       </div>
     );
   }, [selectedKeys, filteredItems.length, page, pages]);
+  
   return (
     <>
+      {/* Card Structure for Department Management */}
+      <Card className='bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm mb-6'>
+        <CardHeader className="flex justify-between">
+          <h2 className="text-xl font-bold">Department Management</h2>
+          <Button
+            color="primary"
+            endContent={<PlusIcon />}
+            onClick={() => {
+              setEditingDepartment(null);
+              setModalOpen(true);
+            }}
+          >
+            Add Department
+          </Button>
+        </CardHeader>
+        <CardBody>
+          {/* Filters Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Input
+                isClearable
+                className="w-full"
+                placeholder="Search by department..."
+                startContent={<SearchIcon />}
+                value={filterValue}
+                onClear={() => setFilterValue("")}
+                onValueChange={onSearchChange}
+              />
+            </div>
+            <div className="flex justify-end">
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button endContent={<ChevronDownIcon />} variant="flat">
+                    Columns
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  disallowEmptySelection
+                  aria-label="Table Columns"
+                  closeOnSelect={false}
+                  selectedKeys={visibleColumns}
+                  selectionMode="multiple"
+                  onSelectionChange={setVisibleColumns}
+                >
+                  {columns.map((column) => (
+                    <DropdownItem key={column.uid} className="capitalize">
+                      {capitalize(column.name)}
+                    </DropdownItem>
+                  ))}
+                </DropdownMenu>
+              </Dropdown>
+            </div>
+          </div>
+          
+        </CardBody>
+      </Card>
+
+      {/* Table Structure */}
       <Table
         aria-label="Department table"
         bottomContent={bottomContent}
@@ -323,8 +313,6 @@ export default function DepartmentTable() {
         selectedKeys={selectedKeys}
         selectionMode="none"
         sortDescriptor={sortDescriptor}
-        topContent={topContent}
-        topContentPlacement="outside"
         onSelectionChange={setSelectedKeys}
         onSortChange={setSortDescriptor}
       >
@@ -353,6 +341,23 @@ export default function DepartmentTable() {
           )}
         </TableBody>
       </Table>
+
+      <div className="flex justify-between items-center mt-4">
+            <span className="text-default-400 text-small">
+              Total {departments.length} departments
+            </span>
+            <label className="flex items-center text-default-400 text-small">
+              Rows per page:
+              <select
+                className="bg-transparent outline-none text-default-400 text-small ml-2"
+                onChange={onRowsPerPageChange}
+              >
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="15">15</option>
+              </select>
+            </label>
+          </div>
       <DepartmentModal
         isOpen={modalOpen}
         onClose={handleModalClose}

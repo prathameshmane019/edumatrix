@@ -11,6 +11,13 @@ import { handleExcelUpload, handleExcelDownload } from '@/app/utils/excelHandler
 import CourseContentManager from './CourseContentManager'
 import { Pencil, PencilIcon } from 'lucide-react'
 import { SubjectDropdown } from './subject/SubjectDropdown'
+import {
+
+  Card,
+  CardBody,
+  CardHeader
+  
+} from "@nextui-org/react"
 
 
 export default function TeachingPlanPage() {
@@ -156,7 +163,13 @@ export default function TeachingPlanPage() {
   };
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Manage Teaching Plan</h1>
+       <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm mb-6">
+              <CardHeader className="flex justify-between">
+             
+                <h2 className="text-xl font-bold">Manage Teaching Plan</h2>
+              </CardHeader>
+              <CardBody>
+   
 
       <div className="mb-4">
         <SubjectDropdown
@@ -167,6 +180,8 @@ export default function TeachingPlanPage() {
 
         />
       </div>
+      </CardBody>
+      </Card>
 
       {isLoading && (
         <div className="flex flex-col items-center my-4">

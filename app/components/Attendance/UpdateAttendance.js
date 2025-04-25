@@ -642,8 +642,13 @@ export default function UpdateAttendance() {
 
   return (
     <div className="flex flex-col gap-4 p-4 max-w-7xl mx-auto">
-      <Card>
-        <CardBody>
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm mb-6">
+             <CardHeader className="flex justify-between">
+            
+               <h2 className="text-xl font-bold">Update Attendance</h2>
+             </CardHeader>
+             <CardBody>
+
           <div className="flex flex-wrap gap-4 items-center">
             <SubjectDropdown
               facultyId={profile?._id}
