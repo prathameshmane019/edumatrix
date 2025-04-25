@@ -458,7 +458,11 @@ export default function AttendanceSystem() {
         </div>
       )}
       
-      <Card>
+       <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm mb-6">
+        <CardHeader className="flex justify-between">
+       
+          <h2 className="text-xl font-bold">Take Attendance</h2>
+        </CardHeader>
         <CardBody>
           <div className="flex flex-wrap gap-4 items-center">
             <SubjectDropdown

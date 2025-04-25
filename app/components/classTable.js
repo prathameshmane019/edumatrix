@@ -29,6 +29,9 @@ import { EditIcon } from "@/public/EditIcon";
 import { DeleteIcon } from "@/public/DeleteIcon";
 import { SearchIcon } from "@/public/SearchIcon";
 
+import { Card, CardHeader, CardBody } from "@nextui-org/react";
+
+
 import * as XLSX from "xlsx";
 import { FaFileDownload } from "react-icons/fa";
 import Image from "next/image";
@@ -291,70 +294,79 @@ export default function ClassTable() {
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row justify-between my-4 gap-3 items-end">
-        <Select
-          placeholder="Select Academic Year"
-          variant="bordered"
-          size="sm"
-          selectedKeys={selectedYear ? [selectedYear] : []}
-          onSelectionChange={(keys) => setSelectedYear(Array.from(keys)[0])}
-          startContent={<Calendar className="w-4 h-4 text-default-400" />}
-          className="w-full sm:w-[40%] my-2 sm:my-4"
-        >
-          {getAcademicYears(10).map((year) => (
-            <SelectItem key={year.value} value={year.value}>
-              {year.label}
-            </SelectItem>
-          ))}
-        </Select>
-        
-        {profile?.role !== "admin" && (
-          <DepartmentDropdown 
-            instituteId={profile?.role === "superadmin" ? profile?._id : profile?.institute?._id}
-            onSelect={handleDepartmentSelect}
+       <Card className='bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm'>
+      <CardHeader className="flex justify-between">
+        <h2 className="text-xl font-bold">Class Management</h2>
+        <Button
+              color="primary"
+              startContent={<PlusIcon />}
+              size="sm"
+              auto
+              onClick={handleAddClassClick}
+              isDisabled={!selectedDepartment || !selectedYear}
+            >
+              Add Class
+            </Button>
+      </CardHeader>
+      <CardBody>
+        {/* Filters Section */}
+        <div className="flex flex-col sm:flex-row justify-between my-4 gap-3 items-end">
+          <Select
+            placeholder="Select Academic Year"
+            variant="bordered"
+            size="sm"
+            selectedKeys={selectedYear ? [selectedYear] : []}
+            onSelectionChange={(keys) => setSelectedYear(Array.from(keys)[0])}
+            startContent={<Calendar className="w-4 h-4 text-default-400" />}
             className="w-full sm:w-[40%] my-2 sm:my-4"
-            selectedDepartment={selectedDepartment}
+          >
+            {getAcademicYears(10).map((year) => (
+              <SelectItem key={year.value} value={year.value}>
+                {year.label}
+              </SelectItem>
+            ))}
+          </Select>
+          
+          {profile?.role !== "admin" && (
+            <DepartmentDropdown 
+              instituteId={profile?.role === "superadmin" ? profile?._id : profile?.institute?._id}
+              onSelect={handleDepartmentSelect}
+              className="w-full sm:w-[40%] my-2 sm:my-4"
+              selectedDepartment={selectedDepartment}
+            />
+          )}
+          
+          <Input
+            isClearable
+            classNames={{
+              base: "w-full sm:max-w-[44%] my-2 sm:my-4",
+              inputWrapper: "border-1",
+            }}
+            placeholder="Search by class name or teacher..."
+            size="sm"
+            startContent={<SearchIcon className="text-default-300" />}
+            value={filterValue}
+            variant="bordered"
+            onClear={() => setFilterValue("")}
+            onChange={(e) => setFilterValue(e.target.value)}
           />
-        )}
-        
-        <Input
-          isClearable
-          classNames={{
-            base: "w-full sm:max-w-[44%] my-2 sm:my-4",
-            inputWrapper: "border-1",
-          }}
-          placeholder="Search by class name or teacher..."
-          size="sm"
-          startContent={<SearchIcon className="text-default-300" />}
-          value={filterValue}
-          variant="bordered"
-          onClear={() => setFilterValue("")}
-          onChange={(e) => setFilterValue(e.target.value)}
-        />
-        
-        <div className="gap-4 my-2 sm:my-4 items-center flex flex-wrap justify-center sm:justify-end">
-          <Button
-            color="primary"
-            startContent={<PlusIcon />}
-            size="sm"
-            auto
-            onClick={handleAddClassClick}
-            isDisabled={!selectedDepartment || !selectedYear}
-          >
-            Add Class
-          </Button>
-          <Button
-            color="primary"
-            size="sm"
-            variant="ghost"
-            onClick={downloadExcel}
-            endContent={<FaFileDownload />}
-            isDisabled={!classes.length}
-          >
-            Download
-          </Button>
+          
+          <div className="gap-4 my-2 sm:my-4 items-center flex flex-wrap justify-center sm:justify-end">
+           
+            <Button
+              color="primary"
+              size="sm"
+              variant="ghost"
+              onClick={downloadExcel}
+              endContent={<FaFileDownload />}
+              isDisabled={!classes.length}
+            >
+              Download
+            </Button>
+          </div>
         </div>
-      </div>
+      </CardBody>
+    </Card>
       
       {isLoadingClasses ? (
         <div className="flex justify-center items-center h-64">
