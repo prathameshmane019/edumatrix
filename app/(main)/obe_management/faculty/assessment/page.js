@@ -328,15 +328,11 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
             </SelectItem>
           ))}
         </Select>
-<<<<<<< HEAD
-        <Select
-          label="Semester"
-          placeholder="Select Semester"
-=======
+
         <Select 
           variant="bordered"
           placeholder="Filter by Semester"
->>>>>>> 0e2187b028d72b246cdc381c47df0704ae3e9edf
+
           selectedKeys={filterSem ? new Set([filterSem]) : new Set()}
           onSelectionChange={handleFilterSemChange}
           className="max-w-xs"
@@ -363,11 +359,9 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
           label="Subject"
           // semester={filterSem}
           className="max-w-xs"
-<<<<<<< HEAD
-          isDisabled={!isSubjectDropdownEnabled}
-=======
+
           // isDisabled={!academicYear}
->>>>>>> 0e2187b028d72b246cdc381c47df0704ae3e9edf
+
           classNames={{
             base: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all",
             label: "text-slate-700 font-medium",
