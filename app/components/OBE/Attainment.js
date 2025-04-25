@@ -83,7 +83,7 @@ export default function ViewAttainmentPage() {
 
     // Calculate attainment
     const calculateAttainment = useCallback(async () => {
-        if (!subject || !academicYear || !user?.institute?._id || !user?.department) {
+        if (!subject && !academicYear && (!user?.institute?._id || !user._id) && (!user?.department|| !selectedDept)) {
             toast.info("Please select Academic Year, Subject, and ensure institute and department are available.");
             return;
         }
@@ -100,8 +100,8 @@ export default function ViewAttainmentPage() {
                     subject: subject,
                     academicYear,
                     sem: filterSem || undefined,
-                    instituteId: user.institute._id,
-                    department: user.department // Assuming department has a name field (string)
+                    instituteId: user?.institute?._id || user?._id,
+                    department: user?.department || selectedDept // Assuming department has a name field (string)
                 }
             });
 
@@ -117,8 +117,8 @@ export default function ViewAttainmentPage() {
                     subject: subject,
                     academicYear,
                     sem: filterSem || undefined,
-                    department: user.department,
-                    instituteId: user.institute._id
+                    department: user?.department || selectedDept,
+                    instituteId: user?.institute?._id || user?._id
                 }
             });
 
@@ -139,7 +139,7 @@ export default function ViewAttainmentPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [subject, academicYear, filterSem, user?.institute?._id, user?.department?.name]);
+    }, [subject, academicYear, filterSem, user?.institute?._id, user?.department, selectedDept, user?._id]);
 
     // Chart data
     const coChartData = useMemo(() => {
@@ -221,12 +221,13 @@ export default function ViewAttainmentPage() {
             {/* Filters */}
             <Card className="mb-6 shadow-sm">
                 <CardBody className="flex  flex-col gap-4   p-6">
-                    <div className="flex gap-4">
+                    <div className="flex gap-4 items-center">
                         {user?.role === "superadmin" && (
                             <DepartmentDropdown
                                 instituteId={user?.role === "superadmin" ? user?._id : user?.institute?._id}
                                 onSelect={handleDepartmentSelect}
                                 className="w-full sm:w-[40%] my-2 sm:my-4"
+                                size='md'
                                 selectedDepartment={selectedDept}
                             />)}
 
@@ -272,6 +273,7 @@ export default function ViewAttainmentPage() {
                                 onSelect={handleClassSelect}
                                 selectedClass={selectedClass}
                                 acadmicYear={academicYear}
+                                size='md'
                                 selectedDepartment={selectedDept}
                                 className="my-4 max-w-60"
                             />)}
@@ -280,10 +282,11 @@ export default function ViewAttainmentPage() {
                             department={user?.role === "superadmin" ? selectedDept : user?.id}
                             academicYear={academicYear}
                             onSelect={handleSubjectChange}
-                            facultyId={user?.role ==="faculty" &&user?._id}
-                            selectedSubject={subject} 
+                            facultyId={user?.role === "faculty" && user?._id}
+                            size='md'
+                            selectedSubject={subject}
                             selectedClass={selectedClass}
-                            semester={filterSem} 
+                            semester={filterSem}
                             fetchBy={user?.role === "faculty" ? "facultyId" : "classId"}
                             classNames={{
                                 base: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-500 transition-all duration-200",

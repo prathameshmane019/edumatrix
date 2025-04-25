@@ -15,6 +15,8 @@ export function SubjectDropdown({
   onSubjectTypeChange,
   fetchBy = 'facultyId',
   semester = '',
+  label = '',
+  size = 'sm',
   department,
   subType
 }) 
@@ -89,16 +91,13 @@ export function SubjectDropdown({
     <Select
       placeholder={isLoading ? "Loading subjects..." : "Select a subject"}
       variant="bordered"
-      // size="sm"
-      // label="Select subject"
+      size={size}
+      label={label}
 
       value={selectedSubject}
       selectedKeys={selectedSubject ? [selectedSubject] : []}
 
-      // onSelectionChange={(keys) => {
-      //   const selectedKey = Array.from(keys)[0]
-      //   handleSelectChange(selectedKey)
-      // }}
+    
       
       onChange={handleSelectChange}
       className={`w-full max-w-xs  ${className}`}
