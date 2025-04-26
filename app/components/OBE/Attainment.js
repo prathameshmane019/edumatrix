@@ -1,22 +1,8 @@
 "use client";
 import React, { useState, useCallback, useMemo } from 'react';
 import {
-    Button,
-    Select,
-    SelectItem,
-    Table,
-    TableHeader,
-    TableColumn,
-    TableBody,
-    TableRow,
-    TableCell,
-    Spinner,
-    Chip,
-    Progress,
-    Card,
-    CardBody,
-    CardHeader,
-    Tooltip
+    Button, Select, SelectItem, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
+    Spinner, Chip, Progress, Card, CardBody, CardHeader, Tooltip, Tabs, Tab, Input, Slider
 } from '@nextui-org/react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -32,50 +18,41 @@ import { DepartmentDropdown } from '@/app/components/department/DepartmentDropDo
 export default function ViewAttainmentPage() {
     const { user } = useUser();
     const [subject, setSubject] = useState(null);
-    const [academicYears, setAcademicYears] = useState([]);
     const [academicYear, setAcademicYear] = useState("");
     const [filterSem, setFilterSem] = useState("");
     const [coAttainmentData, setCoAttainmentData] = useState([]);
-    const [selectedClass, setSelectedClass] = useState(null);
     const [poAttainmentData, setPoAttainmentData] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [selectedDept, setSelectedDept] = useState(''); 
-  // State for the full subject document
-  const [subjectDocument, setSubjectDocument] = useState(null);
-    const handleDepartmentSelect = (departmentId) => {
-        setSelectedDept(departmentId.target.value);
-    };
+    const [selectedDept, setSelectedDept] = useState('');
+    const [selectedClass, setSelectedClass] = useState(null);
+    const [subjectDocument, setSubjectDocument] = useState(null);
+    const [coThreshold, setCoThreshold] = useState(60); // Default CO threshold
+    const [coTarget, setCoTarget] = useState(70); // Default CO target
 
-    const handleClassSelect = (value) => setSelectedClass(value);
-    // Academic year options
-    const academicYearOptions = useMemo(
-        () => getAcademicYears(10).map((year) => ({
-            key: year.value,
-            value: year.value,
-            label: year.label,
-        })),
-        []
-    );
-    const handleSubjectDocChange = (fullSubjectDoc) => {
-        setSubjectDocument(fullSubjectDoc);
-        console.log('Full subject document:', fullSubjectDoc);
-         
-      };
-      React.useEffect(() => {
+    // Memoized academic year options
+    const academicYearOptions = useMemo(() => getAcademicYears(10).map(year => ({
+        key: year.value,
+        value: year.value,
+        label: year.label,
+    })), []);
+
+    // Set default academic year
+    React.useEffect(() => {
         const years = getAcademicYears(10);
-        setAcademicYears(years);
-    
         const currentYear = new Date().getFullYear();
         const currentMonth = new Date().getMonth() + 1;
-        let defaultAcademicYear =
-            currentMonth >= 7
-                ? `${currentYear}-${currentYear + 1}`
-                : `${currentYear - 1}-${currentYear}`;
-        const matchingYear = years.find((y) => y.value === defaultAcademicYear);
+        const defaultAcademicYear = currentMonth >= 7
+            ? `${currentYear}-${currentYear + 1}`
+            : `${currentYear - 1}-${currentYear}`;
+        const matchingYear = years.find(y => y.value === defaultAcademicYear);
         if (matchingYear) setAcademicYear(matchingYear.value);
     }, []);
 
+    // Handlers
+    const handleDepartmentSelect = (departmentId) => setSelectedDept(departmentId.target.value);
+    const handleClassSelect = (value) => setSelectedClass(value);
+    const handleSubjectDocChange = (fullSubjectDoc) => setSubjectDocument(fullSubjectDoc);
     const handleAcademicYearChange = useCallback((keys) => {
         const selectedYear = keys.size > 0 ? Array.from(keys)[0].toString() : "";
         setAcademicYear(selectedYear);
@@ -96,10 +73,10 @@ export default function ViewAttainmentPage() {
         setCoAttainmentData([]);
         setPoAttainmentData([]);
     }, []);
-    
+
     // Calculate attainment
     const calculateAttainment = useCallback(async () => {
-        if (!subject && !academicYear && (!user?.institute?._id || !user._id) && (!user?.department|| !selectedDept)) {
+        if (!subject && !academicYear && (!user?.institute?._id || !user?._id) && (!user?.department || !selectedDept)) {
             toast.info("Please select Academic Year, Subject, and ensure institute and department are available.");
             return;
         }
@@ -110,16 +87,31 @@ export default function ViewAttainmentPage() {
         setPoAttainmentData([]);
 
         try {
-            // Fetch CO attainment
-            const coResponse = await axios.get('/api/v2/obe/attainment/co', {
-                params: {
-                    subject: subject,
-                    academicYear,
-                    sem: filterSem || undefined,
-                    instituteId: user?.institute?._id || user?._id,
-                    department: user?.department || selectedDept // Assuming department has a name field (string)
-                }
-            });
+            // Fetch CO and PO attainment concurrently
+            const [coResponse, poResponse] = await Promise.all([
+                axios.get('/api/v2/obe/attainment/co', {
+                    params: {
+                        subject,
+                        academicYear,
+                        sem: filterSem || undefined,
+                        instituteId: user?.institute?._id || user?._id,
+                        department: user?.department || selectedDept,
+                        coThreshold,
+                        coTarget
+                    }
+                }),
+                axios.get('/api/v2/obe/attainment/po', {
+                    params: {
+                        subject,
+                        academicYear,
+                        sem: filterSem || undefined,
+                        department: user?.department || selectedDept,
+                        instituteId: user?.institute?._id || user?._id,
+                        coThreshold,
+                        coTarget
+                    }
+                })
+            ]);
 
             if (coResponse.data.success && Array.isArray(coResponse.data.data)) {
                 setCoAttainmentData(coResponse.data.data);
@@ -127,24 +119,13 @@ export default function ViewAttainmentPage() {
                 toast.error("No CO attainment data found.");
             }
 
-            // Fetch PO attainment
-            const poResponse = await axios.get('/api/v2/obe/attainment/po', {
-                params: {
-                    subject: subject,
-                    academicYear,
-                    sem: filterSem || undefined,
-                    department: user?.department || selectedDept,
-                    instituteId: user?.institute?._id || user?._id
-                }
-            });
-
             if (poResponse.data.success && Array.isArray(poResponse.data.data)) {
                 setPoAttainmentData(poResponse.data.data);
             } else {
                 toast.error("No PO/PSO attainment data found.");
             }
 
-            if (coResponse.data.success && poResponse.data.success) {
+            if (coResponse.data.success || poResponse.data.success) {
                 toast.success("Attainment calculated successfully.");
             }
         } catch (err) {
@@ -155,24 +136,20 @@ export default function ViewAttainmentPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [subject, academicYear, filterSem, user?.institute?._id, user?.department, selectedDept, user?._id]);
+    }, [subject, academicYear, filterSem, user, selectedDept, coThreshold, coTarget]);
 
     // Chart data
-    const coChartData = useMemo(() => {
-        return coAttainmentData.map(item => ({
-            name: item.coCode,
-            attainment: item.attainmentLevel,
-            target: item.targetPercentage
-        }));
-    }, [coAttainmentData]);
+    const coChartData = useMemo(() => coAttainmentData.map(item => ({
+        name: item.coCode,
+        attainment: item.attainmentLevel,
+        target: item.targetPercentage
+    })), [coAttainmentData]);
 
-    const poChartData = useMemo(() => {
-        return poAttainmentData.map(item => ({
-            name: item.poCode,
-            attainment: item.attainmentLevel,
-            target: item.targetPercentage
-        }));
-    }, [poAttainmentData]);
+    const poChartData = useMemo(() => poAttainmentData.map(item => ({
+        name: item.poCode,
+        attainment: item.attainmentLevel,
+        target: item.targetPercentage
+    })), [poAttainmentData]);
 
     const coPieData = useMemo(() => {
         const attained = coAttainmentData.filter(co => co.isAttained).length;
@@ -212,118 +189,133 @@ export default function ViewAttainmentPage() {
     }, [coAttainmentData, poAttainmentData, academicYear, subject]);
 
     return (
-        <div className="p-4 md:p-8 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
-            <Card className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm">
-                <CardHeader className=" ">
+        <div className="p-6 md:p-10 bg-slate-50 min-h-screen">
+            {/* Header Card */}
+            <Card className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm">     
+                <CardHeader className="bg-indigo-50">
                     <h1 className="text-2xl font-bold text-slate-800">OBE Attainment Dashboard</h1>
                 </CardHeader>
                 <CardBody className="p-6">
-                    {subject && academicYear && (
-                        <p className="text-slate-600 text-sm">
-                            Year: {academicYear} | Semester: {filterSem || "All"} | Subject: {subjectDocument?.label || subject}
-                        </p>
-                    )}
-                    {!subject && academicYear && (
-                        <p className="text-slate-600 text-sm">
-                            Year: {academicYear} | Semester: {filterSem || "All"} | Please select a subject.
-                        </p>
-                    )}
-                    {!academicYear && (
-                        <p className="text-slate-600 text-sm">Select Academic Year and Subject to view attainment levels.</p>
-                    )}
+                    <p className="text-slate-600 text-sm">
+                        {academicYear && `Year: ${academicYear} | `}
+                        {filterSem && `Semester: ${filterSem} | `}
+                        {subject ? `Subject: ${subjectDocument?.label || subject}` : 'Please select a subject.'}
+                    </p>
                 </CardBody>
             </Card>
 
-            {/* Filters */}
-            <Card className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm">
-                <CardBody className="flex  flex-col gap-4   p-6">
-                    <div className="flex gap-4 items-center">
+            {/* Filters Card */}
+            <Card className="mb-6 bg-white shadow-md border border-slate-200">
+                <CardBody className="p-6">
+                    <div className="grid grid-cols-1 items-center md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                         {user?.role === "superadmin" && (
                             <DepartmentDropdown
-                                instituteId={user?.role === "superadmin" ? user?._id : user?.institute?._id}
+                                instituteId={user?._id || user?.institute?._id}
                                 onSelect={handleDepartmentSelect}
-                                className="w-full sm:w-[40%] my-2 sm:my-4"
-                                size='md'
                                 selectedDepartment={selectedDept}
-                            />)}
-<Select
-    placeholder="Select Academic Year"
-    variant="bordered"
-    selectedKeys={academicYear ? new Set([academicYear]) : new Set()}
-    onSelectionChange={handleAcademicYearChange}
-    startContent={<CalendarIcon size={18} className="text-indigo-600" />}
-    className="max-w-xs"
-    classNames={{
-        trigger: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-500 transition-all duration-200",
-        label: "text-slate-700 font-medium",
-        value: "text-slate-900",
-    }}
->
-    {academicYears.map((year) => (
-        <SelectItem key={year.value} value={year.value} className="text-slate-900">
-            {year.label}
-        </SelectItem>
-    ))}
-</Select>
-
-<Select
-    placeholder="Filter by Semester"
-    selectedKeys={filterSem ? new Set([filterSem]) : new Set()}
-    onSelectionChange={handleFilterSemChange}
-    className="max-w-xs"
-    variant="bordered"
-    isDisabled={!academicYear}
-    classNames={{
-        trigger: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-500 transition-all duration-200",
-        label: "text-slate-700 font-medium",
-        value: "text-slate-900",
-    }}
->
-    <SelectItem key="sem1" value="sem1">Semester 1</SelectItem>
-    <SelectItem key="sem2" value="sem2">Semester 2</SelectItem>
-</Select>
-
-<SubjectDropdown
-    instituteId={user?.role === "superadmin" ? user?._id : user?.institute?._id}
-    onSubjectDocChange={handleSubjectDocChange}
-    department={user?.role === "superadmin" ? selectedDept : user?.id}
-    academicYear={academicYear}
-    onSelect={handleSubjectChange}
-    facultyId={user?.role === "faculty" && user?._id}
-    size='md'
-    selectedSubject={subject}
-    selectedClass={selectedClass}
-    semester={filterSem}
-    fetchBy={user?.role === "faculty" ? "facultyId" : "classId"}
-    isDisabled={!academicYear || !filterSem}
-    classNames={{
-        base: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-500 transition-all duration-200",
-        label: "text-slate-700 font-medium",
-    }}
-/>
-
-                    </div>
-                    <div className="flex items-center gap-4 mt-5">
+                                size='md'
+                                className="w-full"
+                            />
+                        )}
+                        <Select
+                            placeholder="Select Academic Year"
+                            variant="bordered"
+                            selectedKeys={academicYear ? new Set([academicYear]) : new Set()}
+                            onSelectionChange={handleAcademicYearChange}
+                            startContent={<CalendarIcon size={18} className="text-indigo-600" />}
+                            className="w-full"
+                        >
+                            {academicYearOptions.map((year) => (
+                                <SelectItem key={year.value} value={year.value}>{year.label}</SelectItem>
+                            ))}
+                        </Select>
+                        {user?.role !== 'faculty' && (
+                            <ClassDropdown
+                                instituteId={user?._id || user?.institute?._id}
+                                onSelect={handleClassSelect}
+                                selectedClass={selectedClass}
+                                selectedDepartment={selectedDept}
+                                acadmicYear={academicYear}
+                                className="w-full"
+                                size='md'
+                            />
+                        )}
+                        <Select
+                            placeholder="Filter by Semester"
+                            selectedKeys={filterSem ? new Set([filterSem]) : new Set()}
+                            onSelectionChange={handleFilterSemChange}
+                            variant="bordered"
+                            isDisabled={!academicYear}
+                            className="w-full"
+                        >
+                            <SelectItem key="sem1" value="sem1">Semester 1</SelectItem>
+                            <SelectItem key="sem2" value="sem2">Semester 2</SelectItem>
+                        </Select>
+                        <SubjectDropdown
+                            instituteId={user?.role === "superadmin" ? user?._id : user?.institute?._id}
+                            onSubjectDocChange={handleSubjectDocChange}
+                            department={user?.role === "superadmin" ? selectedDept : user?.id}
+                            academicYear={academicYear}
+                            onSelect={handleSubjectChange}
+                            facultyId={user?.role === "faculty" && user?._id}
+                            selectedSubject={subject}
+                            selectedClass={selectedClass}
+                            size='md'
+                            semester={filterSem}
+                            fetchBy={user?.role === "faculty" ? "facultyId" : "classId"}
+                            isDisabled={!academicYear || !filterSem}
+                            className="w-full"
+                        />
+                        <div>
+                            <label className="text-sm font-medium text-slate-700">CO Score Threshold (%) : {coThreshold}</label>
+                            <Slider
+                                aria-label="CO Threshold"
+                                showTooltip={true}
+                                value={coThreshold}
+                                onChange={setCoThreshold}
+                                min={0}
+                                max={100}
+                                step={1}
+                                color="primary"
+                                showValue
+                                className="mt-2"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium text-slate-700">CO Target Percentage (%) : {coTarget} </label>
+                            <Slider
+                                aria-label="CO Target"
+                                value={coTarget}
+                                onChange={setCoTarget}
+                                min={0}
+                                max={100}
+                                step={1}
+                                showTooltip={true}
+                                color="primary"
+                                showValue
+                                className="mt-2"
+                            />
+                        </div>
+                    </div> 
+                    <div className="flex items-center gap-4">
                         <Button
                             color="primary"
                             onPress={calculateAttainment}
                             isLoading={isLoading}
                             isDisabled={!subject || !academicYear || isLoading}
-                            className="bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200"
+                            className="bg-indigo-600 hover:bg-indigo-700"
                         >
                             Calculate Attainment
                         </Button>
-
                         <Button
                             color="secondary"
                             startContent={<FileSpreadsheet size={18} />}
                             onPress={handleExport}
                             isDisabled={!coAttainmentData.length && !poAttainmentData.length}
-                            className="bg-emerald-600 hover:bg-emerald-700 transition-colors duration-200"
+                            className="bg-emerald-600 hover:bg-emerald-700"
                         >
                             Export Report
                         </Button>
-
                         {(academicYear || filterSem || subject) && (
                             <Button
                                 size="sm"
@@ -333,25 +325,22 @@ export default function ViewAttainmentPage() {
                                     setSubject(null);
                                     setCoAttainmentData([]);
                                     setPoAttainmentData([]);
+                                    setCoThreshold(60);
+                                    setCoTarget(70);
                                 }}
                                 color="default"
                                 variant="flat"
-                                className="text-slate-600 hover:bg-slate-200 transition-colors duration-200"
                             >
-                                Clear Filters
+                                Clear All
                             </Button>
                         )}
                     </div>
-
                 </CardBody>
-            </Card>
-
+            </Card> 
+            {/* Error and Loading States */}
             {error && (
-                <Chip color="danger" className="mb-4 shadow-sm">
-                    {error}
-                </Chip>
+                <Chip color="danger" className="mb-4">{error}</Chip>
             )}
-
             {isLoading && (
                 <Card className="shadow-md">
                     <CardBody className="flex justify-center py-8">
@@ -360,34 +349,19 @@ export default function ViewAttainmentPage() {
                 </Card>
             )}
 
-            {/* Content */}
-            {!academicYear ? (
-                <p className="text-slate-600 text-center">Please select an Academic Year.</p>
-            ) : !subject ? (
-                <p className="text-slate-600 text-center">Please select a Subject.</p>
-            ) : coAttainmentData.length === 0 && poAttainmentData.length === 0 && !isLoading ? (
-                <p className="text-slate-600 text-center">Click &quot;Calculate Attainment&quot; to view results.</p>
-            ) : (
-                <div className="space-y-8">
-                    {/* CO Attainment */}
-                    {coAttainmentData.length > 0 && (
-                        <Card className="shadow-lg">
+            {/* Tabs for CO and PO/PSO Attainment */}
+            {!isLoading && (coAttainmentData.length > 0 || poAttainmentData.length > 0) && (
+                <Tabs aria-label="Attainment Tabs" color="primary" variant="bordered" className="mb-6">
+                    <Tab key="co" title="Course Outcomes (CO)">
+                        <Card className="shadow-md">
                             <CardHeader className="bg-indigo-50">
                                 <h2 className="text-xl font-semibold text-slate-800">Course Outcome (CO) Attainment</h2>
-                                <Tooltip content="Percentage of students scoring ≥ 60% of max marks per CO. Target: 70%.">
+                                <Tooltip content={`Percentage of students scoring ≥ ${coThreshold}% of max marks per CO. Target: ${coTarget}%.`}>
                                     <Info size={18} className="text-indigo-600 ml-2 cursor-pointer" />
                                 </Tooltip>
                             </CardHeader>
                             <CardBody className="p-6">
-                                <Table
-                                    aria-label="CO Attainment Table"
-                                    className="mb-6"
-                                    classNames={{
-                                        table: "min-w-full",
-                                        th: "bg-slate-100 text-slate-700 font-medium",
-                                        td: "text-slate-900",
-                                    }}
-                                >
+                                <Table aria-label="CO Attainment Table" className="mb-6">
                                     <TableHeader>
                                         <TableColumn>CO Code</TableColumn>
                                         <TableColumn>Description</TableColumn>
@@ -406,7 +380,7 @@ export default function ViewAttainmentPage() {
                                                         size="sm"
                                                         value={item.attainmentLevel}
                                                         color={item.isAttained ? "success" : "warning"}
-                                                        showValueLabel={true}
+                                                        showValueLabel
                                                         className="max-w-xs"
                                                     />
                                                 </TableCell>
@@ -422,9 +396,8 @@ export default function ViewAttainmentPage() {
                                         )}
                                     </TableBody>
                                 </Table>
-
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <div className="h-72">
+                                    <div className="h-64">
                                         <h3 className="text-md font-medium mb-2 text-slate-700">CO Attainment vs Target</h3>
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={coChartData}>
@@ -438,7 +411,7 @@ export default function ViewAttainmentPage() {
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </div>
-                                    <div className="h-72">
+                                    <div className="h-64">
                                         <h3 className="text-md font-medium mb-2 text-slate-700">CO Attainment Distribution</h3>
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
@@ -463,27 +436,17 @@ export default function ViewAttainmentPage() {
                                 </div>
                             </CardBody>
                         </Card>
-                    )}
-
-                    {/* PO/PSO Attainment */}
-                    {poAttainmentData.length > 0 && (
-                        <Card className="shadow-lg">
+                    </Tab>
+                    <Tab key="po" title="Program Outcomes (PO/PSO)">
+                        <Card className="shadow-md">
                             <CardHeader className="bg-emerald-50">
                                 <h2 className="text-xl font-semibold text-slate-800">Program Outcome (PO/PSO) Attainment</h2>
-                                <Tooltip content="Weighted average of CO attainments based on correlation levels (Low=0.33, Moderate=0.67, High=1.0).">
+                                <Tooltip content={`Weighted average of CO attainments based on correlation levels. Target: ${coTarget}%.`}>
                                     <Info size={18} className="text-emerald-600 ml-2 cursor-pointer" />
                                 </Tooltip>
                             </CardHeader>
                             <CardBody className="p-6">
-                                <Table
-                                    aria-label="PO Attainment Table"
-                                    className="mb-6"
-                                    classNames={{
-                                        table: "min-w-full",
-                                        th: "bg-slate-100 text-slate-700 font-medium",
-                                        td: "text-slate-900",
-                                    }}
-                                >
+                                <Table aria-label="PO Attainment Table" className="mb-6">
                                     <TableHeader>
                                         <TableColumn>PO/PSO Code</TableColumn>
                                         <TableColumn>Description</TableColumn>
@@ -501,7 +464,7 @@ export default function ViewAttainmentPage() {
                                                         size="sm"
                                                         value={item.attainmentLevel}
                                                         color={item.isAttained ? "success" : "warning"}
-                                                        showValueLabel={true}
+                                                        showValueLabel
                                                         className="max-w-xs"
                                                     />
                                                 </TableCell>
@@ -514,8 +477,7 @@ export default function ViewAttainmentPage() {
                                         )}
                                     </TableBody>
                                 </Table>
-
-                                <div className="h-72">
+                                <div className="h-64">
                                     <h3 className="text-md font-medium mb-2 text-slate-700">PO/PSO Attainment vs Target</h3>
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={poChartData}>
@@ -531,8 +493,16 @@ export default function ViewAttainmentPage() {
                                 </div>
                             </CardBody>
                         </Card>
-                    )}
-                </div>
+                    </Tab>
+                </Tabs>
+            )}
+
+            {/* Empty State */}
+            {!isLoading && !coAttainmentData.length && !poAttainmentData.length && academicYear && subject && (
+                <p className="text-slate-600 text-center">Click "Calculate Attainment" to view results.</p>
+            )}
+            {!academicYear && (
+                <p className="text-slate-600 text-center">Please select an Academic Year.</p>
             )}
         </div>
     );

@@ -595,8 +595,7 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
     <h1 className="text-2xl font-bold">Attendance Dashboard </h1>
    </CardHeader>
   <CardBody>
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 items-center gap-4">
-      {/* Step 1: Select Department (shown only for superadmins) */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 items-center gap-4"> 
       {role === "superadmin" && (
         <DepartmentDropdown
           instituteId={institute}
