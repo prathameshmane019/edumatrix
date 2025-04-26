@@ -591,11 +591,11 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
     >
       <motion.div variants={itemVariants}>
       <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm mb-6">
-  <CardHeader className="flex justify-between">
-    <h2 className="text-xl font-bold">Attendance Filters</h2>
-  </CardHeader>
+  <CardHeader className="flex justify-between items-start flex-col">
+    <h1 className="text-2xl font-bold">Attendance Dashboard </h1>
+   </CardHeader>
   <CardBody>
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 items-center gap-4">
       {/* Step 1: Select Department (shown only for superadmins) */}
       {role === "superadmin" && (
         <DepartmentDropdown
@@ -736,10 +736,56 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
 </Card>
       </motion.div>
 
+      {attendanceData && viewType === 'cumulative' && (
+        <motion.div 
+          variants={itemVariants}
+          className="my-6 "
+        >
+          <Card shadow='sm'  className='p-6 '> 
+            <CardHeader>
+              <h2 className="text-xl font-bold">Attendance Summary</h2>
+            </CardHeader>
+            <CardBody>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <Tooltip content="Total number of students in the class">
+                  <Card className="bg-blue-50">
+                    <CardBody>
+                      <p className="text-sm text-gray-500">Total Students</p>
+                      <p className="text-2xl font-bold">{attendanceData.attendance.length}</p>
+                    </CardBody>
+                  </Card>
+                </Tooltip>
+                
+                <Tooltip content="Average attendance percentage across all students">
+                  <Card className="bg-green-50">
+                    <CardBody>
+                      <p className="text-sm text-gray-500">Average Attendance</p>
+                      <p className="text-2xl font-bold">
+                        {(attendanceData.attendance.reduce((acc, student) => acc + (student.overallPercentage || 0), 0) / attendanceData.attendance.length).toFixed(2)}%
+                      </p>
+                    </CardBody>
+                  </Card>
+                </Tooltip>
+                
+                <Tooltip content="Number of students with attendance below 75%">
+                  <Card className="bg-red-50">
+                    <CardBody>
+                      <p className="text-sm text-gray-500">Below Threshold</p>
+                      <p className="text-2xl font-bold">
+                        {attendanceData.attendance.filter(student => (student.overallPercentage || 0) < 75).length}
+                      </p>
+                    </CardBody>
+                  </Card>
+                </Tooltip>
+              </div>
+            </CardBody>
+          </Card>
+        </motion.div>
+      )}
       <motion.div variants={itemVariants}>
-        <Card className="w-full">
+        <Card shadow='sm' className="w-full ">
           <CardHeader>
-            <h1 className="text-2xl font-bold">Attendance Dashboard</h1>
+            <h1 className="text-2xl font-bold">Attendance Report</h1>
           </CardHeader>
           <CardBody>
             {loading ? (
@@ -794,52 +840,6 @@ export default function AdminAttendance({ adminId = '', institute = '', departme
         </Card>
       </motion.div>
 
-      {attendanceData && viewType === 'cumulative' && (
-        <motion.div 
-          variants={itemVariants}
-          className="mt-6"
-        >
-          <Card>
-            <CardHeader>
-              <h2 className="text-xl font-bold">Attendance Summary</h2>
-            </CardHeader>
-            <CardBody>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <Tooltip content="Total number of students in the class">
-                  <Card className="bg-blue-50">
-                    <CardBody>
-                      <p className="text-sm text-gray-500">Total Students</p>
-                      <p className="text-2xl font-bold">{attendanceData.attendance.length}</p>
-                    </CardBody>
-                  </Card>
-                </Tooltip>
-                
-                <Tooltip content="Average attendance percentage across all students">
-                  <Card className="bg-green-50">
-                    <CardBody>
-                      <p className="text-sm text-gray-500">Average Attendance</p>
-                      <p className="text-2xl font-bold">
-                        {(attendanceData.attendance.reduce((acc, student) => acc + (student.overallPercentage || 0), 0) / attendanceData.attendance.length).toFixed(2)}%
-                      </p>
-                    </CardBody>
-                  </Card>
-                </Tooltip>
-                
-                <Tooltip content="Number of students with attendance below 75%">
-                  <Card className="bg-red-50">
-                    <CardBody>
-                      <p className="text-sm text-gray-500">Below Threshold</p>
-                      <p className="text-2xl font-bold">
-                        {attendanceData.attendance.filter(student => (student.overallPercentage || 0) < 75).length}
-                      </p>
-                    </CardBody>
-                  </Card>
-                </Tooltip>
-              </div>
-            </CardBody>
-          </Card>
-        </motion.div>
-      )}
     </motion.div>
   );
 }
