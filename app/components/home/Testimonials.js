@@ -87,7 +87,7 @@ export default function Testimonials() {
                       <span key={i} className="text-yellow-400 inline-block">★</span>
                     ))}
                   </div>
-                  <p className="text-gray-700 italic mb-6 flex-grow">"{testimonial.quote}"</p>
+                  <p className="text-gray-700 italic mb-6 flex-grow">&#34;{testimonial.quote}`&#34;</p>
                   <div className="flex items-center mt-auto">
                     <div className="w-12 h-12 rounded-full bg-gray-200 mr-4 overflow-hidden">
                       <svg className="w-full h-full" viewBox="0 0 48 48" aria-label={testimonial.author}>

@@ -499,7 +499,7 @@ export default function ViewAttainmentPage() {
 
             {/* Empty State */}
             {!isLoading && !coAttainmentData.length && !poAttainmentData.length && academicYear && subject && (
-                <p className="text-slate-600 text-center">Click "Calculate Attainment" to view results.</p>
+                <p className="text-slate-600 text-center">Click &#34;Calculate Attainment&#34; to view results.</p>
             )}
             {!academicYear && (
                 <p className="text-slate-600 text-center">Please select an Academic Year.</p>
