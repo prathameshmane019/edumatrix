@@ -50,17 +50,7 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
 
   const [filterSem, setFilterSem] = useState("");
   const { user } = useUser();
-
-  const academicYearOptions = useMemo(
-    () =>
-      getAcademicYears(10).map((year) => ({
-        key: year.value,
-        value: year.value,
-        label: year.label,
-      })),
-    []
-  );
-
+ 
   const fetchAssessments = useCallback(async (subId, acadYear = "", semester = "") => {
     if (!subId) {
       setAssessments([]);
@@ -103,6 +93,7 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
         : [];
       console.log("Fetched course outcomes:", relevantCOs);
       setCourseOutcomes(relevantCOs);
+      setIsLoadingCOs(false);
 
     } catch (error) {
       console.error("Error fetching course outcomes:", error);
@@ -127,6 +118,8 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
     const matchingYear = years.find((y) => y.value === defaultAcademicYear);
     if (matchingYear) setAcademicYear(matchingYear.value);
   }, []);
+
+
   useEffect(() => {
     console.log("Filter changed, fetching data:", { subject, academicYear, filterSem });
     if (subject && academicYear) {
@@ -182,12 +175,7 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
 
   const handleEditAssessment = useCallback(
     (assessment) => {
-      if (isLoadingCOs) {
-        toast.info("Please wait, loading Course Outcomes...");
-        return;
-      }
-      console.log("Opening edit assessment form:", assessment);
-      setSelectedAssessment(assessment);
+     setSelectedAssessment(assessment);
       onFormOpen();
     },
     [onFormOpen, isLoadingCOs]
@@ -371,7 +359,7 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
               instituteId={user?.institute?._id}
               academicYear={academicYear}
               onSelect={handleSubjectChange}
-              facultyId={user?._id}
+              facultyId={(academicYear && filterSem )&& user?._id}
               size="md"
               selectedSubject={subject} 
               isDisabled={!academicYear || !filterSem}
@@ -486,7 +474,7 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
                             e.stopPropagation();
                             handleEditAssessment(assessment);
                           }}
-                          isDisabled={isLoadingCOs}
+                          // isDisabled={isLoadingCOs}
                         >
                           <EditIcon className="h-4 w-4" />
                         </Button>
@@ -513,7 +501,7 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
             </TableBody>
           </Table>
         ) : (
-          <p className="text-gray-500 py-8 text-center">No assessments found for the selected subject and filters.</p>
+          <p className="text-gray-500 py-8 text-center">No assessments or course outcomes found for the selected subject and filters.</p>
         )}
         <Modal backdrop='blur' isOpen={isFormOpen} onOpenChange={onFormClose} size="xl" scrollBehavior="inside">
           <ModalContent className="max-h-[90vh] overflow-y-auto">

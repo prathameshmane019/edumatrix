@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Select, SelectItem } from '@nextui-org/react'
 import axios from 'axios'
+import {  Notebook } from 'lucide-react';
 
 export function SubjectDropdown({
   instituteId,
@@ -31,7 +32,7 @@ export function SubjectDropdown({
     async function fetchSubjects() {
       // Determine if fetch should be attempted based on fetchBy strategy
       const shouldFetch = 
-        (fetchBy === 'facultyId' && instituteId && (facultyId || academicYear || semester)) ||
+        (fetchBy === 'facultyId' && instituteId && (facultyId && academicYear || semester)) ||
         (fetchBy === 'classId' && instituteId && selectedClass)
 
       if (!shouldFetch) {
@@ -116,6 +117,7 @@ export function SubjectDropdown({
     <Select
       placeholder={isLoading ? "Loading subjects..." : "Select a subject"}
       variant="bordered"
+      startContent={<Notebook/>}
       size={size}
       label={label}
       value={selectedSubject}

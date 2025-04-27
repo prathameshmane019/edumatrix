@@ -322,8 +322,8 @@ const MappingPage = () => {
                 academicYear={academicYear}
                 onSelect={setSubject}
                 facultyId={user?._id}
-                selectedSubject={subject}
-                label="Subject"
+                selectedSubject={subject} 
+                size='md'
                 isDisabled={!academicYear}
                 classNames={{
                   base: `bg-white border-slate-200 rounded-lg shadow-sm ${academicYear ? 'hover:border-indigo-400' : 'opacity-70 cursor-not-allowed'} transition-all`,
@@ -359,7 +359,7 @@ const MappingPage = () => {
 
             </CardBody>
         </Card>
-        <Card className='mt-10 shadow-sm '>
+        <Card className='mt-10  ' shadow='sm'>
           <CardBody>
             {isLoading && (
               <div className="flex justify-center items-center py-12">
@@ -456,8 +456,9 @@ const MappingPage = () => {
                       </Dropdown>
                     </div>
 
-                    <div className="overflow-x-auto rounded-xl shadow-lg border border-slate-200">
+                    <div className="overflow-x-auto rounded-xl shadow-md shadow-violet-50 border border-slate-200">
                       <Table
+                      shadow='sm'
                         aria-label="CO-PO/PSO Mapping Matrix"
                         className="min-w-full bg-white"
                         classNames={{
@@ -603,7 +604,7 @@ const MappingPage = () => {
                     transition={{ duration: 0.3 }}
                     className="grid grid-cols-1 lg:grid-cols-2 gap-6"
                   >
-                    <Card className="p-6 bg-white shadow-md rounded-xl border border-slate-200">
+                    <Card shadow='sm' className="p-6 bg-white   rounded-xl border border-slate-200">
                       <h3 className="text-xl font-semibold text-slate-800 mb-4">Mapping Overview</h3>
                       <div className="space-y-6">
                         <div>
@@ -640,7 +641,7 @@ const MappingPage = () => {
                         </div>
                       </div>
                     </Card>
-                    <Card className="p-6 bg-white shadow-md rounded-xl border border-slate-200">
+                    <Card shadow='sm' className="p-6 bg-white   rounded-xl border border-slate-200">
                       <h3 className="text-xl font-semibold text-slate-800 mb-4">Course Outcome Analysis</h3>
                       <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                         {Object.entries(stats.byCO).map(([coId, count]) => {
@@ -679,7 +680,7 @@ const MappingPage = () => {
                   </motion.div>
                 )}
 
-                <div className="flex justify-between items-center mt-6 p-4 bg-white rounded-xl shadow-md border border-slate-200">
+                <div className="flex justify-between items-center mt-6 p-4 bg-white rounded-xl shadow-sm border border-slate-200">
                   <div className="flex items-center gap-3 flex-wrap">
                     <span className="text-sm font-medium text-slate-700">Correlation Levels:</span>
                     {CORRELATION_LEVELS.filter((l) => l.value > 0).map((level) => (

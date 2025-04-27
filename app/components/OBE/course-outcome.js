@@ -64,11 +64,11 @@ const ManageCourseOutcomesPage = () => {
     useEffect(() => {
         const years = getAcademicYears(10);
         setAcademicYears(years);
-        
+
         // Set current academic year as default
         const currentYear = new Date().getFullYear();
         const currentMonth = new Date().getMonth() + 1; // JavaScript months are 0-based
-        
+
         // If we're in the latter half of the year (July onwards), use current-next year format
         // Otherwise use previous-current year format
         let defaultAcademicYear;
@@ -77,7 +77,7 @@ const ManageCourseOutcomesPage = () => {
         } else {
             defaultAcademicYear = `${currentYear - 1}-${currentYear}`;
         }
-        
+
         // Find the closest match in our academic years list
         const matchingYear = years.find(year => year.value === defaultAcademicYear);
         if (matchingYear) {
@@ -224,6 +224,12 @@ const ManageCourseOutcomesPage = () => {
             onClose();
             resetForm();
         } catch (error) {
+            if (error.response && error.response.status === 409) {
+                toast.error("A course outcome already exists for this subject");
+            }
+            if (error.response && error.response.status === 404) {
+                toast.error("Programe outcomes not found");
+            }
             console.error("Error saving course outcome:", error);
             toast.error("Failed to save course outcome");
         } finally {
@@ -265,176 +271,176 @@ const ManageCourseOutcomesPage = () => {
 
                         <div>
                             <SubjectDropdown
+
                                 instituteId={filters.instituteId}
                                 department={filters.department}
                                 academicYear={filters.academicYear}
+                                size='md'
                                 onSelect={(value) => setFilters(prev => ({ ...prev, subject: value }))}
-                                facultyId={user?._id}
+                                facultyId={filters.academicYear && user?._id}
                                 selectedSubject={filters.subject}
                                 isDisabled={!filters.academicYear}
                             />
                         </div>
                     </div>
-                    </CardBody>
-                    </Card>
-                    <Card>
-                        <CardBody>
-                    {/* Course Outcomes List */}
-                    {isLoading ? (
-                        <div className="flex justify-center items-center py-12">
-                            <Spinner size="lg" />
-                        </div>
-                    ) : courseOutcomes.length > 0 ? (
-                        <div className="flex flex-col gap-4">
-                            {courseOutcomes.map((courseOutcomeDoc) => (
-                                <Card key={courseOutcomeDoc._id}>
-                                    <CardHeader>
-                                        <h3 className="font-semibold text-lg">
-                                            Subject: {courseOutcomeDoc.subject?.name || 'N/A'} (Academic Year: {courseOutcomeDoc.academicYear})
-                                        </h3>
-                                    </CardHeader>
-                                    <CardBody>
-                                        {courseOutcomeDoc.outcomes.length > 0 ? (
-                                            <Table
-                                                aria-label={`Outcomes for ${courseOutcomeDoc.subject?.name}`}
-                                                selectionMode="none"
-                                            >
-                                                <TableHeader>
-                                                    <TableColumn>Index</TableColumn>
-                                                    <TableColumn width={400}>Description</TableColumn>
-                                                    <TableColumn>Cognitive Level</TableColumn>
-                                                    <TableColumn align="center">Actions</TableColumn>
-                                                </TableHeader>
-                                                <TableBody items={courseOutcomeDoc.outcomes}>
-                                                    {(outcome) => (
-                                                        <TableRow key={outcome.index}>
-                                                            <TableCell className="font-medium">
-                                                                CO{outcome?.index || 'N/A'}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                <Tooltip content={outcome?.description || 'N/A'}>
-                                                                    <span className="line-clamp-2">{outcome?.description || 'N/A'}</span>
-                                                                </Tooltip>
-                                                            </TableCell>
-                                                            <TableCell>{outcome?.cognitiveLevel || 'N/A'}</TableCell>
-                                                            <TableCell>
-                                                                <div className="flex justify-center gap-2">
-                                                                    <Dropdown>
-                                                                        <DropdownTrigger>
-                                                                            <Button isIconOnly size="sm" variant="light">
-                                                                                <MoreVertical size={16} />
-                                                                            </Button>
-                                                                        </DropdownTrigger>
-                                                                        <DropdownMenu aria-label="Actions">
-                                                                            <DropdownItem
-                                                                                startContent={<Pencil size={16} />}
-                                                                                onPress={() => handleOpenEditDialog(courseOutcomeDoc._id, outcome.index, outcome)}
-                                                                            >
-                                                                                Edit
-                                                                            </DropdownItem>
-                                                                            <DropdownItem
-                                                                                startContent={<Trash2 size={16} />}
-                                                                                className="text-danger"
-                                                                                onPress={() => handleDeleteOutcome(courseOutcomeDoc._id, outcome.index)}
-                                                                            >
-                                                                                Delete
-                                                                            </DropdownItem>
-                                                                        </DropdownMenu>
-                                                                    </Dropdown>
-                                                                </div>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    )}
-                                                </TableBody>
-                                            </Table>
-                                        ) : (
-                                            <p className="text-default-500">No outcomes defined for this subject.</p>
-                                        )}
-                                    </CardBody>
-                                </Card>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center py-12 text-center bg-default-100 rounded-lg">
-                            <AlertCircle size={36} className="text-default-400 mb-2" />
-                            <h3 className="text-lg font-medium">No course outcomes found</h3>
-                            <p className="text-default-500">
-                                {!filters.subject && filters.academicYear 
-                                    ? "Please select a subject to view outcomes."
-                                    : !filters.academicYear 
-                                    ? "Please select an academic year to continue."
-                                    : "No outcomes found for the selected subject and academic year."}
-                            </p>
-                        </div>
-                    )}
                 </CardBody>
             </Card>
+            <div>
+                {/* Course Outcomes List */}
+                {isLoading ? (
+                    <div className="flex justify-center items-center py-12">
+                        <Spinner size="lg" />
+                    </div>
+                ) : courseOutcomes.length > 0 ? (
+                    <div className="flex flex-col gap-4">
+                        {courseOutcomes.map((courseOutcomeDoc) => (
+                            <Card shadow='sm' className='p-6' key={courseOutcomeDoc._id}>
+                                <CardHeader>
+                                    <h3 className="font-semibold text-lg">
+                                        Subject: {courseOutcomeDoc.subject?.name || 'N/A'} (Academic Year: {courseOutcomeDoc.academicYear})
+                                    </h3>
+                                </CardHeader>
+                                <CardBody>
+                                    {courseOutcomeDoc.outcomes.length > 0 ? (
+                                        <Table
+                                            aria-label={`Outcomes for ${courseOutcomeDoc.subject?.name}`}
+                                            selectionMode="none"
+                                            shadow='sm'
+                                        >
+                                            <TableHeader>
+                                                <TableColumn>Index</TableColumn>
+                                                <TableColumn width={400}>Description</TableColumn>
+                                                <TableColumn>Cognitive Level</TableColumn>
+                                                <TableColumn align="center">Actions</TableColumn>
+                                            </TableHeader>
+                                            <TableBody items={courseOutcomeDoc.outcomes}>
+                                                {(outcome) => (
+                                                    <TableRow key={outcome.index}>
+                                                        <TableCell className="font-medium">
+                                                            CO{outcome?.index || 'N/A'}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Tooltip content={outcome?.description || 'N/A'}>
+                                                                <span className="line-clamp-2">{outcome?.description || 'N/A'}</span>
+                                                            </Tooltip>
+                                                        </TableCell>
+                                                        <TableCell>{outcome?.cognitiveLevel || 'N/A'}</TableCell>
+                                                        <TableCell>
+                                                            <div className="flex justify-center gap-2">
+                                                                <Dropdown>
+                                                                    <DropdownTrigger>
+                                                                        <Button isIconOnly size="sm" variant="light">
+                                                                            <MoreVertical size={16} />
+                                                                        </Button>
+                                                                    </DropdownTrigger>
+                                                                    <DropdownMenu aria-label="Actions">
+                                                                        <DropdownItem
+                                                                            startContent={<Pencil size={16} />}
+                                                                            onPress={() => handleOpenEditDialog(courseOutcomeDoc._id, outcome.index, outcome)}
+                                                                        >
+                                                                            Edit
+                                                                        </DropdownItem>
+                                                                        <DropdownItem
+                                                                            startContent={<Trash2 size={16} />}
+                                                                            className="text-danger"
+                                                                            onPress={() => handleDeleteOutcome(courseOutcomeDoc._id, outcome.index)}
+                                                                        >
+                                                                            Delete
+                                                                        </DropdownItem>
+                                                                    </DropdownMenu>
+                                                                </Dropdown>
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    ) : (
+                                        <p className="text-default-500">No outcomes defined for this subject.</p>
+                                    )}
+                                </CardBody>
+                            </Card>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-center bg-default-100 rounded-lg">
+                        <AlertCircle size={36} className="text-default-400 mb-2" />
+                        <h3 className="text-lg font-medium">No course outcomes found</h3>
+                        <p className="text-default-500">
+                            {!filters.subject && filters.academicYear
+                                ? "Please select a subject to view outcomes."
+                                : !filters.academicYear
+                                    ? "Please select an academic year to continue."
+                                    : "No outcomes found for the selected subject and academic year."}
+                        </p>
+                    </div>
+                )}
+            </div> 
+            {/* Add/Edit Modal */ }
+    <Modal
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        size="2xl"
+        scrollBehavior="inside"
+    >
+        <ModalContent>
+            {(onClose) => (
+                <>
+                    <ModalHeader>
+                        <h2>{isEditing ? "Edit Course Outcome" : "Add New Outcome"}</h2>
+                    </ModalHeader>
+                    <ModalBody>
+                        <div className="flex flex-col gap-4">
+                            <Input
+                                label="Outcome Index *"
+                                type="number"
+                                min="1"
+                                value={formData.index}
+                                onChange={(e) => setFormData(prev => ({ ...prev, index: e.target.value }))}
+                                isRequired
+                                variant="bordered"
+                            />
 
-            {/* Add/Edit Modal */}
-            <Modal
-                isOpen={isOpen}
-                onOpenChange={onOpenChange}
-                size="2xl"
-                scrollBehavior="inside"
-            >
-                <ModalContent>
-                    {(onClose) => (
-                        <>
-                            <ModalHeader>
-                                <h2>{isEditing ? "Edit Course Outcome" : "Add New Outcome"}</h2>
-                            </ModalHeader>
-                            <ModalBody>
-                                <div className="flex flex-col gap-4">
-                                    <Input
-                                        label="Outcome Index *"
-                                        type="number"
-                                        min="1"
-                                        value={formData.index}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, index: e.target.value }))}
-                                        isRequired
-                                        variant="bordered"
-                                    />
+                            <Textarea
+                                label="Description *"
+                                value={formData.description}
+                                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                                isRequired
+                                variant="bordered"
+                                minRows={3}
+                            />
 
-                                    <Textarea
-                                        label="Description *"
-                                        value={formData.description}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                                        isRequired
-                                        variant="bordered"
-                                        minRows={3}
-                                    />
-
-                                    <Select
-                                        label="Cognitive Level"
-                                        selectedKeys={[formData.cognitiveLevel]}
-                                        onSelectionChange={(keys) => setFormData(prev => ({ ...prev, cognitiveLevel: Array.from(keys)[0] }))}
-                                        variant="bordered"
-                                    >
-                                        {COGNITIVE_LEVELS.map(level => (
-                                            <SelectItem key={level} value={level}>
-                                                {level}
-                                            </SelectItem>
-                                        ))}
-                                    </Select>
-                                </div>
-                            </ModalBody>
-                            <ModalFooter>
-                                <Button variant="flat" onPress={onClose}>
-                                    Cancel
-                                </Button>
-                                <Button
-                                    color="primary"
-                                    onPress={handleSubmit}
-                                    isLoading={isSubmitting}
-                                >
-                                    {isEditing ? 'Update Outcome' : 'Add Outcome'}
-                                </Button>
-                            </ModalFooter>
-                        </>
-                    )}
-                </ModalContent>
-            </Modal>
-        </div>
+                            <Select
+                                label="Cognitive Level"
+                                selectedKeys={[formData.cognitiveLevel]}
+                                onSelectionChange={(keys) => setFormData(prev => ({ ...prev, cognitiveLevel: Array.from(keys)[0] }))}
+                                variant="bordered"
+                            >
+                                {COGNITIVE_LEVELS.map(level => (
+                                    <SelectItem key={level} value={level}>
+                                        {level}
+                                    </SelectItem>
+                                ))}
+                            </Select>
+                        </div>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button variant="flat" onPress={onClose}>
+                            Cancel
+                        </Button>
+                        <Button
+                            color="primary"
+                            onPress={handleSubmit}
+                            isLoading={isSubmitting}
+                        >
+                            {isEditing ? 'Update Outcome' : 'Add Outcome'}
+                        </Button>
+                    </ModalFooter>
+                </>
+            )}
+        </ModalContent>
+    </Modal>
+        </div >
     );
 };
 

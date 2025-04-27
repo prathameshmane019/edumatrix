@@ -28,7 +28,7 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
   const [isUploading, setIsUploading] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
   const [coMapping, setCOMapping] = useState([])
-  const inputRefs = useRef(new Map())
+  const inputRefs = useRef({})
 
   const fetchStudentMarks = useCallback(async () => {
     if (!assessment?._id) return
@@ -36,7 +36,7 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
     setIsLoading(true)
     try {
       const response = await axios.get(`/api/v2/obe/student-marks`, {
-        params: { assessmentId: assessment._id},
+        params: { assessmentId: assessment._id },
       })
 
       if (response.data.success && response.data.data) {
@@ -89,19 +89,15 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
     return null
   }, [students])
 
+  // Also modify handleMarkChange to not try to restore focus
   const handleMarkChange = useCallback((internalId, coIndex, value) => {
     if (value !== "" && !/^\d*\.?\d*$/.test(value)) return
-
-    const activeElement = document.activeElement
-    const inputKey = activeElement ? activeElement.dataset.inputKey : null
 
     setStudents((prev) => {
       const newStudents = prev.map((student) => {
         if (student.internalId === internalId) {
           const updatedCOMarks = [...(student.coMarks || [])]
           const coMarkIndex = updatedCOMarks.findIndex(co => co.coIndex === coIndex)
-          const coMappingEntry = coMapping.find(co => co.coIndex === coIndex)
-          const maxMarks = coMappingEntry ? coMappingEntry.maxMarks : Infinity
 
           if (coMarkIndex >= 0) {
             updatedCOMarks[coMarkIndex] = {
@@ -129,15 +125,7 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
       setHasChanges(true)
       return newStudents
     })
-
-    // Restore focus
-    if (inputKey) {
-      setTimeout(() => {
-        const input = inputRefs.current.get(inputKey)
-        if (input) input.focus()
-      }, 0)
-    }
-  }, [coMapping])
+  }, [])
 
   const handleAddStudent = useCallback(() => {
     const internalId = `internal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -166,9 +154,6 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
   }, [])
 
   const handleStudentInfoChange = useCallback((internalId, field, value) => {
-    const activeElement = document.activeElement
-    const inputKey = activeElement ? activeElement.dataset.inputKey : null
-
     setStudents((prev) => {
       const newStudents = prev.map((student) => {
         if (student.internalId === internalId) {
@@ -183,14 +168,6 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
       setHasChanges(true)
       return newStudents
     })
-
-    // Restore focus
-    if (inputKey) {
-      setTimeout(() => {
-        const input = inputRefs.current.get(inputKey)
-        if (input) input.focus()
-      }, 0)
-    }
   }, [])
 
   const hasInvalidEntries = useCallback(() => {
@@ -437,6 +414,19 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
     }
   }, [coMapping])
 
+  // Function to set input ref
+  const setInputRef = (el, key) => {
+    if (el) {
+      inputRefs.current[key] = el
+    }
+  }
+  const registerInput = (el, key) => {
+    if (el) {
+      inputRefs.current[key] = el
+    }
+  }
+
+
   if (!assessment) {
     return (
       <Card>
@@ -513,121 +503,117 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
             <Spinner label="Loading student marks..." />
           </div>
         ) : (
-          <>
-            <div className="flex justify-between mb-4">
-              <Button
-                color="primary"
-                variant="light"
-                startContent={<Plus size={18} />}
-                onClick={handleAddStudent}
-                size="sm"
-              >
-                Add Student
-              </Button>
-              <div className="text-sm text-gray-500">
-                {students.length} student{students.length !== 1 ? "s" : ""}
-              </div>
-            </div>
-            <Table shadow="sm"  aria-label="Student Marks Table" selectionMode="none">
-              <TableHeader>
-                <TableColumn>Student ID</TableColumn>
-                <TableColumn>Roll Number</TableColumn>
-                <TableColumn>Name</TableColumn>
-                {coMapping.map((co) => (
-                  <TableColumn key={`co-${co.coIndex}`}>
-                    CO{co.coIndex} ({co.maxMarks})
-                  </TableColumn>
-                ))}
-                <TableColumn>Total Marks</TableColumn>
-                <TableColumn width={100}>Actions</TableColumn>
-              </TableHeader>
-              <TableBody emptyContent="No students added yet. Add students or import from Excel.">
-                {students.map((student) => {
-                  const idError = validateStudentId(student.student, student.internalId)
-                  return (
-                    <TableRow key={student.internalId}>
-                      <TableCell>
-                        <Input
-                          size="sm"
-                          value={student.student}
-                          onChange={(e) => handleStudentInfoChange(student.internalId, "student", e.target.value)}
-                          placeholder="Enter student ID (e.g., EN12345)"
-                          variant="bordered"
-                          className="max-w-[150px]"
-                          isInvalid={!!idError}
-                          errorMessage={idError}
-                          data-input-key={`student-${student.internalId}`}
-                          ref={el => inputRefs.current.set(`student-${student.internalId}`, el)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          size="sm"
-                          value={student.rollNumber}
-                          onChange={(e) => handleStudentInfoChange(student.internalId, "rollNumber", e.target.value)}
-                          placeholder="Enter roll number"
-                          variant="bordered"
-                          className="max-w-[150px]"
-                          data-input-key={`rollNumber-${student.internalId}`}
-                          ref={el => inputRefs.current.set(`rollNumber-${student.internalId}`, el)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          size="sm"
-                          value={student.name}
-                          onChange={(e) => handleStudentInfoChange(student.internalId, "name", e.target.value)}
-                          placeholder="Enter student name"
-                          variant="bordered"
-                          data-input-key={`name-${student.internalId}`}
-                          ref={el => inputRefs.current.set(`name-${student.internalId}`, el)}
-                        />
-                      </TableCell>
-                      {coMapping.map((co) => {
-                        const coMark = student.coMarks.find(cm => cm.coIndex === co.coIndex) || { marks: 0 }
-                        return (
-                          <TableCell key={`co-${co.coIndex}`}>
-                            <Input
-                              size="sm"
-                              value={coMark.marks === 0 ? "" : coMark.marks}
-                              onChange={(e) => handleMarkChange(student.internalId, co.coIndex, e.target.value)}
-                              placeholder="Enter marks"
-                              variant="bordered"
-                              className="max-w-[100px]"
-                              isInvalid={
-                                coMark.marks !== 0 &&
-                                (isNaN(coMark.marks) || coMark.marks < 0 || coMark.marks > co.maxMarks)
-                              }
-                              errorMessage={
-                                coMark.marks !== 0 && coMark.marks > co.maxMarks
-                                  ? `Max ${co.maxMarks}`
-                                  : null
-                              }
-                              data-input-key={`co-${co.coIndex}-${student.internalId}`}
-                              ref={el => inputRefs.current.set(`co-${co.coIndex}-${student.internalId}`, el)}
+          <> 
+            <div className="overflow-x-auto">
+              <table className="min-w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 text-left border-b border-gray-200">
+                    <th className="px-4 py-3 font-medium text-sm text-default-700">Student ID</th>
+                    <th className="px-4 py-3 font-medium text-sm text-default-700">Roll Number</th>
+                    <th className="px-4 py-3 font-medium text-sm text-default-700">Name</th>
+                    {coMapping.map((co) => (
+                      <th key={`header-co-${co.coIndex}`} className="px-4 py-3 font-medium text-sm text-default-700">
+                        CO{co.coIndex} ({co.maxMarks})
+                      </th>
+                    ))}
+                    <th className="px-4 py-3 font-medium text-sm text-default-700">Total Marks</th>
+                    <th className="px-4 py-3 font-medium text-sm text-default-700 w-24">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.length === 0 ? (
+                    <tr>
+                      <td colSpan={5 + coMapping.length} className="px-4 py-6 text-center text-gray-500">
+                        No students added yet. Add students or import from Excel.
+                      </td>
+                    </tr>
+                  ) : (
+                    students.map((student) => {
+                      const idError = validateStudentId(student.student, student.internalId);
+                      return (
+                        <tr key={student.internalId} className="border-b border-gray-200 hover:bg-gray-50">
+                          <td className="px-2 py-2">
+                            <div className="relative">
+                              <input
+                                type="text"
+                                className={`w-32 px-3 py-2 text-sm border rounded-md outline-none focus:ring-2 focus:ring-primary focus:border-primary ${idError ? 'border-danger text-danger' : 'border-default-300'
+                                  }`}
+                                value={student.student}
+                                onChange={(e) => handleStudentInfoChange(student.internalId, "student", e.target.value)}
+                                placeholder="Enter student ID"
+                              />
+                              {idError && <p className="text-xs text-danger mt-1">{idError}</p>}
+                            </div>
+                          </td>
+                          <td className="px-2 py-2">
+                            <input
+                              type="text"
+                              className="w-32 px-3 py-2 text-sm border border-default-300 rounded-md outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                              value={student.rollNumber}
+                              onChange={(e) => handleStudentInfoChange(student.internalId, "rollNumber", e.target.value)}
+                              placeholder="Enter roll number"
                             />
-                          </TableCell>
-                        )
-                      })}
-                      <TableCell>
-                        {student.totalMarks === null ? "Not Evaluated" : student.totalMarks}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          isIconOnly
-                          variant="light"
-                          color="danger"
-                          size="sm"
-                          onClick={() => handleRemoveStudent(student.internalId)}
-                        >
-                          <Trash size={16} />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
+                          </td>
+                          <td className="px-2 py-2">
+                            <input
+                              type="text"
+                              className="w-40 px-3 py-2 text-sm border border-default-300 rounded-md outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                              value={student.name}
+                              onChange={(e) => handleStudentInfoChange(student.internalId, "name", e.target.value)}
+                              placeholder="Enter student name"
+                            />
+                          </td>
+                          {coMapping.map((co) => {
+                            const coMark = student.coMarks.find(cm => cm.coIndex === co.coIndex) || { marks: 0 };
+                            const isInvalid = coMark.marks !== 0 &&
+                              (isNaN(coMark.marks) || coMark.marks < 0 || coMark.marks > co.maxMarks);
+
+                            return (
+                              <td key={`co-${co.coIndex}`} className="px-2 py-2">
+                                <div className="relative">
+                                  <input
+                                    type="text"
+                                    className={`w-20 px-3 py-2 text-sm border rounded-md outline-none focus:ring-2 focus:ring-primary focus:border-primary ${isInvalid ? 'border-danger text-danger' : 'border-default-300'
+                                      }`}
+                                    value={coMark.marks === 0 ? "" : coMark.marks}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                                        handleMarkChange(student.internalId, co.coIndex, value);
+                                      }
+                                    }}
+                                    placeholder="Marks"
+                                  />
+                                  {isInvalid && coMark.marks > co.maxMarks && (
+                                    <p className="text-xs text-danger mt-1">Max {co.maxMarks}</p>
+                                  )}
+                                </div>
+                              </td>
+                            );
+                          })}
+                          <td className="px-4 py-2 text-sm">
+                            {student.totalMarks === null ? "Not Evaluated" : student.totalMarks}
+                          </td>
+                          <td className="px-2 py-2">
+                            <Button
+                              isIconOnly
+                              variant="light"
+                              color="danger"
+                              size="sm"
+                              onClick={() => handleRemoveStudent(student.internalId)}
+                            >
+                              <Trash size={16} />
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Keep the original "unsaved changes" indicator */}
             {hasChanges && (
               <div className="mt-4 flex justify-end">
                 <Chip color="warning" variant="flat">

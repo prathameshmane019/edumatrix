@@ -257,7 +257,7 @@ export default function ViewAttainmentPage() {
                             department={user?.role === "superadmin" ? selectedDept : user?.role==="admin" ? user?.id:undefined}
                             academicYear={academicYear}
                             onSelect={handleSubjectChange}
-                            facultyId={user?.role === "faculty" && user?._id}
+                            facultyId={((user?.role === "faculty") && filterSem ) && user?._id}
                             selectedSubject={subject}
                             selectedClass={selectedClass}
                             size='md'
