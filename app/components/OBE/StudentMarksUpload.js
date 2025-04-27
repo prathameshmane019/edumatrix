@@ -36,7 +36,7 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
     setIsLoading(true)
     try {
       const response = await axios.get(`/api/v2/obe/student-marks`, {
-        params: { assessmentId: assessment._id },
+        params: { assessmentId: assessment._id},
       })
 
       if (response.data.success && response.data.data) {
@@ -448,7 +448,7 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
   }
 
   return (
-    <Card className="w-full">
+    <Card className="w-full p-5" shadow="sm">
       <CardHeader className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-semibold">Student Marks: {assessment.name}</h3>
@@ -528,7 +528,7 @@ export default function StudentMarksUpload({ assessment, onMarksUpdated }) {
                 {students.length} student{students.length !== 1 ? "s" : ""}
               </div>
             </div>
-            <Table aria-label="Student Marks Table" selectionMode="none">
+            <Table shadow="sm"  aria-label="Student Marks Table" selectionMode="none">
               <TableHeader>
                 <TableColumn>Student ID</TableColumn>
                 <TableColumn>Roll Number</TableColumn>

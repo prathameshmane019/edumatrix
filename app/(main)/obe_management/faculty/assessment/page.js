@@ -96,13 +96,14 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
     setIsLoadingCOs(true);
     try {
       const response = await axios.get(`/api/v2/obe/course-outcomes`, {
-        params: { subjectId: subId },
+        params: { subjectId: subId ,instituteId:user?.institute?._id},
       });
       const relevantCOs = Array.isArray(response.data.data)
         ? response.data.data.filter((coDoc) => coDoc.outcomes && coDoc.outcomes.length > 0)
         : [];
       console.log("Fetched course outcomes:", relevantCOs);
       setCourseOutcomes(relevantCOs);
+
     } catch (error) {
       console.error("Error fetching course outcomes:", error);
       toast.error(`Error fetching course outcomes: ${error.response?.data?.message || error.message}`);
@@ -114,7 +115,7 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
   useEffect(() => {
     const years = getAcademicYears(10);
     setAcademicYears(years);
-  
+
     // Set current academic year as default
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
@@ -122,7 +123,7 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
       currentMonth >= 7
         ? `${currentYear}-${currentYear + 1}`
         : `${currentYear - 1}-${currentYear}`;
-  
+
     const matchingYear = years.find((y) => y.value === defaultAcademicYear);
     if (matchingYear) setAcademicYear(matchingYear.value);
   }, []);
@@ -154,7 +155,7 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
     setAssessments([]);
     setCourseOutcomes([]);
   }, []);
-  
+
   const handleFilterSemChange = useCallback((keys) => {
     const selectedSem = keys.size > 0 ? Array.from(keys)[0].toString() : "";
     console.log("Semester filter changed:", selectedSem);
@@ -267,7 +268,7 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
     [subject, fetchAssessments, academicYear, filterSem]
   );
 
-  
+
   // New function to open delete modal
   const openDeleteModal = useCallback((assessment) => {
     console.log("Opening delete modal for assessment:", assessment);
@@ -288,260 +289,261 @@ export default function ManageAssessmentsPage({ subject: initialSubject }) {
     { key: "actions", label: "Actions" },
   ];
 
-  // Helper function to check if subject dropdown should be enabled
-  const isSubjectDropdownEnabled = academicYear && filterSem;
-
+  // Helper function to check if subject dropdown should be enabled 
   return (
     <div className="m-10">
-      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm overflow-hidden">
+      <Card shadow="sm" className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm overflow-hidden">
         <CardBody >
-        <div>
-          <h2 className="text-2xl font-semibold">Manage Assessments</h2>
-          {subject && academicYear && filterSem && (
-            <p className="text-gray-500">
-              Year: {academicYear} | Semester: {filterSem || "All"}
-            </p>
-          )}
-          {!subject && academicYear && filterSem && (
-            <p className="text-gray-500">
-              Year: {academicYear} | Semester: {filterSem} | Please select a subject.
-            </p>
-          )}
-          {!academicYear && (
-            <p className="text-gray-500">Please select Academic Year to begin.</p>
-          )}
-          {academicYear && !filterSem && (
-            <p className="text-gray-500">Year: {academicYear} | Please select Semester.</p>
-          )}
-        </div>
-        <div className="mb-4 flex justify-end">
-        <Button
-          color="primary"
-          startContent={<PlusIcon />}
-          onClick={handleAddAssessment}
-          isDisabled={!subject || isLoadingCOs || !academicYear || !filterSem}
-        >
-          Add Assessment
-        </Button> 
-        </div>
-      <div className="mb-4 flex gap-4 items-center flex-wrap">
-      <Select
-  label="Academic Year"
-  placeholder="Select Academic Year"
-  variant="bordered"
-  selectedKeys={academicYear ? new Set([academicYear]) : new Set()}
-  onSelectionChange={handleAcademicYearChange}
-  startContent={<CalendarIcon size={18} className="text-indigo-600" />}
-  className="max-w-xs"
-  classNames={{
-    trigger: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all",
-    label: "text-slate-700 font-medium",
-  }}
->
-  {academicYears.map((year) => (
-    <SelectItem key={year.value} value={year.value} className="text-slate-900">
-      {year.label}
-    </SelectItem>
-  ))}
-</Select>
+          <div>
+            <h2 className="text-2xl font-semibold">Manage Assessments</h2>
+            {subject && academicYear && filterSem && (
+              <p className="text-gray-500">
+                Year: {academicYear} | Semester: {filterSem || "All"}
+              </p>
+            )}
+            {!courseOutcomes && (
+              <p className="text-gray-500">No course outcome found for selected course try to add course outcomes first.</p>
+            )}
+            {!subject && academicYear && filterSem && (
+              <p className="text-gray-500">
+                Year: {academicYear} | Semester: {filterSem} | Please select a subject.
+              </p>
+            )}
+            {!academicYear && (
+              <p className="text-gray-500">Please select Academic Year to begin.</p>
+            )}
 
-<Select
-  variant="bordered"
-  placeholder="Filter by Semester"
-  selectedKeys={filterSem ? new Set([filterSem]) : new Set()}
-  onSelectionChange={handleFilterSemChange}
-  className="max-w-xs"
-  isDisabled={!academicYear}
-  classNames={{
-    trigger: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all",
-    label: "text-slate-700 font-medium",
-  }}
->
-  <SelectItem key="sem1" value="sem1">
-    Semester 1
-  </SelectItem>
-  <SelectItem key="sem2" value="sem2">
-    Semester 2
-  </SelectItem>
-</Select>
+            {academicYear && !filterSem && (
+              <p className="text-gray-500">Year: {academicYear} | Please select Semester.</p>
+            )}
+          </div>
+          <div className="mb-4 flex justify-end">
+            <Button
+              color="primary"
+              startContent={<PlusIcon />}
+              onClick={handleAddAssessment}
+              isDisabled={!subject || isLoadingCOs || !academicYear || !filterSem || !courseOutcomes.length>0}
+            >
+              Add Assessment
+            </Button>
+          </div>
+          <div className="mb-4 flex gap-4 items-center flex-wrap">
+            <Select 
+              placeholder="Select Academic Year"
+              variant="bordered"
+              selectedKeys={academicYear ? new Set([academicYear]) : new Set()}
+              onSelectionChange={handleAcademicYearChange}
+              startContent={<CalendarIcon size={18} className="text-indigo-600" />}
+              className="max-w-xs"
+              classNames={{
+                trigger: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all",
+                label: "text-slate-700 font-medium",
+              }}
+            >
+              {academicYears.map((year) => (
+                <SelectItem key={year.value} value={year.value} className="text-slate-900">
+                  {year.label}
+                </SelectItem>
+              ))}
+            </Select>
 
-<SubjectDropdown
-  instituteId={user?.institute?._id}
-  academicYear={academicYear}
-  onSelect={handleSubjectChange}
-  facultyId={user?._id}
-  selectedSubject={subject}
-  label="Subject"
-  isDisabled={!academicYear || !filterSem}
-  className="max-w-xs"
-  classNames={{
-    base: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all",
-    label: "text-slate-700 font-medium",
-  }}
-/>
-        {(academicYear || filterSem || subject) && (
-          <Button
-            size="sm"
-            onPress={() => {
-              setAcademicYear("");
-              setFilterSem("");
-              setSubject(null);
-              setAssessments([]);
-              setCourseOutcomes([]);
-            }}
-            color="secondary"
-            variant="flat"
-          >
-            Clear Filters
-          </Button>
-        )}
-        </div> 
-      </CardBody>
+            <Select
+              variant="bordered"
+              placeholder="Filter by Semester"
+              selectedKeys={filterSem ? new Set([filterSem]) : new Set()}
+              onSelectionChange={handleFilterSemChange}
+              className="max-w-xs"
+              isDisabled={!academicYear}
+              classNames={{
+                trigger: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all",
+                label: "text-slate-700 font-medium",
+              }}
+            >
+              <SelectItem key="sem1" value="sem1">
+                Semester 1
+              </SelectItem>
+              <SelectItem key="sem2" value="sem2">
+                Semester 2
+              </SelectItem>
+            </Select>
+
+            <SubjectDropdown
+              instituteId={user?.institute?._id}
+              academicYear={academicYear}
+              onSelect={handleSubjectChange}
+              facultyId={user?._id}
+              size="md"
+              selectedSubject={subject} 
+              isDisabled={!academicYear || !filterSem}
+              className="max-w-xs"
+              classNames={{
+                base: "bg-white border-slate-200 rounded-lg shadow-sm hover:border-indigo-400 transition-all",
+                label: "text-slate-700 font-medium",
+              }}
+            />
+            {(academicYear || filterSem || subject) && (
+              <Button
+                size="sm"
+                onPress={() => {
+                  setAcademicYear("");
+                  setFilterSem("");
+                  setSubject(null);
+                  setAssessments([]);
+                  setCourseOutcomes([]);
+                }}
+                color="secondary"
+                variant="flat"
+              >
+                Clear Filters
+              </Button>
+            )}
+          </div>
+        </CardBody>
       </Card>
       <div className="flex flex-col justify-between items-center mb-4">
-      {isLoadingCOs && !isLoadingAssessments && subject && academicYear && (
-        <div className="flex justify-center py-4">
-          <Spinner label="Loading Course Outcomes..." />
-        </div>
-      )}
-      {!academicYear ? (
-        <p className="text-gray-500 py-8 text-center">Please select an Academic Year.</p>
-      ) : !filterSem ? (
-        <p className="text-gray-500 py-8 text-center">Please select a Semester.</p>
-      ) : !subject ? (
-        <p className="text-gray-500 py-8 text-center">Please select a Subject.</p>
-      ) : isLoadingAssessments ? (
-        <div className="flex justify-center py-8">
-          <Spinner label="Loading Assessments..." />
-        </div>
-      ) : assessments.length > 0 ? (
-        <Table aria-label="Assessments Table" selectionMode="none">
-          <TableHeader columns={columns}>
-            {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
-          </TableHeader>
-          <TableBody items={assessments} emptyContent={"No assessments found for the selected filters."}>
-            {(assessment) => (
-              <TableRow
-                key={assessment._id}
-                className="cursor-pointer"
-                onClick={() => handleViewAssessment(assessment)}
-              >
-                <TableCell>{assessment.name}</TableCell>
-                <TableCell>
-                  <Chip color="primary" variant="flat" size="sm">
-                    {assessment.type}
-                  </Chip>
-                </TableCell>
-                <TableCell>{assessment.maxMarks}</TableCell>
-                <TableCell>
-                  {assessment.assessmentDate ? new Date(assessment.assessmentDate).toLocaleDateString() : "-"}
-                </TableCell>
-                <TableCell>
-                  {Array.isArray(assessment.coMapping) &&
-                    assessment.coMapping.map((map, index) => (
-                      <Chip variant="flat" color='warning' key={`${assessment._id}-co-map-${index}`} size="sm" className="mr-1 mb-1">
-                        {`CO${map.coIndex} (${map.maxMarks})`}
-                      </Chip>
-                    ))}
-                </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center gap-2">
-                    <Tooltip content="View Details">
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="flat"
-                        color="primary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleViewAssessment(assessment);
-                        }}
-                      >
-                        <FileText className="h-4 w-4" />
-                      </Button>
-                    </Tooltip>
-                    <Tooltip content="Manage Student Marks">
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="flat"
-                        color="success"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`assessment/${assessment._id}?tab=marks`);
-                        }}
-                      >
-                        <Users className="h-4 w-4" />
-                      </Button>
-                    </Tooltip>
-                    <Tooltip content="Edit">
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="bordered"
-                        color="primary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditAssessment(assessment);
-                        }}
-                        isDisabled={isLoadingCOs}
-                      >
-                        <EditIcon className="h-4 w-4" />
-                      </Button>
-                    </Tooltip>
-                    <Tooltip content="Delete">
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="light"
-                        color="danger"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openDeleteModal(assessment); // Updated to open modal
-                        }}
-                        isDisabled={isLoadingAssessments}
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
-                    </Tooltip>
-                  </div>
-                </TableCell>
-              </TableRow>
+        {isLoadingCOs && !isLoadingAssessments && subject && academicYear && (
+          <div className="flex justify-center py-4">
+            <Spinner label="Loading Course Outcomes..." />
+          </div>
+        )}
+        {!academicYear ? (
+          <p className="text-gray-500 py-8 text-center">Please select an Academic Year.</p>
+        ) : !filterSem ? (
+          <p className="text-gray-500 py-8 text-center">Please select a Semester.</p>
+        ) : !subject ? (
+          <p className="text-gray-500 py-8 text-center">Please select a Subject.</p>
+        ) : isLoadingAssessments ? (
+          <div className="flex justify-center py-8">
+            <Spinner label="Loading Assessments..." />
+          </div>
+        ) : assessments.length > 0 ? (
+          <Table aria-label="Assessments Table" selectionMode="none">
+            <TableHeader columns={columns}>
+              {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
+            </TableHeader>
+            <TableBody items={assessments} emptyContent={"No assessments found for the selected filters."}>
+              {(assessment) => (
+                <TableRow
+                  key={assessment._id}
+                  className="cursor-pointer"
+                  onClick={() => handleViewAssessment(assessment)}
+                >
+                  <TableCell>{assessment.name}</TableCell>
+                  <TableCell>
+                    <Chip color="primary" variant="flat" size="sm">
+                      {assessment.type}
+                    </Chip>
+                  </TableCell>
+                  <TableCell>{assessment.maxMarks}</TableCell>
+                  <TableCell>
+                    {assessment.assessmentDate ? new Date(assessment.assessmentDate).toLocaleDateString() : "-"}
+                  </TableCell>
+                  <TableCell>
+                    {Array.isArray(assessment.coMapping) &&
+                      assessment.coMapping.map((map, index) => (
+                        <Chip variant="flat" color='warning' key={`${assessment._id}-co-map-${index}`} size="sm" className="mr-1 mb-1">
+                          {`CO${map.coIndex} (${map.maxMarks})`}
+                        </Chip>
+                      ))}
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-2">
+                      <Tooltip content="View Details">
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          variant="flat"
+                          color="primary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewAssessment(assessment);
+                          }}
+                        >
+                          <FileText className="h-4 w-4" />
+                        </Button>
+                      </Tooltip>
+                      <Tooltip content="Manage Student Marks">
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          variant="flat"
+                          color="success"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`assessment/${assessment._id}?tab=marks`);
+                          }}
+                        >
+                          <Users className="h-4 w-4" />
+                        </Button>
+                      </Tooltip>
+                      <Tooltip content="Edit">
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          variant="bordered"
+                          color="primary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditAssessment(assessment);
+                          }}
+                          isDisabled={isLoadingCOs}
+                        >
+                          <EditIcon className="h-4 w-4" />
+                        </Button>
+                      </Tooltip>
+                      <Tooltip content="Delete">
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          variant="light"
+                          color="danger"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openDeleteModal(assessment); // Updated to open modal
+                          }}
+                          isDisabled={isLoadingAssessments}
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </Button>
+                      </Tooltip>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        ) : (
+          <p className="text-gray-500 py-8 text-center">No assessments found for the selected subject and filters.</p>
+        )}
+        <Modal backdrop='blur' isOpen={isFormOpen} onOpenChange={onFormClose} size="xl" scrollBehavior="inside">
+          <ModalContent className="max-h-[90vh] overflow-y-auto">
+            {(closeModal) => (
+              <>
+                <ModalHeader className="flex flex-col gap-1">
+                  {selectedAssessment ? "Edit Assessment" : "Add New Assessment"}
+                </ModalHeader>
+                <AssessmentForm
+                  key={selectedAssessment?._id || "new"}
+                  assessment={selectedAssessment}
+                  subject={stableSubject}
+                  courseOutcomes={stableCourseOutcomes}
+                  onSubmit={handleSaveAssessment}
+                  onClose={closeModal}
+                  isLoading={isSubmitting}
+                  academicYear={academicYear}
+                  semester={filterSem}
+                  isLoadingCOs={isLoadingCOs}
+                />
+              </>
             )}
-          </TableBody>
-        </Table>
-      ) : (
-        <p className="text-gray-500 py-8 text-center">No assessments found for the selected subject and filters.</p>
-      )}
-      <Modal backdrop='blur' isOpen={isFormOpen} onOpenChange={onFormClose} size="xl" scrollBehavior="inside">
-        <ModalContent className="max-h-[90vh] overflow-y-auto">
-          {(closeModal) => (
-            <>
-              <ModalHeader className="flex flex-col gap-1">
-                {selectedAssessment ? "Edit Assessment" : "Add New Assessment"}
-              </ModalHeader>
-              <AssessmentForm
-                key={selectedAssessment?._id || "new"}
-                assessment={selectedAssessment}
-                subject={stableSubject}
-                courseOutcomes={stableCourseOutcomes}
-                onSubmit={handleSaveAssessment}
-                onClose={closeModal}
-                isLoading={isSubmitting}
-                academicYear={academicYear}
-                semester={filterSem}
-                isLoadingCOs={isLoadingCOs}
-              />
-            </>
-          )}
-        </ModalContent>
-      </Modal>
-      <AssessmentDeleteConfirmModal
-        isOpen={isDeleteOpen}
-        onClose={onDeleteClose}
-        onConfirmDelete={handleDeleteAssessment}
-        assessment={assessmentToDelete}
-      /> 
+          </ModalContent>
+        </Modal>
+        <AssessmentDeleteConfirmModal
+          isOpen={isDeleteOpen}
+          onClose={onDeleteClose}
+          onConfirmDelete={handleDeleteAssessment}
+          assessment={assessmentToDelete}
+        />
       </div>
     </div>
   );

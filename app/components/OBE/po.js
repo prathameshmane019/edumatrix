@@ -188,7 +188,7 @@ export default function ManagePOsPage() {
              {/* Add Button & Context Display */}
              <div className="mb-4 flex justify-between items-center">
                  <div className="text-sm text-gray-600">
-                     {selectedDept && selectedYear && user?.institute?.name ? (
+                     {selectedDept && selectedYear  ? (
                          <span>Managing POs for: <Chip size="sm" variant="flat" color="success">{selectedDept}</Chip> / <Chip size="sm" variant="flat" color="success">{selectedYear}</Chip> / <Chip size="sm" variant="flat" color="default">{user.institute.name}</Chip></span>
                      ) : (
                          <span className="text-gray-500 italic">Please select Department and Academic Year to view or add POs.</span>

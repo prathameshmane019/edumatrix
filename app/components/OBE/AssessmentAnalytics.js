@@ -158,7 +158,7 @@ export default function AssessmentAnalytics({ assessment }) {
   }
 
   return (
-    <Card className="w-full">
+    <Card className="w-full p-5" shadow="sm">
       <CardHeader>
         <h3 className="text-lg font-semibold">Assessment Analytics</h3>
       </CardHeader>

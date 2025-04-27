@@ -191,7 +191,7 @@ export default function ViewAttainmentPage() {
     return (
         <div className="p-6 md:p-10 bg-slate-50 min-h-screen">
             {/* Header Card */}
-            <Card className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm">     
+            <Card className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm">
                 <CardHeader className="bg-indigo-50">
                     <h1 className="text-2xl font-bold text-slate-800">OBE Attainment Dashboard</h1>
                 </CardHeader>
@@ -254,7 +254,7 @@ export default function ViewAttainmentPage() {
                         <SubjectDropdown
                             instituteId={user?.role === "superadmin" ? user?._id : user?.institute?._id}
                             onSubjectDocChange={handleSubjectDocChange}
-                            department={user?.role === "superadmin" ? selectedDept : user?.id}
+                            department={user?.role === "superadmin" ? selectedDept : user?.role==="admin" ? user?.id:undefined}
                             academicYear={academicYear}
                             onSelect={handleSubjectChange}
                             facultyId={user?.role === "faculty" && user?._id}
@@ -296,7 +296,7 @@ export default function ViewAttainmentPage() {
                                 className="mt-2"
                             />
                         </div>
-                    </div> 
+                    </div>
                     <div className="flex items-center gap-4">
                         <Button
                             color="primary"
@@ -336,7 +336,7 @@ export default function ViewAttainmentPage() {
                         )}
                     </div>
                 </CardBody>
-            </Card> 
+            </Card>
             {/* Error and Loading States */}
             {error && (
                 <Chip color="danger" className="mb-4">{error}</Chip>

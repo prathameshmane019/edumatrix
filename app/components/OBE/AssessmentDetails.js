@@ -101,7 +101,7 @@ export default function AssessmentDetails({ assessment, onUpdate }) {
 
   return (
     <>
-      <Card className="w-full">
+      <Card shadow="sm" className="p-5 w-full">
         <CardHeader className="flex justify-between items-center">
           <h3 className="text-lg font-semibold">Assessment Details</h3>
           <Button color="primary" variant="light" startContent={<Edit size={18} />} onClick={handleEditClick}>
@@ -145,7 +145,7 @@ export default function AssessmentDetails({ assessment, onUpdate }) {
             <div>
               <h4 className="text-md font-medium mb-3">Course Outcome Mapping</h4>
               {Array.isArray(assessment.coMapping) && assessment.coMapping.length > 0 ? (
-                <Table aria-label="CO Mapping" selectionMode="none" className="mt-2">
+                <Table shadow="sm" aria-label="CO Mapping" selectionMode="none" className="mt-2">
                   <TableHeader>
                     <TableColumn>Course Outcome</TableColumn>
                     <TableColumn>Marks Allocated</TableColumn>

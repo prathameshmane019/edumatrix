@@ -107,7 +107,7 @@ export async function GET(req) {
     await connectMongoDB();
     
     const { searchParams } = new URL(req.url);
-    const subject = searchParams.get('subject');
+    const subject = searchParams.get('subjectId');
     const programOutcome = searchParams.get('programOutcome');
     const instituteId = searchParams.get('instituteId');
     const department = searchParams.get('department');
@@ -121,8 +121,11 @@ export async function GET(req) {
     if (department) filter.department = department;
     if (academicYear) filter.academicYear = academicYear;
     
-
-    console.log("[API - GET] Filters:", filter);
+ 
+    if(!instituteId && (!subject))
+    {
+      return NextResponse.json({success:false},{status:400})
+    }
     
     // Fetch course outcomes
     const courseOutcomes = await CourseOutcome.find(filter)
