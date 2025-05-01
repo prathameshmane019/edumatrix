@@ -5,7 +5,9 @@ import { Select, SelectItem } from "@nextui-org/react";
 import { Button } from '@nextui-org/react';
 import { useUser } from '@/app/context/UserContext';
 import dynamic from 'next/dynamic';
-import { Tabs, Tab } from "@nextui-org/react";
+import { Tabs, Tab,Card,
+  CardHeader,
+  CardBody } from "@nextui-org/react";
 
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
@@ -370,82 +372,102 @@ const EvaluationPage = ({ role }) => {
 
   return (
     <div className='w-full mx-auto'>
-      <h2 className='text-2xl w-full text-center mt-8 font-bold'>Faculty Evaluation</h2>
-      <div className="container w-full mx-auto px-4 py-8">
-        {selectedFeedback &&
-          <div className='w-full items-end flex justify-end my-2'>
-            <Button variant="bordered" onClick={printDiv}>Print</Button>
-          </div>}
-        <div className="flex gap-6 mb-4 ">
-          {user?.role == "superadmin" && (
-            <div>
-              <DepartmentDropdown
-                instituteId={user?._id}
-                includeCentral={true} 
-                label="Select Department"
-                onSelect={(e) => fetchFeedbackData(e.target.value, user?._id)}
-                className='min-w-[15vw] '
-                selectedDepartment={selectedDepartment}
-              />
-            </div>
-          )}
-          <div>
-            <Select
-              label="Select feedback"
-              size='sm'
-              variant='bordered'                 
-              className='min-w-[15vw] my-4'
-              placeholder="Select feedback"
-              onChange={(e) => setSelectedFeedback(feedbackData?.find(feedback => feedback._id === e.target.value))}
-            >
-              {feedbackData &&
-                feedbackData.map((feedback) => (
-                  <SelectItem key={feedback._id} value={feedback._id}>
-                    {feedback.feedbackTitle}
-                  </SelectItem>
-                ))}
-            </Select>
-          </div>
-          {selectedFeedback?.feedbackType === "academic" && (
-            <div>
-              <Select
-                label="Select Feedback Mode"
-                size='sm'
-                variant='bordered'
-                className='min-w-[15vw] my-4'
-
-                placeholder="Select Feedback Mode"
-                defaultSelectedKeys={[feedbackMode]}
-                onChange={(e) => {
-                  setFeedbackMode(e.target.value);
-                  setSelectedSubject(null);
-                }}
-              >
-                <SelectItem key="individual" value="individual">Individual Feedback</SelectItem>
-                <SelectItem key="cumulative" value="cumulative">Cumulative Feedback</SelectItem>
-              </Select>
-            </div>
-          )}
-          {selectedFeedback?.feedbackType === "academic" && feedbackMode === 'individual' && (
-            <div>
-              <Select
-                label="Select a Subject"
-                placeholder="Select a Subject"
-                size='sm'
-                className='min-w-[15vw] my-4'
-                variant='bordered'
-                onChange={(e) => setSelectedSubject(selectedFeedback?.subjects?.find(subject => subject._id === e.target.value))}
-              >
-                {selectedFeedback && selectedFeedback.subjects.map((subject) => (
-                  <SelectItem key={subject._id} value={subject._id}>
-                    {subject.subject}
-                  </SelectItem>
-                ))}
-              </Select>
-            </div>
-          )}
+   <div> 
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm mb-6">
+  <CardHeader className="flex justify-between items-center pb-2">
+    <div>
+      <h2 className="text-2xl font-bold">Faculty Evaluation</h2>
+      {selectedFeedback && (
+        <div className="text-sm text-slate-500">
+          {selectedFeedback.feedbackTitle}
         </div>
-
+      )}
+    </div>
+    {selectedFeedback && (
+      <div>
+        <Button variant="bordered" size="sm" onClick={printDiv} startContent={<Printer className="w-4 h-4" />}>
+          Print
+        </Button>
+      </div>
+    )}
+  </CardHeader>
+  <CardBody>
+    {/* Filters Section */}
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {user?.role === "superadmin" && (
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
+          <DepartmentDropdown
+            instituteId={user?._id}
+            includeCentral={true}
+            onSelect={(e) => fetchFeedbackData(e.target.value, user?._id)}
+            selectedDepartment={selectedDepartment}
+            variant="bordered"
+            size="sm"
+            className="w-full"
+          />
+        </div>
+      )}
+      
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1">Select Feedback</label>
+        <Select
+          size="sm"
+          variant="bordered"
+          placeholder="Select feedback"
+          className="w-full"
+          onChange={(e) => setSelectedFeedback(feedbackData?.find(feedback => feedback._id === e.target.value))}
+        >
+          {feedbackData &&
+            feedbackData.map((feedback) => (
+              <SelectItem key={feedback._id} value={feedback._id}>
+                {feedback.feedbackTitle}
+              </SelectItem>
+            ))}
+        </Select>
+      </div>
+      
+      {selectedFeedback?.feedbackType === "academic" && (
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Feedback Mode</label>
+          <Select
+            size="sm"
+            variant="bordered"
+            placeholder="Select Feedback Mode"
+            className="w-full"
+            defaultSelectedKeys={[feedbackMode]}
+            onChange={(e) => {
+              setFeedbackMode(e.target.value);
+              setSelectedSubject(null);
+            }}
+          >
+            <SelectItem key="individual" value="individual">Individual Feedback</SelectItem>
+            <SelectItem key="cumulative" value="cumulative">Cumulative Feedback</SelectItem>
+          </Select>
+        </div>
+      )}
+      
+      {selectedFeedback?.feedbackType === "academic" && feedbackMode === 'individual' && (
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Subject</label>
+          <Select
+            size="sm"
+            variant="bordered"
+            placeholder="Select a Subject"
+            className="w-full"
+            onChange={(e) => setSelectedSubject(selectedFeedback?.subjects?.find(subject => subject._id === e.target.value))}
+          >
+            {selectedFeedback && selectedFeedback.subjects.map((subject) => (
+              <SelectItem key={subject._id} value={subject._id}>
+                {subject.subject}
+              </SelectItem>
+            ))}
+          </Select>
+        </div>
+      )}
+    </div>
+  </CardBody>
+</Card>
         {selectedFeedback ? (
           <Tabs  aria-label="Evaluation Tabs" className=' w-full mx-auto flex flex-col items-center ' variant='bordered'>
             <Tab key="evaluation" title="Evaluation">
