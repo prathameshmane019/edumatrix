@@ -160,7 +160,7 @@ const Dashboard = () => {
        <div className="mb-8">
         <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm">
           <CardHeader className="flex justify-between">
-            <h1 className="text-3xl font-bold text-slate-800">Academic Dashboard</h1>
+          <h2 className="text-xl font-bold"> Academic Dashboard</h2>
             <div className="text-sm text-slate-500">
               {academicYear ? `Viewing data for: ${academicYear}` : ""}
             </div>
