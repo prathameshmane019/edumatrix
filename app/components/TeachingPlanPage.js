@@ -166,7 +166,7 @@ export default function TeachingPlanPage() {
        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm mb-6">
               <CardHeader className="flex justify-between">
              
-                <h2 className="text-xl font-bold">Manage Teaching Plan</h2>
+              <h2 className="text-xl font-bold">Manage Teaching Plan</h2>
               </CardHeader>
               <CardBody>
    

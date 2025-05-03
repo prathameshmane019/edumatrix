@@ -296,7 +296,7 @@ export default function ClassTable() {
     <>
        <Card className='bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm'>
       <CardHeader className="flex justify-between">
-        <h2 className="text-xl font-bold">Class Management</h2>
+      <h2 className="text-xl font-bold">Class Management</h2>
         <Button
               color="primary"
               startContent={<PlusIcon />}
