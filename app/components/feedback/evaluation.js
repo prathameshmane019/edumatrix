@@ -8,6 +8,8 @@ import dynamic from 'next/dynamic';
 import { Tabs, Tab,Card,
   CardHeader,
   CardBody } from "@nextui-org/react";
+  import { Printer } from 'lucide-react';
+
 
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
