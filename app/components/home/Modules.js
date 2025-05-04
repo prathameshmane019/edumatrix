@@ -16,9 +16,9 @@ import {
   Sparkles,
   ArrowRight,
   Award,Clock
-} from 'lucide-react';
-import { StudentManagementModule, AttendanceSystemModule } from '@/public/home/home';
-
+} from 'lucide-react'; 
+import AttendanceSystemModule from '@/public/illustrations/home/AttendanceSystemModule';
+import StudentManagementModule from '@/public/illustrations/home/StudentManagementModule';
 export default function Modules() {
   const modules = [
     {
@@ -253,15 +253,15 @@ export default function Modules() {
           </div>
 
           <div className="order-1 md:order-2 relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-indigo-500/10 rounded-3xl transform rotate-3"></div>
-            <svg
-              className="relative rounded-2xl shadow-lg w-full h-auto"
-              viewBox="0 0 600 500"
-              aria-label="Student Management Module"
-            >
-              <use href={`#${StudentManagementModule}`} />
-            </svg>
-          </div>
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-indigo-500/10 rounded-3xl transform rotate-3"></div>
+                <svg
+                  className="relative rounded-2xl shadow-lg w-full h-auto"
+                  viewBox="0 0 600 500"
+                  aria-label="Student Management Module"
+                >
+                  <StudentManagementModule />
+                </svg>
+              </div>
         </motion.div>
 
         {/* Featured Module - Attendance System */}
@@ -272,16 +272,16 @@ export default function Modules() {
           variants={fadeIn}
           className="grid md:grid-cols-2 gap-16 items-center mb-20"
         >
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-green-500/10 rounded-3xl transform -rotate-3"></div>
-            <svg
-              className="relative rounded-2xl shadow-lg w-full h-auto"
-              viewBox="0 0 600 500"
-              aria-label="Attendance System Module"
-            >
-              <use href={`#${AttendanceSystemModule}`} />
-            </svg>
-          </div>
+             <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-green-500/10 rounded-3xl transform -rotate-3"></div>
+                <svg
+                  className="relative rounded-2xl shadow-lg w-full h-auto"
+                  viewBox="0 0 600 500"
+                  aria-label="Attendance System Module"
+                >
+                  <AttendanceSystemModule />
+                </svg>
+              </div>
 
           <div>
             <h3 className="text-3xl font-outfit font-bold text-gray-900 mb-6">

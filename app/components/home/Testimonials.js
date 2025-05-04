@@ -3,28 +3,31 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Card, CardBody, Button } from '@nextui-org/react';
-import { ArrowRight } from 'lucide-react';
-import { Avatar1, Avatar2, Avatar3 } from '@/public/home/home';
+import { ArrowRight } from 'lucide-react'; 
+import Image from 'next/image';
 
 export default function Testimonials() {
+  // Define avatar imports or use placeholder images
+  const avatarPlaceholder = "/api/placeholder/80/80";
+  
   const testimonials = [
     {
       quote: "EduMatrix Pro has revolutionized how we manage our academic processes. The outcome-based education module has been particularly valuable for our accreditation requirements.",
       author: "Dr. Sarah Johnson",
       position: "Academic Dean, Tech University",
-      avatar: Avatar1,
+      avatar: avatarPlaceholder,
     },
     {
       quote: "The integration of all modules into a single platform has eliminated data silos and significantly improved our decision-making process. The analytics provided are invaluable.",
       author: "Prof. Michael Chen",
       position: "Head of Department, Global College",
-      avatar: Avatar2,
+      avatar: avatarPlaceholder,
     },
     {
       quote: "As a faculty member, I appreciate how the system simplifies attendance tracking and student performance monitoring. It's user-friendly and saves me hours each week.",
       author: "Prof. Amelia Rodriguez",
       position: "Senior Faculty, Innovation Institute",
-      avatar: Avatar3,
+      avatar: avatarPlaceholder,
     },
   ];
 
@@ -45,7 +48,7 @@ export default function Testimonials() {
       },
     },
   };
-
+  
   return (
     <section className="py-20">
       <motion.div
@@ -77,7 +80,6 @@ export default function Testimonials() {
             whileInView="visible"
             viewport={{ once: true }}
             variants={scaleIn}
-            transition={{ delay: idx * 0.2 }}
           >
             <Card className="border border-gray-100 h-full">
               <CardBody className="p-8">
@@ -90,9 +92,13 @@ export default function Testimonials() {
                   <p className="text-gray-700 italic mb-6 flex-grow">"{testimonial.quote}"</p>
                   <div className="flex items-center mt-auto">
                     <div className="w-12 h-12 rounded-full bg-gray-200 mr-4 overflow-hidden">
-                      <svg className="w-full h-full" viewBox="0 0 48 48" aria-label={testimonial.author}>
-                        <use href={`#${testimonial.avatar}`} />
-                      </svg>
+                      <Image 
+                        src={testimonial.avatar} 
+                        alt={`Avatar of ${testimonial.author}`}
+                        width={48}
+                        height={48}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                     <div>
                       <h4 className="font-outfit font-semibold text-gray-900">{testimonial.author}</h4>

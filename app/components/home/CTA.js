@@ -1,9 +1,10 @@
 'use client';
 
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@nextui-org/react';
-import { ArrowRight, Award, Users } from 'lucide-react';
-import { EducationDashboard3D } from '@/public/home/home';
+import { ArrowRight, Award, Users } from 'lucide-react'; 
+import EducationDashboard3D from '@/public/illustrations/home/EducationDashboard3D';
 
 export default function CTA() {
   const fadeIn = {
@@ -59,7 +60,7 @@ export default function CTA() {
               viewBox="0 0 500 400"
               aria-label="EduMatrix Pro Dashboard"
             >
-              <use href={`#${EducationDashboard3D}`} />
+              <EducationDashboard3D />
             </svg>
 
             <motion.div

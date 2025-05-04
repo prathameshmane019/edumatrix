@@ -3,12 +3,16 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import { Tabs, Tab, Button } from '@nextui-org/react';
-import { ArrowRight, GraduationCap, ClapperboardIcon as ChalkboardTeacher, Building2, Layers, Check } from 'lucide-react';
-import {
-  StudentDashboard,
-  FacultyPortal,
-  InstituteManagement,
-  DepartmentDashboard} from '@/public/home/home'
+import { ArrowRight, GraduationCap, Building2, Layers, Check } from 'lucide-react';
+import { ClapperboardIcon } from 'lucide-react'; // Imported correctly
+import Image from 'next/image';
+
+// Assuming these are imported components, but if they're paths to SVG files, 
+// you would need to import them differently
+import StudentDashboard from '@/public/illustrations/home/StudentDashboard';
+import FacultyPortal from '@/public/illustrations/home/FacultyPortal';
+import InstituteManagement from '@/public/illustrations/home/InstituteManagement';
+import DepartmentDashboard from '@/public/illustrations/home/DepartmentDashboard';
 
 export default function RoleBased() {
   const [activeTab, setActiveTab] = useState("students");
@@ -78,6 +82,12 @@ export default function RoleBased() {
     },
   };
 
+  // Helper function to render the correct illustration component
+  const renderIllustration = (tab) => {
+    const IllustrationComponent = roleContent[tab].illustration;
+    return <IllustrationComponent className="w-full h-auto" />;
+  };
+
   return (
     <section className="py-20">
       <motion.div
@@ -133,7 +143,7 @@ export default function RoleBased() {
             key="faculty"
             title={
               <div className="flex items-center gap-2">
-                <ChalkboardTeacher />
+                <ClapperboardIcon />
                 <span>Faculty</span>
               </div>
             }
@@ -197,13 +207,9 @@ export default function RoleBased() {
 
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-indigo-500/10 rounded-3xl transform rotate-2"></div>
-                <svg
-                  className="relative rounded-2xl shadow-lg z-10 w-full h-auto"
-                  viewBox="0 0 600 400"
-                  aria-label={roleContent[activeTab].title}
-                >
-                  <use href={`#${roleContent[activeTab].illustration}`} />
-                </svg>
+                <div className="relative rounded-2xl shadow-lg z-10 w-full">
+                  {renderIllustration(activeTab)}
+                </div>
               </div>
             </motion.div>
           </AnimatePresence>

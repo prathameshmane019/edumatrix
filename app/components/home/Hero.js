@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { motion, useScroll, useAnimation } from 'framer-motion';
 import { useEffect, useRef } from 'react';
 import { Button, Card, CardBody } from '@nextui-org/react';
-import { ArrowRight, MessageSquare, Layers, Zap, RefreshCw, Database, Brain, Check, Calendar } from 'lucide-react';
-import { DashboardIllustration } from '@/public/home/home';
+import { ArrowRight, MessageSquare, Layers, Zap, RefreshCw, Database, Brain, Check, Calendar } from 'lucide-react'; 
+import { DashboardIllustration } from '@/public/illustrations/home/DashboardIllustration';
+
 
 export default function Hero() {
   const controls = useAnimation();
@@ -180,14 +181,10 @@ export default function Hero() {
               Final semester exams start from May 15th
             </div>
           </motion.div>
+          <div className="relative rounded-3xl shadow-xl hover:shadow-2xl transition-shadow overflow-hidden">
+            <DashboardIllustration />
+          </div>
 
-          <svg
-            className="relative rounded-3xl shadow-xl hover:shadow-2xl transition-shadow w-full h-auto"
-            viewBox="0 0 600 400"
-            aria-label="EduMatrix Pro Dashboard Illustration"
-          >
-            <use href={`#${DashboardIllustration}`} />
-          </svg>
         </motion.div>
       </div>
     </section>
