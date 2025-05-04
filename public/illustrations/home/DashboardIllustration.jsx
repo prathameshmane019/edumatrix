@@ -59,7 +59,7 @@ const DashboardIllustration = () => {
         <circle cx="125" cy="170" r="15" fill="url(#primary-gradient)" opacity="0.8" />
         <text x="165" y="155" fontFamily="Arial" fontWeight="bold" fontSize="12" fill="#475569">Students</text>
         <text x="165" y="180" fontFamily="Arial" fontWeight="bold" fontSize="18" fill="#1e293b">1,547</text>
-        <text x="165" y="200" fontFamily="Arial" fontSize="10" fill="#64748b">+12% from last month</text>
+        <text x="165" y="200" fontFamily="Arial" fontSize="10" fill="#64748b">+12% </text>
       </g>
       
       <g filter="url(#shadow)">
@@ -68,7 +68,7 @@ const DashboardIllustration = () => {
         <circle cx="290" cy="170" r="15" fill="#4ade80" opacity="0.8" />
         <text x="330" y="155" fontFamily="Arial" fontWeight="bold" fontSize="12" fill="#475569">Attendance</text>
         <text x="330" y="180" fontFamily="Arial" fontWeight="bold" fontSize="18" fill="#1e293b">98%</text>
-        <text x="330" y="200" fontFamily="Arial" fontSize="10" fill="#64748b">+2% from last week</text>
+        <text x="330" y="200" fontFamily="Arial" fontSize="10" fill="#64748b">+2%  </text>
       </g>
       
       <g filter="url(#shadow)">
@@ -77,7 +77,7 @@ const DashboardIllustration = () => {
         <circle cx="455" cy="170" r="15" fill="#f59e0b" opacity="0.8" />
         <text x="495" y="155" fontFamily="Arial" fontWeight="bold" fontSize="12" fill="#475569">Results</text>
         <text x="495" y="180" fontFamily="Arial" fontWeight="bold" fontSize="18" fill="#1e293b">85%</text>
-        <text x="495" y="200" fontFamily="Arial" fontSize="10" fill="#64748b">Pass rate this semester</text>
+        <text x="495" y="200" fontFamily="Arial" fontSize="10" fill="#64748b">Pass rate </text>
       </g>
       
       {/* Chart area */}
