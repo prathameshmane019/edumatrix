@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from '@nextui-org/react';
 import { ArrowRight, Sparkles } from 'lucide-react';
-
+import Image from 'next/image';
 export default function Header() {
   return (
     <header className="bg-white/70 backdrop-blur-md border-b sticky top-0 z-50">
@@ -24,6 +24,13 @@ export default function Header() {
                 <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary to-indigo-600"></div>
                 <div className="absolute inset-0.5 rounded-full bg-white flex items-center justify-center">
                   <Sparkles className="h-6 w-6 text-primary" />
+                  {/* <Image
+                    src="/logo.svg"
+                    alt="EduMatrix Logo"
+                    width={60}
+                    height={60}
+                    className="h-6 w-6"
+                  /> */}
                 </div>
               </div>
               <div className="space-y-0">

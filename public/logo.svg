@@ -1,0 +1,271 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200">
+  <!-- Premium definitions for enhanced gradients, filters and animations -->
+  <defs>
+    <!-- Ultra-modern gradient palette with vibrant colors -->
+    <linearGradient id="primaryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6D28D9">
+        <animate attributeName="stop-color" values="#6D28D9; #8B5CF6; #7C3AED; #6D28D9" dur="6s" repeatCount="indefinite" />
+      </stop>
+      <stop offset="100%" stop-color="#C084FC">
+        <animate attributeName="stop-color" values="#C084FC; #A78BFA; #DDD6FE; #C084FC" dur="6s" repeatCount="indefinite" />
+      </stop>
+    </linearGradient>
+    
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0EA5E9">
+        <animate attributeName="stop-color" values="#0EA5E9; #38BDF8; #06B6D4; #0EA5E9" dur="5s" repeatCount="indefinite" />
+      </stop>
+      <stop offset="100%" stop-color="#2DD4BF">
+        <animate attributeName="stop-color" values="#2DD4BF; #5EEAD4; #14B8A6; #2DD4BF" dur="5s" repeatCount="indefinite" />
+      </stop>
+    </linearGradient>
+    
+    <linearGradient id="tertiaryGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F472B6">
+        <animate attributeName="stop-color" values="#F472B6; #FB7185; #F472B6" dur="7s" repeatCount="indefinite" />
+      </stop>
+      <stop offset="100%" stop-color="#FB7185">
+        <animate attributeName="stop-color" values="#FB7185; #F472B6; #FB7185" dur="7s" repeatCount="indefinite" />
+      </stop>
+    </linearGradient>
+    
+    <!-- Enhanced bloom effect -->
+    <filter id="bloom" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+      <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0.4  0 1 0 0 0.2  0 0 1 0 1  0 0 0 18 -7" result="bloom" />
+      <feBlend in="SourceGraphic" in2="bloom" mode="screen" />
+    </filter>
+    
+    <!-- Premium glass effect -->
+    <filter id="premiumGlass" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur" />
+      <feOffset dx="0" dy="0" result="offsetBlur" />
+      <feComponentTransfer in="offsetBlur" result="lightened">
+        <feFuncA type="linear" slope="1.8" intercept="0" />
+      </feComponentTransfer>
+      <feFlood flood-color="#ffffff" flood-opacity="0.5" result="glassColor" />
+      <feComposite in="glassColor" in2="lightened" operator="in" result="glassEffect" />
+      <feMerge>
+        <feMergeNode in="glassEffect" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    
+    <!-- Particle system for dynamic animation -->
+    <radialGradient id="particleGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+    
+    <!-- Shimmer effect -->
+    <linearGradient id="shimmerGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0">
+        <animate attributeName="offset" values="0;1" dur="2s" repeatCount="indefinite" />
+      </stop>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0.3">
+        <animate attributeName="offset" values="0;1" dur="2s" repeatCount="indefinite" />
+      </stop>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0">
+        <animate attributeName="offset" values="0;1" dur="2s" repeatCount="indefinite" />
+      </stop>
+    </linearGradient>
+  </defs>
+  
+  <!-- Improved background with subtle animation -->
+  <rect x="0" y="0" width="400" height="200" fill="transparent" />
+  
+  <!-- Dynamic background elements -->
+  <g>
+    <!-- Animated circles -->
+    <circle cx="200" cy="100" r="85" fill="#f8fafc" opacity="0.8">
+      <animate attributeName="r" values="85;87;85" dur="6s" repeatCount="indefinite" />
+    </circle>
+    
+    <!-- Animated geometric background elements -->
+    <circle cx="200" cy="100" r="75" fill="none" stroke="url(#accentGradient)" stroke-width="0.5" stroke-dasharray="2,6" opacity="0.4">
+      <animateTransform attributeName="transform" type="rotate" from="0 200 100" to="360 200 100" dur="40s" repeatCount="indefinite" />
+    </circle>
+    
+    <circle cx="200" cy="100" r="65" fill="none" stroke="url(#primaryGradient)" stroke-width="0.5" stroke-dasharray="2,6" opacity="0.4">
+      <animateTransform attributeName="transform" type="rotate" from="360 200 100" to="0 200 100" dur="30s" repeatCount="indefinite" />
+    </circle>
+    
+    <circle cx="200" cy="100" r="55" fill="none" stroke="url(#tertiaryGradient)" stroke-width="0.5" stroke-dasharray="2,6" opacity="0.3">
+      <animateTransform attributeName="transform" type="rotate" from="0 200 100" to="360 200 100" dur="20s" repeatCount="indefinite" />
+    </circle>
+  </g>
+  
+  <!-- Particle system animation -->
+  <g opacity="0.5">
+    <circle cx="190" cy="90" r="1.5" fill="#C084FC" opacity="0.7">
+      <animate attributeName="cy" values="90;85;90" dur="3s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.7;0.3;0.7" dur="3s" repeatCount="indefinite" />
+    </circle>
+    
+    <circle cx="210" cy="105" r="1" fill="#38BDF8" opacity="0.6">
+      <animate attributeName="cy" values="105;100;105" dur="4s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.6;0.2;0.6" dur="4s" repeatCount="indefinite" />
+    </circle>
+    
+    <circle cx="180" cy="115" r="1.2" fill="#FB7185" opacity="0.5">
+      <animate attributeName="cy" values="115;110;115" dur="5s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.5;0.1;0.5" dur="5s" repeatCount="indefinite" />
+    </circle>
+    
+    <circle cx="195" cy="80" r="1.3" fill="#5EEAD4" opacity="0.6">
+      <animate attributeName="cy" values="80;75;80" dur="3.5s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.6;0.2;0.6" dur="3.5s" repeatCount="indefinite" />
+    </circle>
+    
+    <circle cx="220" cy="95" r="1.1" fill="#A78BFA" opacity="0.7">
+      <animate attributeName="cy" values="95;90;95" dur="4.5s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.7;0.3;0.7" dur="4.5s" repeatCount="indefinite" />
+    </circle>
+  </g>
+  
+  <!-- Main logo mark - Dynamic Network/Matrix visualization -->
+  <g transform="translate(145, 55)" filter="url(#premiumGlass)">
+    <!-- High-tech backdrop shape -->
+    <path d="M50,0 L97,25 L97,75 L50,100 L3,75 L3,25 Z" fill="#fafafe" opacity="0.9" stroke="url(#primaryGradient)" stroke-width="1.2">
+      <animate attributeName="stroke-opacity" values="0.4;0.8;0.4" dur="4s" repeatCount="indefinite" />
+    </path>
+    
+    <!-- Dynamic node system -->
+    <g id="nodeSystem">
+      <!-- Central node with pulsing animation -->
+      <circle cx="50" cy="50" r="5" fill="url(#primaryGradient)" filter="url(#bloom)">
+        <animate attributeName="r" values="5;6;5" dur="2s" repeatCount="indefinite" />
+        <animate attributeName="fill-opacity" values="1;0.8;1" dur="2s" repeatCount="indefinite" />
+      </circle>
+      
+      <!-- Outer nodes with animation -->
+      <g id="outerNodes">
+        <!-- Top node -->
+        <circle cx="50" cy="15" r="4" fill="url(#accentGradient)">
+          <animate attributeName="r" values="4;4.5;4" dur="3s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.9;0.7;0.9" dur="3s" repeatCount="indefinite" />
+        </circle>
+        
+        <!-- Top-right node -->
+        <circle cx="80" cy="30" r="4" fill="url(#primaryGradient)">
+          <animate attributeName="r" values="4;4.5;4" dur="3.5s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.8;0.6;0.8" dur="3.5s" repeatCount="indefinite" />
+        </circle>
+        
+        <!-- Bottom-right node -->
+        <circle cx="80" cy="70" r="4" fill="url(#tertiaryGradient)">
+          <animate attributeName="r" values="4;4.5;4" dur="2.8s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.9;0.7;0.9" dur="2.8s" repeatCount="indefinite" />
+        </circle>
+        
+        <!-- Bottom node -->
+        <circle cx="50" cy="85" r="4" fill="url(#accentGradient)">
+          <animate attributeName="r" values="4;4.5;4" dur="3.2s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.8;0.6;0.8" dur="3.2s" repeatCount="indefinite" />
+        </circle>
+        
+        <!-- Bottom-left node -->
+        <circle cx="20" cy="70" r="4" fill="url(#primaryGradient)">
+          <animate attributeName="r" values="4;4.5;4" dur="2.5s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.9;0.7;0.9" dur="2.5s" repeatCount="indefinite" />
+        </circle>
+        
+        <!-- Top-left node -->
+        <circle cx="20" cy="30" r="4" fill="url(#tertiaryGradient)">
+          <animate attributeName="r" values="4;4.5;4" dur="4s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.8;0.6;0.8" dur="4s" repeatCount="indefinite" />
+        </circle>
+      </g>
+      
+      <!-- Dynamic connection lines with data flow animation -->
+      <g id="connectionLines" stroke-width="1.5" stroke-linecap="round">
+        <!-- Central to top -->
+        <line x1="50" y1="45" x2="50" y2="19" stroke="url(#accentGradient)">
+          <animate attributeName="stroke-width" values="1.5;2;1.5" dur="2s" repeatCount="indefinite" />
+          <animate attributeName="stroke-dasharray" values="0,30;30,0;0,30" dur="3s" repeatCount="indefinite" />
+        </line>
+        
+        <!-- Central to top-right -->
+        <line x1="54" y1="46" x2="76" y2="33" stroke="url(#primaryGradient)">
+          <animate attributeName="stroke-width" values="1.5;2;1.5" dur="2.5s" repeatCount="indefinite" />
+          <animate attributeName="stroke-dasharray" values="0,30;30,0;0,30" dur="3.5s" repeatCount="indefinite" />
+        </line>
+        
+        <!-- Central to bottom-right -->
+        <line x1="54" y1="54" x2="76" y2="67" stroke="url(#tertiaryGradient)">
+          <animate attributeName="stroke-width" values="1.5;2;1.5" dur="2.3s" repeatCount="indefinite" />
+          <animate attributeName="stroke-dasharray" values="30,0;0,30;30,0" dur="3.3s" repeatCount="indefinite" />
+        </line>
+        
+        <!-- Central to bottom -->
+        <line x1="50" y1="55" x2="50" y2="81" stroke="url(#accentGradient)">
+          <animate attributeName="stroke-width" values="1.5;2;1.5" dur="2.7s" repeatCount="indefinite" />
+          <animate attributeName="stroke-dasharray" values="30,0;0,30;30,0" dur="3.7s" repeatCount="indefinite" />
+        </line>
+        
+        <!-- Central to bottom-left -->
+        <line x1="46" y1="54" x2="24" y2="67" stroke="url(#primaryGradient)">
+          <animate attributeName="stroke-width" values="1.5;2;1.5" dur="2.2s" repeatCount="indefinite" />
+          <animate attributeName="stroke-dasharray" values="0,30;30,0;0,30" dur="3.2s" repeatCount="indefinite" />
+        </line>
+        
+        <!-- Central to top-left -->
+        <line x1="46" y1="46" x2="24" y2="33" stroke="url(#tertiaryGradient)">
+          <animate attributeName="stroke-width" values="1.5;2;1.5" dur="2.8s" repeatCount="indefinite" />
+          <animate attributeName="stroke-dasharray" values="30,0;0,30;30,0" dur="3.8s" repeatCount="indefinite" />
+        </line>
+      </g>
+    </g>
+    
+    <!-- Shimmer overlay effect -->
+    <path d="M50,0 L97,25 L97,75 L50,100 L3,75 L3,25 Z" fill="url(#shimmerGradient)" opacity="0.5" />
+  </g>
+  
+  <!-- Premium Typography with enhanced animation -->
+  <g transform="translate(200, 145)" text-anchor="middle">
+    <g id="brandName">
+      <!-- Edu with elegant animation -->
+      <g>
+        <text x="-38" y="0" font-family="'Poppins', sans-serif" font-weight="600" font-size="30" fill="#1E293B">
+          <tspan>Edu</tspan>
+          <animate attributeName="fill" values="#1E293B;#334155;#1E293B" dur="6s" repeatCount="indefinite" />
+        </text>
+      </g>
+      
+      <!-- Matrix with gradient fill and animation -->
+      <g>
+        <text x="28" y="0" font-family="'Poppins', sans-serif" font-weight="700" font-size="30" fill="url(#primaryGradient)">
+          <tspan>Matrix</tspan>
+        </text>
+        
+        <!-- Animated underline -->
+        <path d="M-5,5 L62,5" stroke="url(#accentGradient)" stroke-width="2" stroke-linecap="round">
+          <animate attributeName="d" values="M-5,5 L62,5;M0,5 L57,5;M-5,5 L62,5" dur="4s" repeatCount="indefinite" />
+          <animate attributeName="stroke-width" values="2;2.5;2" dur="4s" repeatCount="indefinite" />
+        </path>
+      </g>
+    </g>
+    
+    <!-- Refined tagline with animation -->
+    <g transform="translate(0, 20)">
+      <text x="0" y="0" font-family="'Inter', sans-serif" font-weight="500" font-size="10" letter-spacing="1.5" fill="#64748B" text-anchor="middle">
+        <tspan>NEXT-GEN EDUCATION MANAGEMENT</tspan>
+        <animate attributeName="opacity" values="0.8;1;0.8" dur="4s" repeatCount="indefinite" />
+      </text>
+    </g>
+  </g>
+  
+  <!-- Dynamic accent elements -->
+  <g>
+    <!-- Animated accent dots -->
+    <circle cx="125" cy="145" r="2" fill="url(#accentGradient)" filter="url(#bloom)">
+      <animate attributeName="r" values="2;3;2" dur="3s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite" />
+    </circle>
+    
+    <circle cx="275" cy="145" r="2" fill="url(#tertiaryGradient)" filter="url(#bloom)">
+      <animate attributeName="r" values="2;3;2" dur="3.5s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="3.5s" repeatCount="indefinite" />
+    </circle>
+  </g>
+</svg>
