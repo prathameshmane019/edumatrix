@@ -225,7 +225,7 @@ export default function OBEFacultyGuidePage() {
             <GraduationCap size={20} className="text-indigo-600" />
           </div>
           <h2 className="text-xl font-semibold text-slate-800">
-            Your Program's Outcomes
+            Your Program&#39;s Outcomes
           </h2>
         </CardHeader>
         <CardBody className="p-4 relative z-10">
@@ -334,7 +334,7 @@ export default function OBEFacultyGuidePage() {
                 <div className="text-blue-600 font-bold text-2xl mb-2">01</div>
                 <h3 className="font-medium text-slate-800 mb-1">Define Course Outcomes</h3>
                 <p className="text-xs text-slate-600">
-                  Create measurable COs using Bloom's Taxonomy verbs
+                  Create measurable COs using Bloom&#39;s Taxonomy verbs
                 </p>
               </div>
 
@@ -416,7 +416,7 @@ export default function OBEFacultyGuidePage() {
                   className="py-1"
                 >
                   <p className="text-sm text-slate-600 p-2">
-                    Use Bloom's Taxonomy verbs and follow SMART criteria (Specific, Measurable, Achievable, Relevant, Time-bound).
+                    Use Bloom&#39;s Taxonomy verbs and follow SMART criteria (Specific, Measurable, Achievable, Relevant, Time-bound).
                   </p>
                 </AccordionItem>
                 <AccordionItem

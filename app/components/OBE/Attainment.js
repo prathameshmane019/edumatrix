@@ -193,7 +193,8 @@ export default function ViewAttainmentPage() {
             {/* Header Card */}
             <Card className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm">
                 <CardHeader className="bg-indigo-50">
-                    <h1 className="text-2xl font-bold text-slate-800">OBE Attainment Dashboard</h1>
+                    <h1 className="text-2xl font-bold text-blue-800">OBE Attainment Dashboard</h1>
+                    
                 </CardHeader>
                 <CardBody className="p-6">
                     <p className="text-slate-600 text-sm">
@@ -499,7 +500,7 @@ export default function ViewAttainmentPage() {
 
             {/* Empty State */}
             {!isLoading && !coAttainmentData.length && !poAttainmentData.length && academicYear && subject && (
-                <p className="text-slate-600 text-center">Click "Calculate Attainment" to view results.</p>
+                <p className="text-slate-600 text-center">Click &#34;Calculate Attainment&#34; to view results.</p>
             )}
             {!academicYear && (
                 <p className="text-slate-600 text-center">Please select an Academic Year.</p>

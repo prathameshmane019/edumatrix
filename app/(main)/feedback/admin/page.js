@@ -134,16 +134,19 @@ const FeedbackDashboard = () => {
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm">
-  <CardHeader className="flex justify-between">
-    <h1 className="text-xl font-bold text-slate-800">Feedback Dashboard</h1>
-    <div className="text-sm text-slate-500">
-      {academicYear ? `Viewing data for: ${academicYear}` : ""}
+       
+<Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm mb-6">
+  <CardHeader className="flex justify-between items-center pb-2">
+    <div>
+      <h1 className="text-2xl font-bold">Feedback Dashboard</h1>
+      <div className="text-sm text-slate-500">
+        {academicYear ? `Viewing data for: ${academicYear}` : ""}
+      </div>
     </div>
   </CardHeader>
   <CardBody>
     {/* Filters Section */}
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1">Academic Year</label>
         <Select
