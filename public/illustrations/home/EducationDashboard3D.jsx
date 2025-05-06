@@ -51,7 +51,7 @@ const EducationDashboard3D = () => {
         <rect x="35" y="60" width="430" height="300" fill="url(#edu-3d-top)" rx="16" />
         
         {/* Main dashboard */}
-        <rect x="50" y="80" width="400" height="260" fill="url(#edu-bg-gradient)" rx="12" filter="url(#edu-shadow)" />
+        <rect x="50" y="80" width="400" height="270" fill="url(#edu-bg-gradient)" rx="12" filter="url(#edu-shadow)" />
       </g>
       
       {/* Top navigation bar */}
@@ -59,12 +59,12 @@ const EducationDashboard3D = () => {
         <rect x="50" y="80" width="400" height="50" fill="white" rx="12 12 0 0" />
         
         {/* Logo */}
-        <rect x="70" y="95" width="120" height="20" rx="4" fill="url(#edu-primary-gradient)" />
+        <rect x="110" y="90" width="120" height="20" rx="4" fill="url(#edu-primary-gradient)" />
         
         {/* Navigation items */}
-        <circle cx="360" cy="105" r="15" fill="#f8fafc" />
-        <circle cx="400" cy="105" r="15" fill="#f8fafc" />
-        <circle cx="440" cy="105" r="15" fill="#f8fafc" />
+        <circle cx="350" cy="105" r="15" fill="#f8fafc" />
+        <circle cx="390" cy="105" r="15" fill="#f8fafc" />
+        <circle cx="430" cy="105" r="15" fill="#f8fafc" />
       </g>
 
       {/* Content area with 3D effect */}
@@ -97,7 +97,7 @@ const EducationDashboard3D = () => {
 
       {/* Enrollment graph with 3D effect */}
       <g transform="skewX(-10) skewY(5)">
-        <rect x="70" y="245" width="215" height="140" rx="8" fill="white" filter="url(#edu-shadow)" />
+        <rect x="70" y="235" width="215" height="140" rx="8" fill="white" filter="url(#edu-shadow)" />
         <text x="90" y="270" fontFamily="Arial" fontWeight="bold" fontSize="12" fill="#1e293b">Enrollment Trends</text>
         
         {/* Graph lines */}
@@ -126,29 +126,24 @@ const EducationDashboard3D = () => {
 
       {/* Recent activity panel */}
       <g transform="skewX(-10) skewY(5)">
-        <rect x="300" y="245" width="130" height="140" rx="8" fill="white" filter="url(#edu-shadow)" />
+        <rect x="300" y="235" width="130" height="140" rx="8" fill="white" filter="url(#edu-shadow)" />
         <text x="320" y="270" fontFamily="Arial" fontWeight="bold" fontSize="12" fill="#1e293b">Recent Activity</text>
         
         {/* Activity items */}
-        <circle cx="320" cy="290" r="5" fill="#6366f1" />
-        <text x="335" y="293" fontFamily="Arial" fontSize="9" fill="#1e293b">New curriculum added</text>
-        <text x="410" y="293" fontFamily="Arial" fontSize="8" fill="#64748b" textAnchor="end">2h ago</text>
+        <circle cx="310" cy="290" r="5" fill="#6366f1" />
+        <text x="325" y="293" fontFamily="Arial" fontSize="9" fill="#1e293b">New curriculum added</text>
+         
+        <circle cx="310" cy="310" r="5" fill="#3b82f6" />
+        <text x="325" y="313" fontFamily="Arial" fontSize="9" fill="#1e293b">Staff meeting scheduled</text>
+       
+        <circle cx="310" cy="330" r="5" fill="#10b981" />
+        <text x="325" y="333" fontFamily="Arial" fontSize="9" fill="#1e293b">Grades updated</text>
         
-        <circle cx="320" cy="310" r="5" fill="#3b82f6" />
-        <text x="335" y="313" fontFamily="Arial" fontSize="9" fill="#1e293b">Staff meeting scheduled</text>
-        <text x="410" y="313" fontFamily="Arial" fontSize="8" fill="#64748b" textAnchor="end">4h ago</text>
-        
-        <circle cx="320" cy="330" r="5" fill="#10b981" />
-        <text x="335" y="333" fontFamily="Arial" fontSize="9" fill="#1e293b">Grades updated</text>
-        <text x="410" y="333" fontFamily="Arial" fontSize="8" fill="#64748b" textAnchor="end">5h ago</text>
-        
-        <circle cx="320" cy="350" r="5" fill="#f43f5e" />
-        <text x="335" y="353" fontFamily="Arial" fontSize="9" fill="#1e293b">Course deadline extended</text>
-        <text x="410" y="353" fontFamily="Arial" fontSize="8" fill="#64748b" textAnchor="end">1d ago</text>
-        
-        <circle cx="320" cy="370" r="5" fill="#8b5cf6" />
-        <text x="335" y="373" fontFamily="Arial" fontSize="9" fill="#1e293b">New students enrolled</text>
-        <text x="410" y="373" fontFamily="Arial" fontSize="8" fill="#64748b" textAnchor="end">1d ago</text>
+        <circle cx="310" cy="350" r="5" fill="#f43f5e" />
+        <text x="325" y="353" fontFamily="Arial" fontSize="9" fill="#1e293b">Course deadline extended</text>
+         
+        <circle cx="310" cy="370" r="5" fill="#8b5cf6" />
+        <text x="325" y="373" fontFamily="Arial" fontSize="9" fill="#1e293b">New students enrolled</text> 
       </g>
 
       {/* Floating 3D elements */}

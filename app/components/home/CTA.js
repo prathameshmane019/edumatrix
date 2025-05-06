@@ -18,7 +18,7 @@ export default function CTA() {
       whileInView="visible"
       viewport={{ once: true }}
       variants={fadeIn}
-      className="py-16 md:py-24"
+      className="  "
     >
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary to-indigo-600 p-12 text-white">
         <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-white/10 blur-3xl"></div>

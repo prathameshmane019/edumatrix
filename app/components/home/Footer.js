@@ -49,11 +49,11 @@ export default function Footer() {
             },
             {
               title: "Company",
-              links: ["About Us", "Careers", "Press Kit", "Contact", "Partners", "Legal"],
+              links: ["About Us",   , "Contact", "Partners", "Legal"],
             },
             {
               title: "Resources",
-              links: ["Documentation", "Tutorials", "Blog", "Community", "Case Studies", "Support"],
+              links: ["Documentation", "Tutorials", "Blog",    "Support"],
             },
           ].map((column, idx) => (
             <div key={idx} className="space-y-6">
