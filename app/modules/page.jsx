@@ -356,8 +356,7 @@ const MODULE_CONFIG = {
         illustration: "/obe.png", // << CREATE THIS SVG ILLUSTRATION
         bgColor: "bg-indigo-50",
         textColor: "text-indigo-600",
-        descriptions: {
-            
+        descriptions: { 
             admin: "Define POs/PSOs, view overall attainment reports, configure settings.",
             superadmin: "Oversee OBE implementation across institutes, manage global settings.",
             faculty: "Manage COs, Assessments, Marks Entry, and view Attainment for your subjects.",
@@ -377,6 +376,7 @@ export default function ModuleSelectionPage() {
     // Redirect if not logged in
     // Note: This check might be better handled by middleware or layout component
     React.useEffect(() => {
+        console.log(user);
         if (!userLoading && !user) {
             router.push('/login');
         }

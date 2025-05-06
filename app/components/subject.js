@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Card, CardHeader, CardBody} from '@nextui-org/react';
-// import { Calendar, Search as SearchIcon, Plus as PlusIcon } from 'lucide-react';
+ 
 import axios from 'axios';
 import { ChevronDownIcon } from "@/public/ChevronDownIcon";
 import {
@@ -259,7 +259,7 @@ export default function SubjectTable({ user }) {
             setModalOpen(true);
           }}
         >
-          Add Outcome
+          Add Subject
         </Button>
       </CardHeader>
       
@@ -318,20 +318,7 @@ export default function SubjectTable({ user }) {
             onChange={(e) => setFilterValue(e.target.value)}
           />
           
-          <div className="gap-4 items-center flex">
-            <Button
-              color="primary"
-              startContent={<PlusIcon size={16} />}
-              size="sm"
-              onClick={() => {
-                setModalMode("add");
-                setSelectedSubject(null);
-                setModalOpen(true);
-              }}
-            >
-              Add Subject
-            </Button>
-          </div>
+           
         </div>
         
         {/* You can add your subjects list or other content here */}

@@ -229,6 +229,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, department, us
   return (
     <Modal
       isOpen={isOpen}
+      hideCloseButton={true}
       onClose={() => {
         resetForm();
         onClose();
@@ -236,6 +237,7 @@ const ClassModal = ({ isOpen, onClose, mode, classData, onSubmit, department, us
       size="3xl"
         placement="center"
         backdrop="blur"
+        isDismissable={false}
     >
       <ModalContent className="max-h-[90vh] overflow-y-auto">
         <ModalHeader>{mode === "add" ? "Add Class" : "Edit Class"}</ModalHeader>

@@ -93,6 +93,7 @@ import axios from 'axios'
 export function BatchDropdown({ 
   facultyId, 
   instituteId, 
+  size='sm',
   selectedSubject, 
   onSelect, 
   selectedBatch, 
@@ -149,13 +150,13 @@ export function BatchDropdown({
   return (
     <Select
       placeholder={isLoading ? "Loading batches..." : "Select a batch"}
-      variant="bordered"
-      size="sm"
+      variant="bordered" 
       value={selectedBatch}
       selectedKeys={selectedBatch ? [selectedBatch] : []}
       onChange={handleSelectChange}
       className={`max-w-xs my-4 ${className}`}
       selectionMode="multiple"
+      size={size}
       isDisabled={isLoading || (!selectedSubject && !selectedClass)}
     >
       {batches.map((batch) => (

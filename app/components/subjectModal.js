@@ -16,8 +16,7 @@ import {
 import { FacultyDropdown } from "./faculty/FacultyDropdown"
 import { Calendar } from "lucide-react"
 import { ClassDropdown } from "./Class/ClassDropdown"
-import { getAcademicYears } from "../utils/acadmicYears"
-import Loader from "./loader"
+import { getAcademicYears } from "../utils/acadmicYears" 
 
 export default function SubjectModal({
   isOpen,
@@ -210,10 +209,12 @@ export default function SubjectModal({
  
   return (
     <Modal
-      isOpen={isOpen}
-      onClose={onClose}
+      isOpen={isOpen} 
       placement="center"
       backdrop="blur"
+      isDismissable={false}
+      onClose={onClose}
+      hideCloseButton={true}
       className="max-w-[40vw] max-h-[80vh] overflow-y-auto"
     >
       <ModalContent>
@@ -346,7 +347,9 @@ export default function SubjectModal({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onClose}
+                onClick={() => {resetForm()
+                onClose()}
+                }
                 className="w-fit px-3 font-normal bg-gray-200 text-gray-600"
               >
                 Cancel

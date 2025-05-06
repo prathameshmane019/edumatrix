@@ -14,13 +14,16 @@ import {
   Card,
   CardBody,
   CardHeader,
-  Divider
+  Divider,
+  Select,
+  SelectItem
 } from "@nextui-org/react";
 import axios from 'axios';
 import { Calendar, Users, BookOpen, CheckSquare, PlusCircle, Trash2 } from 'lucide-react';
 import { SubjectDropdown } from "../subject/SubjectDropdown";
 import { BatchDropdown } from "../subject/BatchDropdown";
 import Loader from "../loader";
+import { getAcademicYears } from "@/app/utils/acadmicYears";
 
 const MemoizedPointInput = React.memo(({ value, onChange, onRemove, canRemove, index }) => (
   <div className="flex gap-2 items-center">
@@ -235,6 +238,7 @@ export default function AttendanceSystem() {
   const [selectedDate, setSelectedDate] = useState("");
   const [subjectType, setSubjectType] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedYear, setSelectedYear] = useState('');
 
   useEffect(() => {
     const storedProfile = sessionStorage.getItem('userProfile');
@@ -271,23 +275,23 @@ export default function AttendanceSystem() {
 
   const fetchSubjectDetails = useCallback(async (subjectId, batchId) => {
     setIsLoading(true);
-    
+
     try {
       const response = await axios.get(`/api/v2/utils/attendance-data?_id=${subjectId}&batchId=${batchId || ''}`);
       const { subject, batches, students } = response.data;
-      
+
       setSubjectDetails(subject);
       setBatches(batches || []);
-      
+
       // Map student objects to match the expected structure
       const mappedStudents = students.map(student => ({
         _id: student._id,
         name: student.personalDetails?.name || student.name,
         rollNumber: student.academicDetails?.rollNumber || student.rollNumber
       }));
-      
+
       setStudents(mappedStudents);
-      
+
       if (subject.subType === 'tg') {
         setTgSessions(subject.tgSessions || []);
         setPointInputs([{ id: Date.now(), value: '' }]);
@@ -373,7 +377,7 @@ export default function AttendanceSystem() {
     }));
 
     // Prepare points discussed array from pointInputs
-    const pointsDiscussedArray = subjectDetails?.subType === 'tg' 
+    const pointsDiscussedArray = subjectDetails?.subType === 'tg'
       ? pointInputs.filter(point => point.value.trim()).map(point => point.value.trim())
       : undefined;
 
@@ -393,11 +397,11 @@ export default function AttendanceSystem() {
       console.log("Sending attendance data:", attendanceData);
       const response = await axios.post('/api/v2/attendance', attendanceData);
       alert("Attendance submitted successfully");
-      
+
       if (subjectDetails?.subType === 'tg') {
         await fetchSubjectDetails(selectedSubject, selectedBatch);
       }
-      
+
       resetForm();
     } catch (error) {
       console.error('Failed to submit attendance:', error);
@@ -457,27 +461,45 @@ export default function AttendanceSystem() {
           <Loader />
         </div>
       )}
-      
-       <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm mb-6">
+
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm mb-6">
         <CardHeader className="flex justify-between">
-       
+
           <h2 className="text-xl font-bold">Take Attendance</h2>
         </CardHeader>
         <CardBody>
-          <div className="flex flex-wrap gap-4 items-center">
+          <div className="flex flex-wrap gap-4 items-center"> 
+            <Select
+              placeholder="Select Academic Year"
+              variant="bordered"
+              size="md"
+              selectedKeys={selectedYear ? [selectedYear] : []}
+              onSelectionChange={(keys) => setSelectedYear(Array.from(keys)[0])}
+              startContent={<Calendar className="w-4 h-4 text-default-400" />}
+              className=" sm:w-[40%] my-2 sm:my-4"
+            >
+              {getAcademicYears(10).map((year) => (
+                <SelectItem key={year.value} value={year.value}>
+                  {year.label}
+                </SelectItem>
+              ))}
+            </Select>
             <SubjectDropdown
               facultyId={profile?._id}
               instituteId={profile?.institute._id}
               onSelect={handleSubjectSelection}
               selectedSubject={selectedSubject}
+              academicYear={selectedYear}
+              size="md"
               onSubjectTypeChange={setSubjectType}
             />
-            {subjectType !== "theory" && (
+            {selectedSubject && subjectType !== "theory" && (
               <BatchDropdown
                 facultyId={profile?._id}
                 instituteId={profile?.institute._id}
                 onSelect={handleBatchSelection}
                 selectedSubject={selectedSubject}
+                size="md"
                 selectedBatch={selectedBatch}
               />
             )}
@@ -485,7 +507,6 @@ export default function AttendanceSystem() {
             <div className="flex items-center gap-2">
               <Input
                 type="date"
-                label="Session Date"
                 value={selectedDate}
                 onChange={(e) => {
                   setSelectedDate(e.target.value);
@@ -495,7 +516,6 @@ export default function AttendanceSystem() {
                 className="max-w-xs"
               />
             </div>
-
             <CheckboxGroup
               orientation="horizontal"
               label="Select Sessions"
@@ -508,8 +528,7 @@ export default function AttendanceSystem() {
                 </Checkbox>
               ))}
             </CheckboxGroup>
-
-            <Button color="primary" variant="shadow" onClick={handleTakeAttendance} startContent={<CheckSquare size={20} />}>
+            <Button color="primary" variant="flat" onClick={handleTakeAttendance} startContent={<CheckSquare size={20} />}>
               Take Attendance
             </Button>
           </div>

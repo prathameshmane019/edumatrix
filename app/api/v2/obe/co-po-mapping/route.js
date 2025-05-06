@@ -20,6 +20,14 @@ export async function GET(req) {
       );
     }
 
+    // Validate the parameters
+    console.log("Incoming parameters:", {
+      subject,
+      academicYear,
+      instituteId,
+      department,
+    });
+    
     const courseOutcomeDoc = await CourseOutcome.findOne({
       subject,
       academicYear,
@@ -27,6 +35,8 @@ export async function GET(req) {
       department,
     }).populate("subject programOutcome");
 
+    console.log("courseOutcomeDoc", courseOutcomeDoc);
+    
     if (!courseOutcomeDoc) {
       return NextResponse.json(
         { success: false, message: "Course outcomes not found" },
