@@ -49,6 +49,8 @@ export const DynamicFieldSelector = ({ formData, handleSelectChange, user }) => 
       instituteId={formData?.institute || user?.institute?._id}
       onSelect={handleChange("className")}
       selectedClass={formData?.className}
+      label="Select Class"
+      size="md"
       selectedDepartment={formData?.department || user?.id}
       acadmicYear={formData?.academicYear} // Fix typo in prop name
     />

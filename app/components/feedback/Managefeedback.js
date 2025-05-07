@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react"
 import axios from "axios"
 import { useUser } from "@/app/context/UserContext"
-import { toast } from "sonner" 
+import { toast } from "sonner"
 import FeedbackTable from "./FeedbackTable"
 import { Button, Card, CardBody, CardHeader, Divider, Input, Select, SelectItem, Spinner } from "@nextui-org/react"
 import { DynamicFieldSelector } from "./DyanyamicFieldSelector"
@@ -29,13 +29,13 @@ const initialFormState = {
 
 const FeedbackManagement = () => {
   const [showFeedbackForm, setShowFeedbackForm] = useState(false)
-  const [feedbacks, setFeedbacks] = useState([]) 
+  const [feedbacks, setFeedbacks] = useState([])
   const { user } = useUser()
   const [formData, setFormData] = useState(initialFormState)
   const [loading, setLoading] = useState(false)
   const [questionSets, setQuestionSets] = useState([])
   const [selectedQuestionSet, setSelectedQuestionSet] = useState(null)
-  const [selectedDepartment,setSelectedDepartment]=useState('')
+  const [selectedDepartment, setSelectedDepartment] = useState('')
   // Memoized academic years
   const academicYears = useMemo(() => getAcademicYears(5), [])
 
@@ -47,8 +47,9 @@ const FeedbackManagement = () => {
     try {
       const response = await axios.get("/api/feedback", {
         params: {
-          department:   user?.id  || selectedDepartment,
-          institute: user._id || user?.institute?._id,
+          department: user?.id || selectedDepartment,
+          institute: (user?.role === "admin" ? user?.institute?._id : user?._id)
+          ,
         },
       })
       setFeedbacks(response.data)
@@ -57,11 +58,11 @@ const FeedbackManagement = () => {
     } finally {
       setLoading(false)
     }
-  }, [user,selectedDepartment])
+  }, [user, selectedDepartment])
 
   // Fetch questions safely
   const fetchQuestions = useCallback(async () => {
-    const institute = formData.institute || user?.institute?._id || user?._id ;
+    const institute = formData.institute || (user?.role === "admin" ? user?.institute?._id : user?._id);
 
     if (!institute || !formData.feedbackType) return
 
@@ -74,13 +75,13 @@ const FeedbackManagement = () => {
       })
 
       const response = await axios.get(`/api/questions?${params}`)
-      
+
       console.log(response.data);
-      
+
       if (formData.feedbackType === "academic") {
-        setFormData(prev => ({ 
-          ...prev, 
-          questions: response.data[0]?.questions || [] 
+        setFormData(prev => ({
+          ...prev,
+          questions: response.data[0]?.questions || []
         }))
       } else {
         setQuestionSets(response.data)
@@ -123,7 +124,7 @@ const FeedbackManagement = () => {
   const handleQuestionSetChange = useCallback((e) => {
     const selectedId = e.target.value
     const selected = questionSets.find(q => q._id === selectedId)
-    
+
     setSelectedQuestionSet(selected)
     setFormData(prev => ({
       ...prev,
@@ -135,26 +136,26 @@ const FeedbackManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     // Comprehensive validation
     const validationErrors = []
-    
+
     if (!formData.feedbackTitle) validationErrors.push("Feedback Title is required")
     if (!formData.feedbackType) validationErrors.push("Feedback Type is required")
     if (!formData.students || formData.students <= 0) validationErrors.push("Valid number of students is required")
     if (!formData.pwd) validationErrors.push("Password is required")
-    
+
     if (formData.feedbackType === "academic") {
       if (!formData.subType) validationErrors.push("Feedback Subtype is required")
       if (!formData.semester) validationErrors.push("Semester is required")
       if (!formData.academicYear) validationErrors.push("Academic Year is required")
       if (formData.subjects.length === 0) validationErrors.push("At least one subject is required")
     }
-    
+
     if (formData.feedbackType === "event" && !formData.selectedQuestionSet) {
       validationErrors.push("Please select a Question Set")
     }
-    
+
     if (validationErrors.length > 0) {
       validationErrors.forEach(error => toast.error(error))
       return
@@ -165,13 +166,14 @@ const FeedbackManagement = () => {
       const submissionData = {
         ...formData,
         department: user?.role === "superadmin" ? "CENTRAL" : user?.id,
-        institute:user?._id || user?.institute?._id ,
-        subjects: formData.subjects.map(({ subject, faculty, _id }) => ({ 
-          subject, 
-          faculty, 
-          _id 
+        institute: (user?.role === "admin" ? user?.institute?._id : user?._id),
+        class: formData.className,
+        subjects: formData.subjects.map(({ subject, faculty, _id }) => ({
+          subject,
+          faculty,
+          _id
         })),
-        questions: formData.questions.map(q => 
+        questions: formData.questions.map(q =>
           typeof q === "string" ? q : q.question
         )
       }
@@ -201,8 +203,8 @@ const FeedbackManagement = () => {
     }
   }
 
-  const handleDepartmentChange  = (value) => {
-    setSelectedDepartment(value.target.value) 
+  const handleDepartmentChange = (value) => {
+    setSelectedDepartment(value.target.value)
   }
   const handleToggleIsActive = async (id, isActive) => {
     setLoading(true)
@@ -261,9 +263,9 @@ const FeedbackManagement = () => {
       </Select>
 
       <DynamicFieldSelector
-        formData={formData} 
-        
-        handleSelectChange={handleSelectChange} 
+        formData={formData}
+
+        handleSelectChange={handleSelectChange}
         user={user}
       />
 
@@ -309,36 +311,36 @@ const FeedbackManagement = () => {
         required
       />
 
-      <Input 
+      <Input
         variant="bordered"
-        label="Resource Person" 
-        value={selectedQuestionSet?.resourcePerson || ''} 
-        disabled 
+        label="Resource Person"
+        value={selectedQuestionSet?.resourcePerson || ''}
+        disabled
       />
 
-      <Input 
+      <Input
         variant="bordered"
-        label="Organization" 
-        value={selectedQuestionSet?.organization || ''} 
-        disabled 
+        label="Organization"
+        value={selectedQuestionSet?.organization || ''}
+        disabled
       />
     </>
   )
 
   // Main render
-  return ( 
+  return (
     <div className="container mx-auto px-4 py-8">
-       {user?.role === "superadmin" &&
-      (
-        <DepartmentDropdown
-        instituteId={user?._id}
-        includeCentral={true}
-        selectedDepartment={selectedDepartment}
-        onSelect={handleDepartmentChange}
-        className="my-0"
-  
-        />)
-    }
+      {user?.role === "superadmin" &&
+        (
+          <DepartmentDropdown
+            instituteId={user?._id}
+            includeCentral={true}
+            selectedDepartment={selectedDepartment}
+            onSelect={handleDepartmentChange}
+            className="my-0"
+
+          />)
+      }
       {!showFeedbackForm && (
         <div className="flex justify-end mb-8">
           <Button color="primary" onClick={() => setShowFeedbackForm(true)}>
@@ -409,16 +411,16 @@ const FeedbackManagement = () => {
               <Divider className="my-4" />
 
               <div className="flex justify-end space-x-4">
-                <Button 
-                  color="danger" 
-                  variant="light" 
+                <Button
+                  color="danger"
+                  variant="light"
                   onClick={() => setShowFeedbackForm(false)}
                 >
                   Cancel
                 </Button>
-                <Button 
-                  color="primary" 
-                  type="submit" 
+                <Button
+                  color="primary"
+                  type="submit"
                   disabled={loading}
                 >
                   {loading ? <Spinner size="sm" /> : "Create Feedback"}
@@ -428,10 +430,10 @@ const FeedbackManagement = () => {
           </CardBody>
         </Card>
       ) : (
-        <FeedbackTable 
-          feedbacks={feedbacks} 
-          onDelete={handleDeleteFeedback} 
-          onToggleActive={handleToggleIsActive} 
+        <FeedbackTable
+          feedbacks={feedbacks}
+          onDelete={handleDeleteFeedback}
+          onToggleActive={handleToggleIsActive}
         />
       )}
     </div>

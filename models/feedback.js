@@ -46,20 +46,22 @@ const feedbackSchema = new Schema(
       type: Number,
       required: true,
     },
+    academicYear: {
+      type: String,
+      required: true,
+    },
     department: {
       type: String,
     },
     class: {
       type: String,
-    },
-
+    }, 
     pwd: {
       type: String,
       required: true,
     },
     resourcePerson: {
-      type: String,
-
+      type: String, 
     },
     organization: {
       type: String,

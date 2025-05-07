@@ -1,24 +1,25 @@
 import React from "react"
 import { useState } from "react"
 import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Button,
-  Switch,
-  Tooltip,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
+    Table,
+    TableHeader,
+    TableColumn,
+    TableBody,
+    TableRow,
+    TableCell,
+    Button,
+    Switch,
+    Tooltip,
+    Modal,
+    ModalContent,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+    useDisclosure,
 } from "@nextui-org/react"
 import { FiCopy } from "react-icons/fi"
 import { toast } from "sonner"
+import { Trash2 } from "lucide-react"
 
 const FeedbackTable = ({ feedbacks, onDelete, onToggleActive }) => {
     const { isOpen, onOpen, onClose } = useDisclosure()
@@ -81,9 +82,14 @@ const FeedbackTable = ({ feedbacks, onDelete, onToggleActive }) => {
                                 <Switch isSelected={feedback.isActive} size="sm" onChange={() => onToggleActive(feedback._id, feedback.isActive)} />
                             </TableCell>
                             <TableCell>
-                                <Button color="danger" size="sm" onClick={() => confirmDelete(feedback._id)}>
-                                    Delete
-                                </Button>
+                                <Button
+                                    isIconOnly
+                                    color="danger"
+                                    variant="light"
+                                    className="text-danger"
+                                    startContent={<Trash2 className="w-5 h-5" />}
+                                    size="sm" onClick={() => confirmDelete(feedback._id)} />
+                                   
                             </TableCell>
                         </TableRow>
                     ))}
@@ -107,4 +113,4 @@ const FeedbackTable = ({ feedbacks, onDelete, onToggleActive }) => {
         </>
     )
 }
- export default FeedbackTable
+export default FeedbackTable

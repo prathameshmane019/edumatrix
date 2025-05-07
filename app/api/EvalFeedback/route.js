@@ -8,6 +8,7 @@ export async function GET(req) {
 
         const department = searchParams.get("department");
         const institute = searchParams.get('institute')
+        const academicYear = searchParams.get('academicYear')
         const query = {};
         if(department){
             query.department = department;
@@ -15,11 +16,15 @@ export async function GET(req) {
         if(institute){
             query.institute = institute;
         }
+        // if(academicYear){
+        //     query.academicYear = academicYear;
+        // }
+        
         query.isActive = false;
+        console.log("Query",query);
         await connectMongoDB();
         let feedbacks
-         feedbacks = await Feedback.find(query);
-         console.log(feedbacks);
+         feedbacks = await Feedback.find(query).populate("institute class","name").populate("class","name");
         console.log("Feedback fetched Successfully");
         console.log(feedbacks);
         return NextResponse.json(feedbacks,{status:200});

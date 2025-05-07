@@ -21,6 +21,7 @@ export async function POST(req) {
             data.subjects = data.subjects.filter(subject => subject && subject._id!=='');
         }
 
+console.log("Data:", data);
 
         const newFeedback = new Feedback(data);
         await newFeedback.save();

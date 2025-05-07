@@ -10,13 +10,14 @@ import {
   CardHeader,
   CardBody
 } from "@nextui-org/react";
-import { Printer } from 'lucide-react';
+import { Calendar, Printer } from 'lucide-react';
 
 
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 import Image from 'next/image';
 import { DepartmentDropdown } from '../department/DepartmentDropDowns';
+import { getAcademicYears } from '@/app/utils/acadmicYears';
 
 const EvaluationPage = ({ role }) => {
   const [cumulativeStudentCategories, setCumulativeStudentCategories] = useState([]);
@@ -26,6 +27,8 @@ const EvaluationPage = ({ role }) => {
   const [responses, setResponses] = useState([]);
   const [feedbackMode, setFeedbackMode] = useState('cumulative');
   const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [selectedYear, setSelectedYear] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const [evaluationDetails, setEvaluationDetails] = useState({
     department: "",
@@ -51,14 +54,15 @@ const EvaluationPage = ({ role }) => {
   }, [user]);
 
   useEffect(() => {
-    if (evaluationDetails?.department && evaluationDetails?.institute) {
+    if (evaluationDetails?.department && evaluationDetails?.institute && selectedYear) {
       fetchFeedbackData(evaluationDetails.department, evaluationDetails.institute);
     }
-  }, [evaluationDetails]);
+  }, [evaluationDetails,selectedYear]);
 
-  const fetchFeedbackData = async (department, institute) => {
+  const fetchFeedbackData = async (department, institute,year) => {
     try {
-      const response = await axios.get(`/api/EvalFeedback?department=${department}&institute=${institute}`);
+      setIsLoading(true);
+      const response = await axios.get(`/api/EvalFeedback?department=${department}&institute=${institute}&academicYear=${year}`);
       const filteredFeedbackData = response.data.filter(
         feedback => !feedback.isActive
       );
@@ -66,6 +70,10 @@ const EvaluationPage = ({ role }) => {
     } catch (error) {
       console.error('Error fetching feedback data:', error);
     }
+    finally {
+      setIsLoading(false);
+    }
+
   };
 
   useEffect(() => {
@@ -85,9 +93,125 @@ const EvaluationPage = ({ role }) => {
     }
   };
 
-  const printDiv = () => {
-    window.print();
+// First, let's modify the printDiv function in your component:
+
+// Here's the complete printing solution with the fixed functions
+
+const printDiv = () => {
+  const printContents = document.getElementById('table-to-print').innerHTML;
+  
+  // Create a new window with just the report content
+  const printWindow = window.open('', '_blank', 'height=600,width=800');
+  
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>${selectedFeedback?.feedbackTitle || 'Feedback Report'}</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+          }
+          th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+          }
+          th {
+            background-color: #f2f2f2;
+          }
+          h2, h3 {
+            text-align: center;
+            margin-bottom: 10px;
+          }
+          .suggestions {
+            margin-top: 20px;
+          }
+          .suggestions h3 {
+            text-align: left;
+            margin-bottom: 10px;
+          }
+          .suggestions ul {
+            padding-left: 20px;
+          }
+          @media print {
+            @page {
+              size: portrait;
+              margin: 1cm;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        ${printContents}
+      </body>
+    </html>
+  `);
+  
+  printWindow.document.close();
+  printWindow.focus();
+  
+  // Give the browser a moment to process the document before printing
+  setTimeout(() => {
+    printWindow.print();
+    // Only close after printing if user doesn't cancel
+    printWindow.onafterprint = () => {
+      printWindow.close();
+    };
+  }, 300);
+};
+
+// Function to calculate rating counts for each question
+const calculateRatingCounts = (questionIndex) => {
+  const counts = {
+    1: 0, // Poor
+    2: 0, // Average
+    3: 0, // Good
+    4: 0, // Very Good
+    5: 0, // Excellent
   };
+
+  responses.forEach((feedbackEntry) => {
+    if (selectedSubject) {
+      const ratingsForSubject = feedbackEntry.ratings.find(rating => rating.subject_id === selectedSubject._id);
+      if (ratingsForSubject && ratingsForSubject.ratings[questionIndex] !== undefined) {
+        const ratingValue = ratingsForSubject.ratings[questionIndex];
+        if (counts[ratingValue] !== undefined) {
+          counts[ratingValue]++;
+        }
+      }
+    }
+  });
+
+  return counts;
+};
+
+// Function to calculate evaluation points for a specific question
+const calculateEvaluationPoint = (questionIndex) => {
+  let totalPoints = 0;
+  let totalResponses = 0;
+
+  responses.forEach((feedbackEntry) => {
+    if (selectedSubject) {
+      const ratingsForSubject = feedbackEntry.ratings.find(rating => rating.subject_id === selectedSubject._id);
+      if (ratingsForSubject && ratingsForSubject.ratings[questionIndex] !== undefined) {
+        const ratingValue = ratingsForSubject.ratings[questionIndex];
+        if (!isNaN(ratingValue) && ratingValue !== null) {
+          totalPoints += ratingValue;
+          totalResponses++;
+        }
+      }
+    }
+  });
+
+  return totalResponses > 0 ? totalPoints : 0;
+};
 
   useEffect(() => {
     if (selectedFeedback && responses.length > 0) {
@@ -96,6 +220,8 @@ const EvaluationPage = ({ role }) => {
     }
   }, [selectedFeedback, responses]);
 
+  // Add these functions to your component before the return statement
+ 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const dd = String(date.getDate()).padStart(2, '0');
@@ -250,6 +376,9 @@ const EvaluationPage = ({ role }) => {
       }
     });
 
+    console.log(selectedFeedback);
+    
+
     // Check if selectedFeedback is defined before accessing questions
     if (!selectedFeedback || !selectedFeedback.questions || !selectedFeedback?.questions.length) {
       console.error('Error: Selected feedback or its questions are not properly initialized.');
@@ -397,10 +526,8 @@ const EvaluationPage = ({ role }) => {
           </CardHeader>
           <CardBody>
             {/* Filters Section */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {user?.role === "superadmin" && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
+            <div className="grid items-center grid-cols-1 md:grid-cols-4 gap-4">
+              {user?.role === "superadmin" && (  
                   <DepartmentDropdown
                     instituteId={user?._id}
                     includeCentral={true}
@@ -409,17 +536,30 @@ const EvaluationPage = ({ role }) => {
                     variant="bordered"
                     size="sm"
                     className="w-full"
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Select Feedback</label>
+                  /> 
+              )} 
+              <Select
+                placeholder="Select Academic Year"
+                variant="bordered"
+                size="sm"
+                selectedKeys={selectedYear ? [selectedYear] : []}
+                onSelectionChange={(keys) => setSelectedYear(Array.from(keys)[0])}
+                startContent={<Calendar className="w-4 h-4 text-default-400" />}
+                label="Select Academic Year"
+                className="w-full   my-2 sm:my-4"
+              >
+                {getAcademicYears(10).map((year) => (
+                  <SelectItem key={year.value} value={year.value}>
+                    {year.label}
+                  </SelectItem>
+                ))}
+              </Select> 
                 <Select
                   size="sm"
                   variant="bordered"
-                  placeholder="Select feedback"
+                  placeholder={isLoading ? "Loading..." : "Select Feedback"}
                   className="w-full"
+                  label="Select feedback"
                   onChange={(e) => setSelectedFeedback(feedbackData?.find(feedback => feedback._id === e.target.value))}
                 >
                   {feedbackData &&
@@ -428,37 +568,35 @@ const EvaluationPage = ({ role }) => {
                         {feedback.feedbackTitle}
                       </SelectItem>
                     ))}
-                </Select>
-              </div>
+                </Select> 
 
               {selectedFeedback?.feedbackType === "academic" && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Feedback Mode</label>
-                  <Select
+                <Select
                     size="sm"
                     variant="bordered"
                     placeholder="Select Feedback Mode"
                     className="w-full"
                     defaultSelectedKeys={[feedbackMode]}
+                    label="Select Feedback Mode"
                     onChange={(e) => {
+
                       setFeedbackMode(e.target.value);
                       setSelectedSubject(null);
                     }}
                   >
                     <SelectItem key="individual" value="individual">Individual Feedback</SelectItem>
                     <SelectItem key="cumulative" value="cumulative">Cumulative Feedback</SelectItem>
-                  </Select>
-                </div>
+                  </Select> 
               )}
 
               {selectedFeedback?.feedbackType === "academic" && feedbackMode === 'individual' && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Subject</label>
-                  <Select
+               <Select
                     size="sm"
                     variant="bordered"
+                    
                     placeholder="Select a Subject"
                     className="w-full"
+                    label="Select a Subject"
                     onChange={(e) => setSelectedSubject(selectedFeedback?.subjects?.find(subject => subject._id === e.target.value))}
                   >
                     {selectedFeedback && selectedFeedback.subjects.map((subject) => (
@@ -466,11 +604,11 @@ const EvaluationPage = ({ role }) => {
                         {subject.subject}
                       </SelectItem>
                     ))}
-                  </Select>
-                </div>
+                  </Select> 
               )}
             </div>
           </CardBody>
+
         </Card>
         {selectedFeedback ? (
           <Tabs aria-label="Evaluation Tabs" className=' w-full mx-auto flex flex-col items-center ' variant='bordered'>
@@ -479,7 +617,8 @@ const EvaluationPage = ({ role }) => {
                 <>
                   {feedbackMode === 'individual' && selectedSubject && (
                     <div id="table-to-print" className="bg-white rounded-lg p-6 mx-auto w-full">
-                      <h2 className="text-2xl font-bold mb-4 text-center mx-auto w-full ">SKN Sinhgad College of Engineering, Pandharpur</h2>
+                      <h2 className="text-2xl font-bold mb-4 text-center mx-auto w-full ">{selectedFeedback?.institute?.name}</h2>
+                      <h3 className="text-lg font-bold mb-2 text-center">{selectedFeedback?.class?.name}</h3>
                       <h2 className="text-xl font-bold mb-4 text-center">Feedback Report</h2>
                       <h2 className="text-xl font-bold mb-2 text-center">
                         Subject: {selectedSubject.subject}
@@ -546,7 +685,9 @@ const EvaluationPage = ({ role }) => {
 
                   {(selectedFeedback?.feedbackType === "event" || feedbackMode === 'cumulative') && (
                     <div id="table-to-print" className="bg-white rounded-lg p-6 text-center">
-                      <h2 className="text-xl font-bold mb-2 text-center">SKN Sinhgad College of Engineering, Pandharpur</h2>
+                      <h2 className="text-xl font-bold mb-2 text-center">{selectedFeedback?.institute?.name}</h2>
+                      <h3 className="text-lg font-bold mb-2 text-center">{selectedFeedback?.department}</h3>
+                      <h3 className="text-lg font-bold mb-2 text-center">{selectedFeedback?.class?.name}</h3>
                       <h2 className="text-xl font-bold mb-2 text-center">Cumulative Feedback</h2>
                       <h2 className="text-lg font-bold mb-2 text-center">
                         Feedback Title: {selectedFeedback?.feedbackTitle}

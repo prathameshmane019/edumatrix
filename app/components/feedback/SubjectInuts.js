@@ -180,8 +180,8 @@ export const SubjectInputs = ({ subjects, onChange, formData, className }) => {
         </div>
       ) : (
         availableSubjects.map((subject, index) => (
-          <Card key={index} className="w-full">
-            <CardBody>
+          <Card    key={index} className=" shadow-md rounded-md w-full">
+            <CardBody >
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
                 <div>
                   <p className="text-sm text-gray-500">Subject</p>
@@ -191,10 +191,7 @@ export const SubjectInputs = ({ subjects, onChange, formData, className }) => {
                   <p className="text-sm text-gray-500">Faculty</p>
                   <p className="font-medium">{subject.faculty || "Not assigned"}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Subject Code</p>
-                  <p className="font-medium">{subject._id}</p>
-                </div>
+                 
               </div>
               
               <div className="flex justify-end mt-2">
@@ -365,18 +362,21 @@ export const SubjectInputs = ({ subjects, onChange, formData, className }) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Input
             label="Subject Name *"
+            variant="bordered"
             placeholder="Enter subject name"
             value={manualFields.manualSubject}
             onChange={(e) => handleManualChange("manualSubject", e.target.value)}
           />
           <Input
             label="Faculty Name *"
+            variant="bordered"
             placeholder="Enter faculty name"
             value={manualFields.manualFaculty}
             onChange={(e) => handleManualChange("manualFaculty", e.target.value)}
           />
           <Input
             label="Subject Code *"
+            variant="bordered"
             placeholder="Enter subject code"
             value={manualFields.manualId}
             onChange={(e) => handleManualChange("manualId", e.target.value)}
@@ -386,6 +386,8 @@ export const SubjectInputs = ({ subjects, onChange, formData, className }) => {
         <Button 
           color="primary" 
           className="mt-3"
+          size="sm"
+          variant="flat"
           onClick={handleAddManualSubject}
         >
           Add Manual Subject
