@@ -352,7 +352,7 @@ const FeedbackManagement = () => {
           <Spinner size="lg" />
         </div>
       ) : showFeedbackForm ? (
-        <Card className="w-full max-w-3xl mx-auto">
+        <Card className="w-full max-w-3xl mx-auto p-5 shadow-md rounded-md">
           <CardHeader className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">Create Feedback</h2>
           </CardHeader>
