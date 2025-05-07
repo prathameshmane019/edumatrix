@@ -46,7 +46,7 @@ export default function Home() {
         <div className="absolute bottom-20 right-40 w-80 h-80 rounded-full bg-cyan-500/10 blur-3xl"></div>
       </div>
       <Header />
-      <main className="container mx-auto px-4">
+      <main className="container mx-auto px-10">
         {/* Add section IDs for smooth scrolling */}
         <section id="home" className=" animate-on-scroll">
           <Hero />
