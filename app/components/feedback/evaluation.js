@@ -53,13 +53,15 @@ const EvaluationPage = ({ role }) => {
     }
   }, [user]);
 
+  console.log(evaluationDetails);
+  
   useEffect(() => {
-    if (evaluationDetails?.department && evaluationDetails?.institute && selectedYear) {
-      fetchFeedbackData(evaluationDetails.department, evaluationDetails.institute);
+    if (selectedYear && evaluationDetails?.department && evaluationDetails?.institute) { 
+      fetchFeedbackData(evaluationDetails.department, evaluationDetails.institute, selectedYear);
     }
-  }, [evaluationDetails,selectedYear]);
+  }, [selectedYear, evaluationDetails?.department, evaluationDetails?.institute]);
 
-  const fetchFeedbackData = async (department, institute,year) => {
+  const fetchFeedbackData = async (department, institute, year) => {
     try {
       setIsLoading(true);
       const response = await axios.get(`/api/EvalFeedback?department=${department}&institute=${institute}&academicYear=${year}`);
@@ -93,17 +95,17 @@ const EvaluationPage = ({ role }) => {
     }
   };
 
-// First, let's modify the printDiv function in your component:
+  // First, let's modify the printDiv function in your component:
 
-// Here's the complete printing solution with the fixed functions
+  // Here's the complete printing solution with the fixed functions
 
-const printDiv = () => {
-  const printContents = document.getElementById('table-to-print').innerHTML;
-  
-  // Create a new window with just the report content
-  const printWindow = window.open('', '_blank', 'height=600,width=800');
-  
-  printWindow.document.write(`
+  const printDiv = () => {
+    const printContents = document.getElementById('table-to-print').innerHTML;
+
+    // Create a new window with just the report content
+    const printWindow = window.open('', '_blank', 'height=600,width=800');
+
+    printWindow.document.write(`
     <!DOCTYPE html>
     <html>
       <head>
@@ -153,65 +155,65 @@ const printDiv = () => {
       </body>
     </html>
   `);
-  
-  printWindow.document.close();
-  printWindow.focus();
-  
-  // Give the browser a moment to process the document before printing
-  setTimeout(() => {
-    printWindow.print();
-    // Only close after printing if user doesn't cancel
-    printWindow.onafterprint = () => {
-      printWindow.close();
-    };
-  }, 300);
-};
 
-// Function to calculate rating counts for each question
-const calculateRatingCounts = (questionIndex) => {
-  const counts = {
-    1: 0, // Poor
-    2: 0, // Average
-    3: 0, // Good
-    4: 0, // Very Good
-    5: 0, // Excellent
+    printWindow.document.close();
+    printWindow.focus();
+
+    // Give the browser a moment to process the document before printing
+    setTimeout(() => {
+      printWindow.print();
+      // Only close after printing if user doesn't cancel
+      printWindow.onafterprint = () => {
+        printWindow.close();
+      };
+    }, 300);
   };
 
-  responses.forEach((feedbackEntry) => {
-    if (selectedSubject) {
-      const ratingsForSubject = feedbackEntry.ratings.find(rating => rating.subject_id === selectedSubject._id);
-      if (ratingsForSubject && ratingsForSubject.ratings[questionIndex] !== undefined) {
-        const ratingValue = ratingsForSubject.ratings[questionIndex];
-        if (counts[ratingValue] !== undefined) {
-          counts[ratingValue]++;
+  // Function to calculate rating counts for each question
+  const calculateRatingCounts = (questionIndex) => {
+    const counts = {
+      1: 0, // Poor
+      2: 0, // Average
+      3: 0, // Good
+      4: 0, // Very Good
+      5: 0, // Excellent
+    };
+
+    responses.forEach((feedbackEntry) => {
+      if (selectedSubject) {
+        const ratingsForSubject = feedbackEntry.ratings.find(rating => rating.subject_id === selectedSubject._id);
+        if (ratingsForSubject && ratingsForSubject.ratings[questionIndex] !== undefined) {
+          const ratingValue = ratingsForSubject.ratings[questionIndex];
+          if (counts[ratingValue] !== undefined) {
+            counts[ratingValue]++;
+          }
         }
       }
-    }
-  });
+    });
 
-  return counts;
-};
+    return counts;
+  };
 
-// Function to calculate evaluation points for a specific question
-const calculateEvaluationPoint = (questionIndex) => {
-  let totalPoints = 0;
-  let totalResponses = 0;
+  // Function to calculate evaluation points for a specific question
+  const calculateEvaluationPoint = (questionIndex) => {
+    let totalPoints = 0;
+    let totalResponses = 0;
 
-  responses.forEach((feedbackEntry) => {
-    if (selectedSubject) {
-      const ratingsForSubject = feedbackEntry.ratings.find(rating => rating.subject_id === selectedSubject._id);
-      if (ratingsForSubject && ratingsForSubject.ratings[questionIndex] !== undefined) {
-        const ratingValue = ratingsForSubject.ratings[questionIndex];
-        if (!isNaN(ratingValue) && ratingValue !== null) {
-          totalPoints += ratingValue;
-          totalResponses++;
+    responses.forEach((feedbackEntry) => {
+      if (selectedSubject) {
+        const ratingsForSubject = feedbackEntry.ratings.find(rating => rating.subject_id === selectedSubject._id);
+        if (ratingsForSubject && ratingsForSubject.ratings[questionIndex] !== undefined) {
+          const ratingValue = ratingsForSubject.ratings[questionIndex];
+          if (!isNaN(ratingValue) && ratingValue !== null) {
+            totalPoints += ratingValue;
+            totalResponses++;
+          }
         }
       }
-    }
-  });
+    });
 
-  return totalResponses > 0 ? totalPoints : 0;
-};
+    return totalResponses > 0 ? totalPoints : 0;
+  };
 
   useEffect(() => {
     if (selectedFeedback && responses.length > 0) {
@@ -221,7 +223,7 @@ const calculateEvaluationPoint = (questionIndex) => {
   }, [selectedFeedback, responses]);
 
   // Add these functions to your component before the return statement
- 
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const dd = String(date.getDate()).padStart(2, '0');
@@ -375,9 +377,8 @@ const calculateEvaluationPoint = (questionIndex) => {
         }
       }
     });
+ 
 
-    console.log(selectedFeedback);
-    
 
     // Check if selectedFeedback is defined before accessing questions
     if (!selectedFeedback || !selectedFeedback.questions || !selectedFeedback?.questions.length) {
@@ -509,7 +510,7 @@ const calculateEvaluationPoint = (questionIndex) => {
         <Card className="m-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm mb-6">
           <CardHeader className="flex justify-between items-center pb-2">
             <div>
-              <h2 className="text-2xl font-bold">Faculty Evaluation</h2>
+              <h2 className="text-2xl font-bold">Feedback Evaluation</h2>
               {selectedFeedback && (
                 <div className="text-sm text-slate-500">
                   {selectedFeedback.feedbackTitle}
@@ -527,17 +528,21 @@ const calculateEvaluationPoint = (questionIndex) => {
           <CardBody>
             {/* Filters Section */}
             <div className="grid items-center grid-cols-1 md:grid-cols-4 gap-4">
-              {user?.role === "superadmin" && (  
-                  <DepartmentDropdown
-                    instituteId={user?._id}
-                    includeCentral={true}
-                    onSelect={(e) => fetchFeedbackData(e.target.value, user?._id)}
-                    selectedDepartment={selectedDepartment}
-                    variant="bordered"
-                    size="sm"
-                    className="w-full"
-                  /> 
-              )} 
+              {user?.role === "superadmin" && (
+                <DepartmentDropdown
+                  instituteId={user?._id}
+                  includeCentral={true}
+                  onSelect={(e) => setEvaluationDetails((prev) => ({
+                    ...prev,
+                    department: e.target.value,
+                  }))}
+                  selectedDepartment={selectedDepartment}
+                  variant="bordered"
+                  size="sm"
+                  label='Select Department'
+                  className="w-full"
+                />
+              )}
               <Select
                 placeholder="Select Academic Year"
                 variant="bordered"
@@ -553,58 +558,58 @@ const calculateEvaluationPoint = (questionIndex) => {
                     {year.label}
                   </SelectItem>
                 ))}
-              </Select> 
-                <Select
-                  size="sm"
-                  variant="bordered"
-                  placeholder={isLoading ? "Loading..." : "Select Feedback"}
-                  className="w-full"
-                  label="Select feedback"
-                  onChange={(e) => setSelectedFeedback(feedbackData?.find(feedback => feedback._id === e.target.value))}
-                >
-                  {feedbackData &&
-                    feedbackData.map((feedback) => (
-                      <SelectItem key={feedback._id} value={feedback._id}>
-                        {feedback.feedbackTitle}
-                      </SelectItem>
-                    ))}
-                </Select> 
+              </Select>
+              <Select
+                size="sm"
+                variant="bordered"
+                placeholder={isLoading ? "Loading..." : "Select Feedback"}
+                className="w-full"
+                label="Select feedback"
+                onChange={(e) => setSelectedFeedback(feedbackData?.find(feedback => feedback._id === e.target.value))}
+              >
+                {feedbackData &&
+                  feedbackData.map((feedback) => (
+                    <SelectItem key={feedback._id} value={feedback._id}>
+                      {feedback.feedbackTitle}
+                    </SelectItem>
+                  ))}
+              </Select>
 
               {selectedFeedback?.feedbackType === "academic" && (
                 <Select
-                    size="sm"
-                    variant="bordered"
-                    placeholder="Select Feedback Mode"
-                    className="w-full"
-                    defaultSelectedKeys={[feedbackMode]}
-                    label="Select Feedback Mode"
-                    onChange={(e) => {
+                  size="sm"
+                  variant="bordered"
+                  placeholder="Select Feedback Mode"
+                  className="w-full"
+                  defaultSelectedKeys={[feedbackMode]}
+                  label="Select Feedback Mode"
+                  onChange={(e) => {
 
-                      setFeedbackMode(e.target.value);
-                      setSelectedSubject(null);
-                    }}
-                  >
-                    <SelectItem key="individual" value="individual">Individual Feedback</SelectItem>
-                    <SelectItem key="cumulative" value="cumulative">Cumulative Feedback</SelectItem>
-                  </Select> 
+                    setFeedbackMode(e.target.value);
+                    setSelectedSubject(null);
+                  }}
+                >
+                  <SelectItem key="individual" value="individual">Individual Feedback</SelectItem>
+                  <SelectItem key="cumulative" value="cumulative">Cumulative Feedback</SelectItem>
+                </Select>
               )}
 
               {selectedFeedback?.feedbackType === "academic" && feedbackMode === 'individual' && (
-               <Select
-                    size="sm"
-                    variant="bordered"
-                    
-                    placeholder="Select a Subject"
-                    className="w-full"
-                    label="Select a Subject"
-                    onChange={(e) => setSelectedSubject(selectedFeedback?.subjects?.find(subject => subject._id === e.target.value))}
-                  >
-                    {selectedFeedback && selectedFeedback.subjects.map((subject) => (
-                      <SelectItem key={subject._id} value={subject._id}>
-                        {subject.subject}
-                      </SelectItem>
-                    ))}
-                  </Select> 
+                <Select
+                  size="sm"
+                  variant="bordered"
+
+                  placeholder="Select a Subject"
+                  className="w-full"
+                  label="Select a Subject"
+                  onChange={(e) => setSelectedSubject(selectedFeedback?.subjects?.find(subject => subject._id === e.target.value))}
+                >
+                  {selectedFeedback && selectedFeedback.subjects.map((subject) => (
+                    <SelectItem key={subject._id} value={subject._id}>
+                      {subject.subject}
+                    </SelectItem>
+                  ))}
+                </Select>
               )}
             </div>
           </CardBody>

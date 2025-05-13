@@ -10,7 +10,7 @@ import {
   Card,
   CardBody,
   CardHeader
-  
+
 } from "@nextui-org/react"
 import {
   Table, Tooltip, TableHeader, TableColumn, TableBody, TableRow, TableCell,
@@ -202,7 +202,7 @@ export default function StudentTable() {
           name: student.name?.trim(),
           email: student.email?.trim()?.toLowerCase(),
           phoneNo: student.phoneNo.toString()?.trim(),
-          dateOfBirth: student.dateOfBirth ? student.dateOfBirth  : undefined,
+          dateOfBirth: student.dateOfBirth ? student.dateOfBirth : undefined,
           gender: student.gender
         },
         password: student.password?.trim() || "1234",
@@ -217,7 +217,7 @@ export default function StudentTable() {
           admissionNumber: student.admissionNumber?.trim(),
           categoryType: student.categoryType,
           status: student.status || 'active',
-          admissionDate: student.admissionDate ?  student.admissionDate  : undefined
+          admissionDate: student.admissionDate ? student.admissionDate : undefined
         },
         parents: {
           name: student.parentName?.trim(),
@@ -242,8 +242,8 @@ export default function StudentTable() {
     } catch (error) {
       console.error('Error uploading students:', error);
       const errorMsg = error.response?.data?.error || 'Failed to upload students';
-      const details = error.response?.data?.details ? 
-        Array.isArray(error.response.data.details) ? error.response.data.details : [error.response.data.details] 
+      const details = error.response?.data?.details ?
+        Array.isArray(error.response.data.details) ? error.response.data.details : [error.response.data.details]
         : [];
       setErrorMessages([errorMsg, ...details]);
       setErrorModalOpen(true);
@@ -274,7 +274,7 @@ export default function StudentTable() {
         "Roll Number": student.academicDetails?.rollNumber || '',
         "Class": student.academicDetails?.class?.toString() || '',
         "Department": student.academicDetails?.department || '',
-        "Academic Year":student.academicDetails.academicYear,
+        "Academic Year": student.academicDetails.academicYear,
         "Phone No": student.personalDetails?.phoneNo || '',
         "Email": student.personalDetails?.email || '',
         "Password": student.password || '',
@@ -310,7 +310,7 @@ export default function StudentTable() {
         _id: "1",
         name: "Prathamesh Mane",
         rollNumber: "R001",
-        password:"1234",
+        password: "1234",
         email: "prathameshmane@example.com",
         phoneNo: "+1234567890",
         dateOfBirth: "12-10-2003",
@@ -330,7 +330,7 @@ export default function StudentTable() {
         name: "Aishwary Deshmukh",
         rollNumber: "R002",
         email: "aishwarydeshmukh12@gmail.com",
-        password:"1234",
+        password: "1234",
         phoneNo: "+1234567892",
         dateOfBirth: "26-03-2004",
         gender: "Female",
@@ -466,7 +466,7 @@ export default function StudentTable() {
             </Tooltip>
             <Tooltip content="View Details">
               <span className="text-lg text-default-400 cursor-pointer active:opacity-50" onClick={() => router.push(`/student_management/admin/manage/${student._id}`)}>
-                <EyeIcon/>
+                <EyeIcon />
               </span>
             </Tooltip>
           </div>
@@ -551,115 +551,123 @@ export default function StudentTable() {
   };
 
   return (
-   
-      <div className="flex flex-row gap-2 flex-wrap">
-  <Card className='bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm w-full max-w-7xl mx-auto'>
-  <CardHeader className="flex justify-between">
-    <h2 className="text-xl font-bold">Student Management</h2>
-    <Button
-      color="primary"
-      endContent={<PlusIcon />}
-      size="sm"
-      onClick={() => {
-        setModalMode("add");
-        setModalOpen(true);
-      }}
-    >
-      Add New
-    </Button>
-  </CardHeader>
-  <CardBody>
-    {/* Filters Section */}
-    <div className="flex flex-col gap-4 mb-6 w-full">
-      <div className="flex flex-row gap-4 w-full">
-        <Select
-          placeholder="Select Year"
-          variant="bordered"
-          size="sm"
-          selectedKeys={academicYear ? [academicYear] : []}
-          onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
-          startContent={<Calendar className="w-4 h-4 text-default-400" />}
-          className="flex-1"
-        >
-          {getAcademicYears(10).map((year) => (
-            <SelectItem key={year.value} value={year.value}>{year.label}</SelectItem>
-          ))}
-        </Select>
-        
-        <ClassDropdown
-          id="class-select"
-          instituteId={institute}
-          onSelect={handleClassSelect}
-          selectedClass={selectedClass}
-          acadmicYear={academicYear}
-          selectedDepartment={selectedDepartment}
-          className="flex-1"
-        />
-        
-        <Select
-          placeholder="Status"
-          variant="bordered"
-          size="sm"
-          selectedKeys={[statusFilter]}
-          onSelectionChange={(keys) => setStatusFilter(Array.from(keys)[0])}
-          className="flex-1"
-        >
-          <SelectItem key="all" value="all">All</SelectItem>
-          <SelectItem key="active" value="active">Active</SelectItem>
-          <SelectItem key="suspended" value="suspended">Suspended</SelectItem>
-          <SelectItem key="alumni" value="alumni">Alumni</SelectItem>
-        </Select>
-      </div>
-      
-      <div className="flex justify-between items-center w-full">
-        <div className="flex-grow mr-2">
-          <Input
-            isClearable
-            className="w-full"
-            placeholder="Search by name, roll number, or admission number..."
+
+    <div className="flex flex-row gap-2 flex-wrap">
+      <Card className='bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm w-full max-w-7xl mx-auto'>
+        <CardHeader className="flex justify-between">
+          <h2 className="text-xl font-bold">Student Management</h2>
+          <Button
+            color="primary"
+            endContent={<PlusIcon />}
             size="sm"
-            startContent={<SearchIcon className="text-default-300" />}
-            value={filterValue}
-            variant="bordered"
-            onClear={() => setFilterValue("")}
-            onValueChange={onSearchChange}
-          />
-        </div>
-        
-        <Dropdown>
-          <DropdownTrigger className="hidden sm:flex">
-            <Button size="sm" variant="flat">Columns</Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            disallowEmptySelection
-            aria-label="Table Columns"
-            closeOnSelect={false}
-            selectedKeys={visibleColumns}
-            selectionMode="multiple"
-            onSelectionChange={setVisibleColumns}
+            onClick={() => {
+              setModalMode("add");
+              setModalOpen(true);
+            }}
           >
-            {columns.map((column) => (
-              <DropdownItem key={column.uid} className="capitalize">{capitalize(column.name)}</DropdownItem>
-            ))}
-          </DropdownMenu>
-        </Dropdown>
-        
-        <Button color="primary" size="sm" className="ml-2" onClick={openFileDialog} startContent={<FaFileUpload />}>
-          Upload File
-        </Button>
-        <input id="upload-input" type="file" accept=".xlsx, .xls" onChange={handleFileUpload} style={{ display: 'none' }} />
-        
-        <Button color="primary" size="sm" className="ml-2" onClick={downloadExcel} startContent={<FaFileDownload />}>
-          Download
-        </Button>
-        
-        <Button color="primary" size="sm" className="ml-2" onClick={downloadSampleExcel}>
-          Sample Excel
-        </Button>
-      </div>
-    </div>
-  </CardBody>
-</Card>
+            Add New
+          </Button>
+        </CardHeader>
+        <CardBody>
+          {/* Filters Section */}
+          <div className="flex flex-col gap-4 mb-6 w-full">
+            <div className="flex flex-row gap-4 items-center w-full">
+              <Select
+                placeholder="Select Year"
+                variant="bordered"
+                size="sm"
+                selectedKeys={academicYear ? [academicYear] : []}
+                onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
+                startContent={<Calendar className="w-4 h-4 text-default-400" />}
+                className="flex-1"
+              >
+                {getAcademicYears(10).map((year) => (
+                  <SelectItem key={year.value} value={year.value}>{year.label}</SelectItem>
+                ))}
+              </Select>
+              {profile?.role !== "admin" && (
+                <DepartmentDropdown
+                  instituteId={profile?.role === "superadmin" ? profile?._id : profile?.institute?._id}
+                  onSelect={handleDepartmentSelect}
+                  className="w-full sm:w-[40%] "
+                  selectedDepartment={selectedDepartment}
+                />
+              )}
+
+              <ClassDropdown
+                id="class-select"
+                instituteId={institute}
+                onSelect={handleClassSelect}
+                selectedClass={selectedClass}
+                acadmicYear={academicYear}
+                selectedDepartment={selectedDepartment}
+                className="flex-1"
+              />
+
+              <Select
+                placeholder="Status"
+                variant="bordered"
+                size="sm"
+                selectedKeys={[statusFilter]}
+                onSelectionChange={(keys) => setStatusFilter(Array.from(keys)[0])}
+                className="flex-1"
+              >
+                <SelectItem key="all" value="all">All</SelectItem>
+                <SelectItem key="active" value="active">Active</SelectItem>
+                <SelectItem key="suspended" value="suspended">Suspended</SelectItem>
+                <SelectItem key="alumni" value="alumni">Alumni</SelectItem>
+              </Select>
+            </div>
+
+            <div className="flex justify-between items-center w-full">
+              <div className="flex-grow mr-2">
+                <Input
+                  isClearable
+                  className="w-full"
+                  placeholder="Search by name, roll number, or admission number..."
+                  size="sm"
+                  startContent={<SearchIcon className="text-default-300" />}
+                  value={filterValue}
+                  variant="bordered"
+                  onClear={() => setFilterValue("")}
+                  onValueChange={onSearchChange}
+                />
+              </div>
+
+              <Dropdown>
+                <DropdownTrigger className="hidden sm:flex">
+                  <Button size="sm" variant="flat">Columns</Button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  disallowEmptySelection
+                  aria-label="Table Columns"
+                  closeOnSelect={false}
+                  selectedKeys={visibleColumns}
+                  selectionMode="multiple"
+                  onSelectionChange={setVisibleColumns}
+                >
+                  {columns.map((column) => (
+                    <DropdownItem key={column.uid} className="capitalize">{capitalize(column.name)}</DropdownItem>
+                  ))}
+                </DropdownMenu>
+              </Dropdown>
+
+              <Button color="primary" size="sm" className="ml-2" onClick={openFileDialog} startContent={<FaFileUpload />}>
+                Upload File
+              </Button>
+              <input id="upload-input" type="file" accept=".xlsx, .xls" onChange={handleFileUpload} style={{ display: 'none' }} />
+
+              <Button color="primary" size="sm" className="ml-2" onClick={downloadExcel} startContent={<FaFileDownload />}>
+                Download
+              </Button>
+
+              <Button color="primary" size="sm" className="ml-2" onClick={downloadSampleExcel}>
+                Sample Excel
+              </Button>
+            </div>
+          </div>
+        </CardBody>
+      </Card>
       <Table
         isCompact
         removeWrapper
@@ -699,7 +707,7 @@ export default function StudentTable() {
         </TableBody>
       </Table>
       <div className="mt-4 flex justify-between items-center">
-        <Pagination total={pages} page={page} onChange={(newPage) => setPage(newPage)} /> 
+        <Pagination total={pages} page={page} onChange={(newPage) => setPage(newPage)} />
         <span>Total Students: {filteredItems.length}</span>
       </div>
       <StudentModal

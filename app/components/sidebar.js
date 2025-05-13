@@ -68,18 +68,18 @@ const Sidebar = () => {
         superadmin: [
           { name: "Dashboard", href: "/obe_management/admin", icon: MdPortrait },
           { name: "PEO Management", href: "/obe_management/admin/peo", icon: MdPortrait },
-       { name: "PO/PSO Management", href: "/obe_management/admin/programe-outcomes", icon: MdPortrait },
-          { name: "Attainment", href: "/obe_management/admin/attainment", icon: MdPortrait },
-      ],
-        admin: [
-          { name: "Dashboard", href: "/obe_management/admin", icon: MdPortrait }, 
           { name: "PO/PSO Management", href: "/obe_management/admin/programe-outcomes", icon: MdPortrait },
           { name: "Attainment", href: "/obe_management/admin/attainment", icon: MdPortrait },
         ],
-        faculty: [ 
+        admin: [
+          { name: "Dashboard", href: "/obe_management/admin", icon: MdPortrait },
+          { name: "PO/PSO Management", href: "/obe_management/admin/programe-outcomes", icon: MdPortrait },
+          { name: "Attainment", href: "/obe_management/admin/attainment", icon: MdPortrait },
+        ],
+        faculty: [
           { name: "Dashboard", href: "/obe_management/faculty", icon: MdPortrait },
           { name: "Course Outcomes", href: "/obe_management/faculty/co", icon: MdPortrait },
-          { name: "CO Mapping", href: "/obe_management/faculty/mapping", icon:MdMap },
+          { name: "CO Mapping", href: "/obe_management/faculty/mapping", icon: MdMap },
           { name: "Assessment", href: "/obe_management/faculty/assessment", icon: MdPortrait },
 
           { name: "Attainment", href: "/obe_management/faculty/attainment", icon: MdPortrait },
@@ -108,7 +108,7 @@ const Sidebar = () => {
 
         ],
         faculty: [
-         
+
           { name: "Manage Content", href: "/course_management/faculty", icon: FaChalkboardTeacher }
         ],
       }
@@ -124,8 +124,7 @@ const Sidebar = () => {
           { name: "Dashboard", href: "/feedback/admin", icon: MdPortrait },
           { name: "Feedback Evaluation", href: "/feedback/admin/evaluation", icon: TbReportAnalytics },
           { name: "Manage Questions", href: "/feedback/admin/questions", icon: GiTeacher },
-          { name: "Manage Feedback", href: "/feedback/admin/feedback", icon: MdFeedback },
-          { name: "Give Feedback", href: "/feedback/admin/response", icon: FaChalkboardTeacher },
+          { name: "Manage Feedback", href: "/feedback/admin/feedback", icon: MdFeedback }
 
         ],
         faculty: [
@@ -143,19 +142,19 @@ const Sidebar = () => {
     attendance: {
       options: {
         admin: [
-          { name: "Profile", href: "/attendance/admin", icon: MdPortrait },  
+          { name: "Profile", href: "/attendance/admin", icon: MdPortrait },
           { name: "View Reports", href: "/attendance/admin/reports", icon: AiOutlineSchedule },
           { name: "Daily Absents", href: "/attendance/admin/absent-students", icon: RiCalendarScheduleLine },
         ],
         superadmin: [
-          { name: "Profile", href: "/attendance/admin", icon: MdPortrait }, 
+          { name: "Profile", href: "/attendance/admin", icon: MdPortrait },
           { name: "View Reports", href: "/attendance/admin/reports", icon: AiOutlineSchedule },
         ],
         faculty: [
           { name: "Profile", href: "/attendance/faculty", icon: MdPortrait },
           { name: "Take Attendance", href: "/attendance/faculty/take", icon: RiCalendarScheduleLine },
           { name: "Update Attendance", href: "/attendance/faculty/update", icon: AiOutlineSchedule },
-          { name: "View Reports", href: "/attendance/faculty/reports", icon: TbReportAnalytics }, 
+          { name: "View Reports", href: "/attendance/faculty/reports", icon: TbReportAnalytics },
         ],
         student: [
           { name: "Profile", href: "/attendance/student", icon: MdPortrait },
@@ -201,18 +200,18 @@ const Sidebar = () => {
   const bestMatch = useMemo(() => {
     let best = null;
     let maxLength = 0;
-  
+
     getNavigationItems.forEach((item) => {
       if (pathname.startsWith(item.href) && item.href.length > maxLength) {
         best = item.href;
         maxLength = item.href.length;
       }
     });
-  
+
     return best;
   }, [pathname, getNavigationItems]);
 
-  
+
   const handleSignOut = async () => {
     await signOut({ redirect: false });
     sessionStorage.clear();
@@ -270,10 +269,9 @@ const Sidebar = () => {
             getNavigationItems.map(({ name, href, icon: Icon }) => (
               <li className="sidebar__item" key={name}>
                 <Link
-  className={`sidebar__link ${href === bestMatch ? "sidebar__link--active" : ""}`}
-  href={href}
->
-
+                  className={`sidebar__link ${href === bestMatch ? "sidebar__link--active" : ""}`}
+                  href={href}
+                >
                   <Tooltip content={name} placement="right">
                     <span className="sidebar__icon">
                       <Icon className="text-2xl" />
@@ -284,8 +282,7 @@ const Sidebar = () => {
               </li>
             ))
           )}
-        </ul>
-
+        </ul> 
         <div className="absolute bottom-4 left-0 right-0 px-4">
           <div className="flex items-center mb-3">
             <Tooltip content="Profile" placement="right">

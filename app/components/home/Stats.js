@@ -5,9 +5,9 @@ import { Building2, ClapperboardIcon as ChalkboardTeacher, GraduationCap, Award 
 
 export default function Stats() {
   const stats = [
-    { value: "500", label: "Institutions", icon: Building2 },
-    { value: "12,000", label: "Faculty Members", icon: ChalkboardTeacher },
-    { value: "250,000", label: "Students", icon: GraduationCap },
+    { value: "4", label: "Institutions", icon: Building2 },
+    { value: "240", label: "Faculty Members", icon: ChalkboardTeacher },
+    { value: "3,000", label: "Students", icon: GraduationCap },
     { value: "98", label: "Satisfaction Rate", icon: Award, suffix: "%" },
   ];
 

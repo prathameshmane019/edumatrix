@@ -10,7 +10,7 @@ export async function POST(req) {
 
         console.log("Data received", data);
         // Validate department and institute
-        if (data.feedbacktype=="academic" && !data.department) {
+        if (data.feedbacktype == "academic" && !data.department) {
             return NextResponse.json({ message: "Department missing" }, { status: 400 });
         }
         if (!data.institute) {
@@ -18,15 +18,11 @@ export async function POST(req) {
         }
 
         if (data.subjects && Array.isArray(data.subjects)) {
-            data.subjects = data.subjects.filter(subject => subject && subject._id!=='');
+            data.subjects = data.subjects.filter(subject => subject && subject._id !== '');
         }
-
-console.log("Data:", data);
-
         const newFeedback = new Feedback(data);
         await newFeedback.save();
-
-        console.log("Feedback Created Successfully", newFeedback);
+ 
         return NextResponse.json({
             message: "Feedback Created Successfully",
             feedback: newFeedback
@@ -38,39 +34,43 @@ console.log("Data:", data);
 }
 export async function GET(req) {
     try {
-        const {searchParams} = new URL(req.url);
+        const { searchParams } = new URL(req.url);
         const department = searchParams.get("department");
         const institute = searchParams.get("institute");
+        const academicYear = searchParams.get("academicYear");
         await connectMongoDB();
-        
+
         const query = {};
-        
+
         // Add department to query if provided
         if (department) {
             query.department = department;
+        } 
+        // Add academicYear to query if provided
+        if (academicYear) {
+            query.academicYear = academicYear;
         }
-        
         // Add institute to query if provided and is a valid ObjectId
         if (institute && mongoose.Types.ObjectId.isValid(institute)) {
             query.institute = new mongoose.Types.ObjectId(institute);
         }
-        
+
         const feedbacks = await Feedback.aggregate([
             { $match: query },
-            { $project: {
-                feedbackTitle: 1,
-                isActive: 1,
-                students: 1,
-                responseCount: { $size: "$responses" }
-            }}
+            {
+                $project: {
+                    feedbackTitle: 1,
+                    isActive: 1,
+                    students: 1,
+                    responseCount: { $size: "$responses" }
+                }
+            }
         ]);
-
-        console.log("Feedback fetched Successfully");
-        console.log(feedbacks);
-        return NextResponse.json(feedbacks, {status: 200});
+ 
+        return NextResponse.json(feedbacks, { status: 200 });
     } catch (error) {
         console.log(error);
-        return NextResponse.json({ error: "Failed to fetch feedback" }, {status: 500});
+        return NextResponse.json({ error: "Failed to fetch feedback" }, { status: 500 });
     }
 }
 export async function DELETE(req) {

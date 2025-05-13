@@ -97,14 +97,14 @@ const FeedbackDashboard = () => {
         setError(null);
       } catch (err) {
         console.error("Error fetching feedback dashboard data:", err);
-  setError(err.response?.data?.error || "Failed to load feedback dashboard data");
+        setError(err.response?.data?.error || "Failed to load feedback dashboard data");
         setDashboardData(null);
       } finally {
         setLoading(false);
       }
     };
 
-    if (instituteId   && academicYear) {
+    if (instituteId && academicYear) {
       fetchFeedbackDashboardData();
     }
   }, [instituteId, selectedDepartment, feedbackType, academicYear, userLoading, user?.role]);
@@ -134,74 +134,69 @@ const FeedbackDashboard = () => {
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-       
-<Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm mb-6">
-  <CardHeader className="flex justify-between items-center pb-2">
-    <div>
-      <h1 className="text-2xl font-bold">Feedback Dashboard</h1>
-      <div className="text-sm text-slate-500">
-        {academicYear ? `Viewing data for: ${academicYear}` : ""}
-      </div>
-    </div>
-  </CardHeader>
-  <CardBody>
-    {/* Filters Section */}
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Academic Year</label>
-        <Select
-          placeholder="Select Year"
-          variant="bordered"
-          size="sm"
-          selectedKeys={academicYear ? [academicYear] : []}
-          onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
-          startContent={<Calendar className="w-4 h-4 text-default-400" />}
-          className="w-full"
-        >
-          {getAcademicYears(10).map((year) => (
-            <SelectItem key={year.value} value={year.value}>
-              {year.label}
-            </SelectItem>
-          ))}
-        </Select>
-      </div>
-      
-      {user.role === "superadmin" && (
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
-          <DepartmentDropdown
-            instituteId={instituteId}
-            onSelect={handleDepartmentSelect}
-            selectedDepartment={selectedDepartment}
-            variant="bordered"
-            size="sm"
-            className="w-full"
-          />
-        </div>
-      )}
-      
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Feedback Type</label>
-        <Select
-          size="sm"
-          variant="bordered"
-          value={feedbackType}
-          onChange={(e) => setFeedbackType(e.target.value)}
-          placeholder="Select Feedback Type"
-          className="w-full"
-        >
-          <SelectItem key="all" value="all">All Types</SelectItem>
-          <SelectItem key="academic" value="academic">Academic</SelectItem>
-          <SelectItem key="event" value="event">Event</SelectItem>
-        </Select>
-      </div>
-    </div>
-  </CardBody>
-</Card>
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm mb-6">
+          <CardHeader className="flex justify-between items-center pb-2">
+            <div>
+              <h1 className="text-2xl font-bold">Feedback Dashboard</h1>
+              <div className="text-sm text-slate-500">
+                {academicYear ? `Viewing data for: ${academicYear}` : ""}
+              </div>
+            </div>
+          </CardHeader>
+          <CardBody>
+            {/* Filters Section */}
+            <div className=" ">
+              <div className="grid items-center grid-cols-1 it md:grid-cols-4 gap-4"> 
+                <Select
+                  placeholder="Select Year"
+                  variant="bordered"
+                  size="sm"
+                  label="Academic Year"
+                  selectedKeys={academicYear ? [academicYear] : []}
+                  onSelectionChange={(keys) => setAcademicYear(Array.from(keys)[0])}
+                  startContent={<Calendar className="w-4 h-4 text-default-400" />}
+                  className="w-[100%]  "
+                >
+                  {getAcademicYears(10).map((year) => (
+                    <SelectItem key={year.value} value={year.value}>
+                      {year.label}
+                    </SelectItem>
+                  ))}
+                </Select>
+
+              {user.role === "superadmin" && ( 
+                  <DepartmentDropdown
+                    instituteId={instituteId}
+                    onSelect={handleDepartmentSelect}
+                    selectedDepartment={selectedDepartment}
+                    variant="bordered"
+                    size="sm"
+                    label="Department"
+                    className="w-[100%]"
+                  /> 
+              )} 
+                <Select
+                  size="sm"
+                  variant="bordered"
+                  value={feedbackType}
+                  onChange={(e) => setFeedbackType(e.target.value)}
+                  placeholder="Select Feedback Type"
+                  label="Feedback Type"
+                  className="w-[100%]"
+                  startContent={<PieIcon className="w-4 h-4 text-default-400" />}
+                >
+                  <SelectItem key="all" value="all">All Types</SelectItem>
+                  <SelectItem key="academic" value="academic">Academic</SelectItem>
+                  <SelectItem key="event" value="event">Event</SelectItem>
+                </Select> 
+            </div> 
+              </div>
+          </CardBody>
+        </Card>
         {loading ? (
           <div className="flex justify-center items-center py-12">
-                       <Spinner size="lg" color="primary" />
-                     </div>
+            <Spinner size="lg" color="primary" />
+          </div>
         ) : error || !dashboardData ? (
           <div className="bg-white rounded-xl shadow-sm p-10 flex items-center justify-center h-64">
             <div className="text-xl font-medium text-red-600">{error || "Failed to load feedback data"}</div>

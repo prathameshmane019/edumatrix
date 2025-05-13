@@ -37,18 +37,24 @@ const FeedbackManagement = () => {
   const [selectedQuestionSet, setSelectedQuestionSet] = useState(null)
   const [selectedDepartment, setSelectedDepartment] = useState('')
   // Memoized academic years
+  
+    const [selectedYear, setSelectedYear] = useState(''); 
   const academicYears = useMemo(() => getAcademicYears(5), [])
 
+
+  console.log(selectedYear);
+  
   // Fetch feedbacks safely
   const fetchFeedbacks = useCallback(async () => {
-    if (!user) return
+    if (!user ||! selectedYear) return
 
     setLoading(true)
     try {
       const response = await axios.get("/api/feedback", {
         params: {
           department: user?.id || selectedDepartment,
-          institute: (user?.role === "admin" ? user?.institute?._id : user?._id)
+          institute: (user?.role === "admin" ? user?.institute?._id : user?._id),
+          academicYear: selectedYear
           ,
         },
       })
@@ -58,7 +64,8 @@ const FeedbackManagement = () => {
     } finally {
       setLoading(false)
     }
-  }, [user, selectedDepartment])
+  }, [user, selectedDepartment,selectedYear])
+
 
   // Fetch questions safely
   const fetchQuestions = useCallback(async () => {
@@ -95,7 +102,7 @@ const FeedbackManagement = () => {
 
   // Lifecycle hooks
   useEffect(() => {
-    if (user?.department || user?.id || selectedDepartment) {
+    if (user?.department || user?.id || selectedDepartment && selectedYear) {
       fetchFeedbacks()
     }
   }, [user, fetchFeedbacks])
@@ -329,115 +336,144 @@ const FeedbackManagement = () => {
 
   // Main render
   return (
-    <div className="container mx-auto px-4 py-8">
-      {user?.role === "superadmin" &&
-        (
-          <DepartmentDropdown
-            instituteId={user?._id}
-            includeCentral={true}
-            selectedDepartment={selectedDepartment}
-            onSelect={handleDepartmentChange}
-            className="my-0"
+    <div>
+      <Card className="m-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm mb-6">
+        <CardHeader className="flex justify-between items-center pb-2">
+          <div>
+            <h2 className="text-2xl font-bold">Feedback Management</h2>
+  </div> 
+        </CardHeader>
+        <CardBody>
+          <div className="flex items-center gap-10 ">
+          <Select
+            placeholder="Select Academic Year"
+            variant="bordered"
+            size="sm" 
+            selectedKeys={selectedYear ? [selectedYear] : []}
+            onSelectionChange={(keys) => setSelectedYear(Array.from(keys)[0])}
+            startContent={<Calendar className="w-4 h-4 text-default-400" />}
+            label="Select Academic Year"
+            className="w-[30%]  my-2 sm:my-4"
+          >
+            {getAcademicYears(10).map((year) => (
+              <SelectItem key={year.value} value={year.value}>
+                {year.label}
+              </SelectItem>
+            ))}
+          </Select> 
+          {user?.role === "superadmin" &&
+            (
+              <DepartmentDropdown
+                instituteId={user?._id}
+                includeCentral={true}
+                selectedDepartment={selectedDepartment}
+                onSelect={handleDepartmentChange}
+                className="my-0"
+                label="Select Department" 
+              />)
+          }
+            {!showFeedbackForm && (
+            <div className="flex justify-end justify-self-end ml-60">
+              <Button size="md" color="primary" onClick={() => setShowFeedbackForm(true)}>
+                Create Feedback
+              </Button>
+            </div>
+          )} 
+          </div>
+        
+        </CardBody>
 
-          />)
-      }
-      {!showFeedbackForm && (
-        <div className="flex justify-end mb-8">
-          <Button color="primary" onClick={() => setShowFeedbackForm(true)}>
-            Create Feedback
-          </Button>
-        </div>
-      )}
+      </Card>
+      <div className="container mx-auto px-4 py-8"> 
+        {loading ? (
+          <div className="flex justify-center items-center min-h-[80vh]">
+            <Spinner size="lg" />
+          </div>
+        ) : showFeedbackForm ? (
+          <Card className="w-full max-w-3xl mx-auto p-5 shadow-md rounded-md">
+            <CardHeader className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Create Feedback</h2>
+            </CardHeader>
+            <CardBody>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <Select
+                  variant="bordered"
+                  label="Feedback Type"
+                  selectedKeys={formData.feedbackType ? [formData.feedbackType] : []}
+                  onChange={(e) => handleSelectChange("feedbackType", e.target.value)}
+                  required
+                >
+                  <SelectItem key="academic" value="academic">Academic</SelectItem>
+                  <SelectItem key="event" value="event">Event</SelectItem>
+                </Select>
 
-      {loading ? (
-        <div className="flex justify-center items-center min-h-screen">
-          <Spinner size="lg" />
-        </div>
-      ) : showFeedbackForm ? (
-        <Card className="w-full max-w-3xl mx-auto p-5 shadow-md rounded-md">
-          <CardHeader className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">Create Feedback</h2>
-          </CardHeader>
-          <CardBody>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <Select
-                variant="bordered"
-                label="Feedback Type"
-                selectedKeys={formData.feedbackType ? [formData.feedbackType] : []}
-                onChange={(e) => handleSelectChange("feedbackType", e.target.value)}
-                required
-              >
-                <SelectItem key="academic" value="academic">Academic</SelectItem>
-                <SelectItem key="event" value="event">Event</SelectItem>
-              </Select>
+                {formData.feedbackType === "academic" && renderAcademicFields()}
+                {formData.feedbackType === "event" && renderEventFields()}
 
-              {formData.feedbackType === "academic" && renderAcademicFields()}
-              {formData.feedbackType === "event" && renderEventFields()}
+                <Input
+                  variant="bordered"
+                  type="number"
+                  label="Number of Students"
+                  value={formData.students}
+                  onChange={handleChange}
+                  name="students"
+                  min="1"
+                  required
+                />
 
-              <Input
-                variant="bordered"
-                type="number"
-                label="Number of Students"
-                value={formData.students}
-                onChange={handleChange}
-                name="students"
-                min="1"
-                required
-              />
+                <Input
+                  variant="bordered"
+                  type="password"
+                  label="Password"
+                  value={formData.pwd}
+                  onChange={handleChange}
+                  name="pwd"
+                  required
+                />
 
-              <Input
-                variant="bordered"
-                type="password"
-                label="Password"
-                value={formData.pwd}
-                onChange={handleChange}
-                name="pwd"
-                required
-              />
+                {formData.questions.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="text-lg font-semibold mb-2">Questions:</h3>
+                    <ul className="list-disc pl-5">
+                      {formData.questions.map((question, index) => (
+                        <li key={index}>
+                          {typeof question === "string" ? question : question.question}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
-              {formData.questions.length > 0 && (
-                <div className="mt-4">
-                  <h3 className="text-lg font-semibold mb-2">Questions:</h3>
-                  <ul className="list-disc pl-5">
-                    {formData.questions.map((question, index) => (
-                      <li key={index}>
-                        {typeof question === "string" ? question : question.question}
-                      </li>
-                    ))}
-                  </ul>
+                <Divider className="my-4" />
+
+                <div className="flex justify-end space-x-4">
+                  <Button
+                    color="danger"
+                    variant="light"
+                    onClick={() => setShowFeedbackForm(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    color="primary"
+                    type="submit"
+                    disabled={loading}
+                  >
+                    {loading ? <Spinner size="sm" /> : "Create Feedback"}
+                  </Button>
                 </div>
-              )}
-
-              <Divider className="my-4" />
-
-              <div className="flex justify-end space-x-4">
-                <Button
-                  color="danger"
-                  variant="light"
-                  onClick={() => setShowFeedbackForm(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  color="primary"
-                  type="submit"
-                  disabled={loading}
-                >
-                  {loading ? <Spinner size="sm" /> : "Create Feedback"}
-                </Button>
-              </div>
-            </form>
-          </CardBody>
-        </Card>
-      ) : (
-        <FeedbackTable
-          feedbacks={feedbacks}
-          onDelete={handleDeleteFeedback}
-          onToggleActive={handleToggleIsActive}
-        />
-      )}
+              </form>
+            </CardBody>
+          </Card>
+        ) : (
+          <FeedbackTable
+            feedbacks={feedbacks}
+            onDelete={handleDeleteFeedback}
+            onToggleActive={handleToggleIsActive}
+          />
+        )}
+      </div> 
     </div>
-  )
-}
+  )}
 
-export default FeedbackManagement
+export default FeedbackManagement;

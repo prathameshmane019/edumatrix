@@ -15,7 +15,8 @@ import {
   Building2,
   Sparkles,
   ArrowRight,
-  Award,Clock
+  Award,Clock,
+  PhoneIcon
 } from 'lucide-react'; 
 import AttendanceSystemModule from '@/public/illustrations/home/AttendanceSystemModule';
 import StudentManagementModule from '@/public/illustrations/home/StudentManagementModule';
@@ -43,9 +44,10 @@ export default function Modules() {
       hover: "hover:bg-gradient-to-br hover:from-orange-500/30 hover:to-yellow-500/30",
     },
     {
-      title: "Examination Portal",
-      description: "End-to-end examination management with question bank, online assessments and automated result processing",
-      icon: FileSpreadsheet,
+      title: "Staff Management",
+      description: "Centralized faculty and staff management with performance tracking, resource allocation and communication tools",
+      icon: Building2,
+    
       gradient: "from-pink-500/20 via-rose-500/10 to-red-500/20",
       hover: "hover:bg-gradient-to-br hover:from-pink-500/30 hover:to-red-500/30",
     },
@@ -294,9 +296,9 @@ export default function Modules() {
             <div className="grid sm:grid-cols-2 gap-6 mb-8">
               {[
                 {
-                  title: "Multi-Modal Input",
-                  description: "QR, biometric, and facial recognition options",
-                  icon: Fingerprint,
+                  title: "Mobile App Interface",
+                  description: "Mobile app options for android and iOS for easy access",
+                  icon: PhoneIcon,
                 },
                 {
                   title: "Real-time Reports",
@@ -351,9 +353,10 @@ export default function Modules() {
                 bgColor: "bg-orange-100",
               },
               {
-                title: "Examination Portal",
-                description: "Complete exam management from scheduling to result processing and analysis",
-                icon: FileSpreadsheet,
+                title: "Attendance System",
+                description: "Advanced attendance tracking with biometric integration and real-time analytics",
+                icon: Fingerprint,
+                
                 color: "text-pink-600",
                 bgColor: "bg-pink-100",
               },
