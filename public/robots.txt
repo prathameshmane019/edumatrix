@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://edumatrix.vercel.app
+
+# Sitemaps
+Sitemap: https://edumatrix.vercel.app/sitemap.xml
