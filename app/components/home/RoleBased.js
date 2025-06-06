@@ -25,7 +25,7 @@ export default function RoleBased() {
         "Personalized dashboards showing course progress",
         "Real-time attendance tracking and notifications",
         "Grade visualization with improvement insights",
-        "Online assignment submission and feedback",
+        "Online feedback submission",
       ],
       illustration: StudentDashboard,
     },
@@ -34,7 +34,7 @@ export default function RoleBased() {
       description: "Comprehensive tools for educators to manage courses, track student performance, and streamline administrative tasks.",
       features: [
         "Intuitive course management interface",
-        "Smart attendance tracking with biometrics",
+        "Smart attendance tracking with mobile interface",
         "Performance analytics for student evaluation",
         "Digital content creation and distribution",
       ],
@@ -55,11 +55,13 @@ export default function RoleBased() {
       title: "Department Operations",
       description: "Specialized departmental tools for academic planning, resource management, and performance tracking.",
       features: [
-        "Department-specific analytics and KPIs",
-        "Faculty workload management and scheduling",
+        "Department-specific analytics ",
+        "Faculty management ",
+        "Subject allocation and CO configuration",
         "Curriculum development and tracking",
-        "Research and publication management",
+        "Track departmental progress in OBE goals",
       ],
+
       illustration: DepartmentDashboard,
     },
   };
