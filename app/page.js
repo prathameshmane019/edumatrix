@@ -52,7 +52,7 @@ export default function Home() {
           <Hero />
         </section>
         
-        <section id="features" className=" animate-on-scroll">
+        <section className=" animate-on-scroll">
           <Stats />
         </section>
         
@@ -66,12 +66,15 @@ export default function Home() {
         
         <section id="pricing" className=" animate-on-scroll">
           <CTA />
-          <Comparison />
+         
         </section>
-        
+        <section id='features'className=" animate-on-scroll">
+           <Comparison />
+        </section>
+{/*         
         <section id="testimonials" className=" animate-on-scroll">
           <Testimonials /> 
-        </section>
+        </section> */}
         
         <section id="about" className="  animate-on-scroll">
           {/* About section content can be added here */}

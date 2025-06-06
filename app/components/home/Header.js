@@ -35,11 +35,11 @@ export default function Header() {
   // Navigation items
   const navItems = [
     { name: 'Home', href: '#home' },
-    { name: 'Features', href: '#features' },
     { name: 'Roles', href: '#roles' },
     { name: 'Modules', href: '#modules' },
-    { name: 'Pricing', href: '#pricing' },
-    { name: 'About Us', href: '#about' },
+    { name: 'Pricing', href: '#pricing' }, 
+    { name: 'Features', href: '#features' },
+
   ];
 
   const scrollToSection = (e, href) => {

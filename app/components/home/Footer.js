@@ -45,15 +45,15 @@ export default function Footer() {
           {[
             {
               title: "Product",
-              links: ["Features", "Modules", "Pricing", "Updates", "Roadmap", "Beta Program"],
+              links: ["Features", "Modules", "Pricing"  ],
             },
             {
               title: "Company",
-              links: ["About Us",   , "Contact", "Partners", "Legal"],
+              links: ["About Us",   , "Contact" ],
             },
             {
               title: "Resources",
-              links: ["Documentation", "Tutorials", "Blog",    "Support"],
+              links: ["Documentation", "Tutorials", "Blog" ],
             },
           ].map((column, idx) => (
             <div key={idx} className="space-y-6">
