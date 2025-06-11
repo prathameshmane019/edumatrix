@@ -348,7 +348,7 @@ const BlogPage = () => {
                             transition={{ delay: 0.3, duration: 0.8 }}
                             className="text-xl md:text-2xl mb-8 max-w-4xl mx-auto leading-relaxed"
                         >
-                            India's Most Advanced College ERP System for NAAC/NBA Compliance, Academic Excellence, and Institutional Growth. Transform your educational institution with cutting-edge technology and comprehensive management solutions.
+                            India&apos;s Most Advanced College ERP System for NAAC/NBA Compliance, Academic Excellence, and Institutional Growth. Transform your educational institution with cutting-edge technology and comprehensive management solutions.
                         </motion.p>
 
                         <motion.div
@@ -675,7 +675,7 @@ const BlogPage = () => {
                                     transition={{ duration: 0.5 }}
                                     className="text-center"
                                 >
-                                    <div className="text-6xl text-blue-600 mb-4">"</div>
+                                    <div className="text-6xl text-blue-600 mb-4">&quot;</div>
                                     <p className="text-xl text-gray-700 mb-6 leading-relaxed italic">
                                         {testimonials[currentTestimonial].content}
                                     </p>
