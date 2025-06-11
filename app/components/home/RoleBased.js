@@ -13,6 +13,7 @@ import StudentDashboard from '@/public/illustrations/home/StudentDashboard';
 import FacultyPortal from '@/public/illustrations/home/FacultyPortal';
 import InstituteManagement from '@/public/illustrations/home/InstituteManagement';
 import DepartmentDashboard from '@/public/illustrations/home/DepartmentDashboard';
+import Link from 'next/link';
 
 export default function RoleBased() {
   const [activeTab, setActiveTab] = useState("students");
@@ -200,6 +201,8 @@ export default function RoleBased() {
                 </div>
 
                 <Button
+                  as={Link}
+                  href="/blog"
                   className="mt-6 bg-gradient-to-r from-primary to-indigo-600 text-white font-medium"
                   endContent={<ArrowRight className="h-4 w-4" />}
                 >

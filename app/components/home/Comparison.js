@@ -112,7 +112,7 @@ export default function Comparison() {
         </table>
       </motion.div>
 
-      <div className="mt-6 text-center">
+      {/* <div className="mt-6 text-center">
         <Button
           as={Link}
           href="/compare"
@@ -122,7 +122,7 @@ export default function Comparison() {
         >
           View Full Comparison
         </Button>
-      </div>
+      </div> */}
     </section>
   );
 }

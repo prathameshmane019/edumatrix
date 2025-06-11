@@ -246,7 +246,7 @@ export default function Modules() {
 
             <Button
               as={Link}
-              href="/modules/student-management"
+              href="/blog"
               endContent={<ArrowRight className="h-4 w-4" />}
               className="bg-primary text-white font-medium"
             >
@@ -328,7 +328,7 @@ export default function Modules() {
 
             <Button
               as={Link}
-              href="/modules/attendance-management"
+              href=" /blog/attendance-management"
               endContent={<ArrowRight className="h-4 w-4" />}
               className="bg-emerald-600 text-white font-medium"
             >
@@ -386,7 +386,7 @@ export default function Modules() {
                     <p className="text-gray-600 mb-6">{module.description}</p>
                     <Button
                       as={Link}
-                      href={`/modules/${module.title.toLowerCase().replace(/\s+/g, '-')}`}
+                      href={`/blog/${module.title.toLowerCase().replace(/\s+/g, '-')}`}
                       variant="light"
                       className={module.color}
                       endContent={<ArrowRight className="h-4 w-4" />}

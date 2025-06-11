@@ -115,7 +115,7 @@ export default function Testimonials() {
       <div className="text-center mt-10">
         <Button
           as={Link}
-          href="/testimonials"
+          href="/blog"
           variant="flat"
           className="bg-gray-100 text-gray-800 font-medium"
           endContent={<ArrowRight className="h-4 w-4" />}

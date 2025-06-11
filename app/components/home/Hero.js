@@ -100,7 +100,7 @@ export default function Hero() {
             </Button>
             <Button
               as={Link}
-              href="/features"
+              href="/blog"
               variant="flat"
               size="lg"
               className="font-medium bg-gray-50 hover:bg-gray-100 transition-all duration-300"

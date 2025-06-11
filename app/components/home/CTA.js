@@ -5,12 +5,15 @@ import { motion } from 'framer-motion';
 import { Button } from '@nextui-org/react';
 import { ArrowRight, Award, Users } from 'lucide-react'; 
 import EducationDashboard3D from '@/public/illustrations/home/EducationDashboard3D';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function CTA() {
   const fadeIn = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.8 } },
   };
+  const router = useRouter();
 
   return (
     <motion.section
@@ -36,10 +39,13 @@ export default function CTA() {
                 size="lg"
                 className="bg-white text-primary font-medium hover:bg-white/90"
                 endContent={<ArrowRight className="h-5 w-5" />}
+                onPress={()=>router.push("/demo")}
               >
                 Schedule Demo
               </Button>
               <Button
+                as={Link}
+                 href="/blog"
                 size="lg"
                 variant="bordered"
                 className="border-white/30 text-white font-medium hover:bg-white/10"
