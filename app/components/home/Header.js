@@ -18,7 +18,7 @@ export default function Header() {
       setScrolled(window.scrollY > 50);
       
       // Determine active section based on scroll position
-      const sections = ['home', 'features', 'roles', 'modules', 'pricing', 'testimonials'];
+      const sections = ['home', , 'roles', 'modules', 'pricing', 'features'];
       for (const section of sections.reverse()) {
         const element = document.getElementById(section);
         if (element && window.scrollY >= element.offsetTop - 150) {

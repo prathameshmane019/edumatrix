@@ -8,7 +8,7 @@ import RoleBased from './components/home/RoleBased';
 import Modules from './components/home/Modules';
 import CTA from './components/home/CTA';
 import Comparison from './components/home/Comparison';
-import Testimonials from './components/home/Testimonials'; 
+import Testimonials from './components/home/Testimonials';
 import Footer from './components/home/Footer';
 
 export default function Home() {
@@ -51,34 +51,31 @@ export default function Home() {
         <section id="home" className=" animate-on-scroll">
           <Hero />
         </section>
-        
+
         <section className=" animate-on-scroll">
           <Stats />
         </section>
-        
+
         <section id="roles" className="  animate-on-scroll">
           <RoleBased />
         </section>
-        
+
         <section id="modules" className="  animate-on-scroll">
           <Modules />
         </section>
-        
+
         <section id="pricing" className=" animate-on-scroll">
           <CTA />
-         
+
         </section>
-        <section id='features'className=" animate-on-scroll">
-           <Comparison />
+        <section id="features" className=" animate-on-scroll">
+          <Comparison />
         </section>
-{/*         
+        {/*         
         <section id="testimonials" className=" animate-on-scroll">
           <Testimonials /> 
         </section> */}
-        
-        <section id="about" className="  animate-on-scroll">
-          {/* About section content can be added here */}
-        </section>
+
       </main>
       <Footer />
     </div>
